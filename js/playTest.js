@@ -100,14 +100,14 @@ function restartGame() {
     loadGamePreview();
 }
 
-function loadGamePreview() {
+async function loadGamePreview() {
     // Sync current level data to levels array before generating
     syncToCurrentLevel();
 
     const iframe = document.getElementById('game-preview-frame');
     const pixelScaleRadio = document.querySelector('input[name="pixel-scale"]:checked');
     const pixelScale = pixelScaleRadio ? parseInt(pixelScaleRadio.value) : 1;
-    const gameHTML = generateGameHTML(false, pixelScale);
+    const gameHTML = await generateGameHTMLAsync(false, pixelScale);
 
     // Clean up previous blob URL
     if (currentBlobUrl) {
@@ -139,13 +139,13 @@ function exportFullGame() {
 }
 
 // Debug: Open game in new tab to test if iframe is causing the issue
-function openGameInNewTab() {
+async function openGameInNewTab() {
     // Sync current level data to levels array before generating
     syncToCurrentLevel();
 
     const pixelScaleRadio = document.querySelector('input[name="pixel-scale"]:checked');
     const pixelScale = pixelScaleRadio ? parseInt(pixelScaleRadio.value) : 1;
-    const gameHTML = generateGameHTML(false, pixelScale);
+    const gameHTML = await generateGameHTMLAsync(false, pixelScale);
     const blob = new Blob([gameHTML], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');

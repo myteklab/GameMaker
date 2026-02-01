@@ -1795,10 +1795,17 @@ let testSfxContext = null;
 
 // Test a SoundEffectStudio sound by project ID
 function testSfxSound(projectId) {
+    // Check inline data first (from embedded SFX studio)
+    if (gameSettings.sfxData && gameSettings.sfxData[projectId]) {
+        console.log('Playing SFX from inline data, layers:', gameSettings.sfxData[projectId].layers?.length || 0);
+        playTestSynthesizedSound(gameSettings.sfxData[projectId]);
+        return;
+    }
+
+    // Fall back to API fetch for legacy projects
     var sfxApiBase = window.GM_SFX_DATA_API || '/api/v1/sfx/data';
     const fetchUrl = sfxApiBase + '?id=' + projectId + '&_t=' + Date.now();
     console.log('testSfxSound fetching:', fetchUrl);
-    // Fetch the synthesis data (with cache-busting to get fresh data after edits)
     fetch(fetchUrl)
         .then(response => response.json())
         .then(result => {
