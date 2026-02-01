@@ -173,9 +173,11 @@ function loadProjectData(data) {
                 levelComplete: ''
             };
         }
-        // Ensure inline SFX/PFX data stores exist for older projects
-        if (!gameSettings.sfxData) gameSettings.sfxData = {};
-        if (!gameSettings.pfxData) gameSettings.pfxData = {};
+        // Ensure inline SFX/PFX data stores are plain objects (not arrays).
+        // PHP json_decode converts empty {} to [], and JSON.stringify on arrays
+        // drops string-keyed properties — so force objects here on load.
+        if (!gameSettings.sfxData || Array.isArray(gameSettings.sfxData)) gameSettings.sfxData = {};
+        if (!gameSettings.pfxData || Array.isArray(gameSettings.pfxData)) gameSettings.pfxData = {};
         updateGameSettingsUI();
     }
 
