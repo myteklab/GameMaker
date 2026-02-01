@@ -173,6 +173,14 @@ function formatFireKey(keyCode) {
 }
 
 function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxData = {}, bundledPfxData = {}) {
+    // Auto-collect inline data if caller didn't provide any
+    if (Object.keys(bundledSfxData).length === 0) {
+        bundledSfxData = getAllSfxData(collectSfxIds());
+    }
+    if (Object.keys(bundledPfxData).length === 0) {
+        bundledPfxData = getAllPfxData(collectPfxIds());
+    }
+
     // Check if any templates have particle effects configured (auto-enable feature)
     const templateArrays = [enemyTemplates, collectibleTemplates, hazardTemplates, powerupTemplates, springTemplates, mysteryBlockTemplates, doorTemplates];
     const hasTemplateParticleEffects = templateArrays.some(templates =>
