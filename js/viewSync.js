@@ -1,7 +1,6 @@
 // ============================================
 // VIEW MENU SYNC & UI FEEDBACK
 // ============================================
-// Extracted from index.php lines 3731-3765
 // Handles view checkbox synchronization and pixel scale radio feedback
 
 // Sync view menu checkboxes with hidden checkboxes

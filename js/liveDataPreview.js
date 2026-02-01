@@ -1,7 +1,6 @@
 // ============================================
 // LIVE DATA PREVIEW
 // ============================================
-// Extracted from index.php lines 5084-5352
 
 function updateLiveDataPreview() {
     const display = document.getElementById('live-data-display');

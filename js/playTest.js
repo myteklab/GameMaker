@@ -1,7 +1,6 @@
 // ============================================
 // PLAY TEST MODE
 // ============================================
-// Extracted from index.php lines 6119-6162
 
 // Toggle play test modal with Escape key
 function togglePlayTestModal() {

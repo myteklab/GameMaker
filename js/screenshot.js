@@ -1,7 +1,6 @@
 // ============================================
 // SCREENSHOT GENERATION
 // ============================================
-// Extracted from index.php lines 4873-5063
 
 // Generate a preview screenshot of the level
 function generateScreenshot() {
@@ -181,23 +180,7 @@ function generateScreenshot() {
 }
 
 // Save screenshot silently (called after save)
+// In standalone mode this is a no-op. Platform adapter overrides this.
 async function saveScreenshotSilent() {
-    if (!projectId) return;
-
-    try {
-        const imgData = generateScreenshot();
-        if (!imgData) return;
-
-        await fetch('/beta/applications/GameMaker/save_screenshot.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-                project_id: projectId,
-                img_data: imgData
-            })
-        });
-    } catch (error) {
-        console.error('Screenshot save error:', error);
-    }
+    // No-op in standalone mode
 }

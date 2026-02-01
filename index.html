@@ -533,20 +533,6 @@
                             <p style="font-size: 10px; color: #888; margin: 2px 0 0 0;">Save to your computer as a standalone HTML file</p>
                         </div>
                     </label>
-                    <label style="display: flex; align-items: center; cursor: pointer; gap: 8px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; border: 1px solid transparent;" class="export-option" onclick="selectExportOption('mytekos')">
-                        <input type="radio" name="export-destination" id="export-mytekos" value="mytekos" style="width: 16px; height: 16px;">
-                        <div>
-                            <span style="color: #fff;">☁️ Save to mytekOS</span>
-                            <p style="font-size: 10px; color: #888; margin: 2px 0 0 0;">Create a MrCodeEditor project you can edit and share</p>
-                        </div>
-                    </label>
-                    <label style="display: flex; align-items: center; cursor: pointer; gap: 8px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; border: 1px solid transparent;" class="export-option" onclick="selectExportOption('publish')">
-                        <input type="radio" name="export-destination" id="export-publish" value="publish" style="width: 16px; height: 16px;">
-                        <div>
-                            <span style="color: #fff;">📱 Publish as Mobile App</span>
-                            <p style="font-size: 10px; color: #888; margin: 2px 0 0 0;">Install on phone with QR code - works offline!</p>
-                        </div>
-                    </label>
                 </div>
             </div>
 
@@ -608,12 +594,6 @@
                 <p style="font-size: 10px; color: #888; margin: 6px 0 0 0;">
                     💡 Provide a URL to a square image (PNG recommended, 512×512px ideal). This will be your app icon when installed on the home screen.
                 </p>
-            </div>
-
-            <!-- Project Name (for mytekOS save) -->
-            <div id="mytekos-project-name" style="display: none; margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
-                <label style="color: #aaa; font-size: 12px; display: block; margin-bottom: 6px;">Project Name:</label>
-                <input type="text" id="game-project-name" placeholder="My Platformer Game" style="width: 100%; padding: 8px; background: #1a1a2e; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 14px;">
             </div>
 
             <!-- Published App Info (shown when already published) -->

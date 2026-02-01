@@ -1,7 +1,6 @@
 // ============================================
 // EXPORT - Legacy Modal Functions
 // ============================================
-// Extracted from index.php lines 4497-4550
 
 function showExportModalLegacy() {
     const modal = document.getElementById('export-modal');
@@ -57,7 +56,6 @@ function copyExportCode() {
 // ============================================
 // EXPORT FORMATS
 // ============================================
-// Extracted from index.php lines 5396-5751
 
 function setExportFormat(format) {
     currentExportFormat = format;
@@ -93,58 +91,31 @@ function setExportFormat(format) {
     generateExportCode(format);
 }
 
-// Handle export option selection (download vs mytekOS vs publish)
+// Handle export option selection
 function selectExportOption(option) {
     document.getElementById('export-download').checked = (option === 'download');
-    document.getElementById('export-mytekos').checked = (option === 'mytekos');
-    document.getElementById('export-publish').checked = (option === 'publish');
 
-    // Show/hide project name input
-    const projectNameDiv = document.getElementById('mytekos-project-name');
-    if (projectNameDiv) {
-        projectNameDiv.style.display = option === 'mytekos' ? 'block' : 'none';
-    }
-
-    // Show/hide game icon URL input
+    // Show/hide game icon URL input for publish
     const iconUrlDiv = document.getElementById('game-icon-url-section');
     if (iconUrlDiv) {
-        iconUrlDiv.style.display = option === 'publish' ? 'block' : 'none';
+        iconUrlDiv.style.display = 'none';
     }
 
-    // Update button text
     updateExportButtonText();
 }
 
 function updateExportButtonText() {
     const exportBtn = document.getElementById('export-action-btn');
-    const isMytekos = document.getElementById('export-mytekos')?.checked;
-    const isPublish = document.getElementById('export-publish')?.checked;
     if (exportBtn) {
-        if (isPublish) {
-            exportBtn.textContent = '📱 Publish as Mobile App';
-            exportBtn.style.background = 'linear-gradient(135deg, #11998e, #38ef7d)';
-        } else if (isMytekos) {
-            exportBtn.textContent = '☁️ Save to mytekOS';
-            exportBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
-        } else {
-            exportBtn.textContent = '📥 Download File';
-            exportBtn.style.background = 'linear-gradient(135deg, #e94560, #0f3460)';
-        }
+        exportBtn.textContent = '📥 Download File';
+        exportBtn.style.background = 'linear-gradient(135deg, #e94560, #0f3460)';
     }
 }
 
 // Execute the export based on selected options
 function executeExport() {
     if (currentExportFormat === 'platformer') {
-        const isMytekos = document.getElementById('export-mytekos')?.checked;
-        const isPublish = document.getElementById('export-publish')?.checked;
-        if (isPublish) {
-            publishGameToMyTekOS();
-        } else if (isMytekos) {
-            saveGameToMytekos();
-        } else {
-            downloadPlatformerGame();
-        }
+        downloadPlatformerGame();
     } else {
         downloadExportCode();
     }
@@ -171,68 +142,6 @@ async function downloadPlatformerGame() {
     a.click();
     URL.revokeObjectURL(url);
     showToast('Game downloaded with bundled sounds! Open the HTML file to play.');
-}
-
-// Save game to mytekOS as MrCodeEditor project
-async function saveGameToMytekos() {
-    const learningMode = document.getElementById('learning-mode-checkbox')?.checked || false;
-    const pixelScaleRadio = document.querySelector('input[name="pixel-scale"]:checked');
-    const pixelScale = pixelScaleRadio ? parseInt(pixelScaleRadio.value) : 1;
-    const projectName = document.getElementById('game-project-name')?.value?.trim() || 'My Platformer Game';
-
-    // Show bundling message if there are SFX sounds
-    const sfxIds = collectSfxIds();
-    if (sfxIds.length > 0) {
-        showToast('Bundling sound effects...', 'info', 2000);
-    }
-
-    const gameHTML = await generateGameHTMLAsync(learningMode, pixelScale);
-
-    // Create MrCodeEditor project format
-    const mrCodeProject = {
-        file: {
-            'index.html': gameHTML
-        },
-        config: {
-            theme: 'pastel-on-dark',
-            includes: [],
-            assets: {},
-            text: { font: 'monospace', font_size: '14px' }
-        }
-    };
-
-    // Show saving indicator
-    const exportBtn = document.getElementById('export-action-btn');
-    const originalText = exportBtn.textContent;
-    exportBtn.textContent = 'Saving...';
-    exportBtn.disabled = true;
-
-    // Send to save endpoint
-    fetch('save_game.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            name: projectName,
-            project_data: JSON.stringify(mrCodeProject)
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        exportBtn.textContent = originalText;
-        exportBtn.disabled = false;
-
-        if (data.success) {
-            showToast('Game saved to mytekOS! Find it in your MrCodeEditor projects.');
-            closeExportModal();
-        } else {
-            showToast('Error: ' + (data.error || 'Failed to save'));
-        }
-    })
-    .catch(error => {
-        exportBtn.textContent = originalText;
-        exportBtn.disabled = false;
-        showToast('Error saving: ' + error.message);
-    });
 }
 
 function updateExportExplanation(format) {
@@ -465,40 +374,8 @@ async function checkAndDisplayPublishedInfo() {
         return;
     }
 
-    try {
-        const response = await fetch(`/beta/api/v1/apps/check?project_id=${projectId}`, {
-            credentials: 'include'
-        });
-
-        const data = await response.json();
-
-        if (data.url && data.app_name) {
-            // Game is published - show the info
-            document.getElementById('published-app-name').textContent = data.app_name;
-            document.getElementById('published-url').value = data.url;
-
-            // Clear previous QR code
-            const qrContainer = document.getElementById('export-qr-code');
-            qrContainer.innerHTML = '';
-
-            // Generate small QR code
-            new QRCode(qrContainer, {
-                text: data.url,
-                width: 100,
-                height: 100,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-
-            publishedInfoDiv.style.display = 'block';
-        } else {
-            publishedInfoDiv.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Error checking published status:', error);
-        publishedInfoDiv.style.display = 'none';
-    }
+    // Published status check is handled by platform adapter
+    publishedInfoDiv.style.display = 'none';
 }
 
 // Copy published URL from export modal
@@ -509,117 +386,14 @@ function copyPublishedURL() {
     showToast('URL copied to clipboard!', 'success');
 }
 
-// ============================================
-// PWA PUBLISHING TO MYTEKOS
-// ============================================
-
-// Publish game as installable PWA
-async function publishGameToMyTekOS() {
-    try {
-        // Check if project is saved
-        if (!projectId) {
-            showToast('Please save your project first before publishing!', 'error');
-            return;
-        }
-
-        // Close export modal
-        closeExportModal();
-
-        // Get user inputs
-        const learningMode = document.getElementById('learning-mode-checkbox')?.checked || false;
-        const pixelScaleRadio = document.querySelector('input[name="pixel-scale"]:checked');
-        const pixelScale = pixelScaleRadio ? parseInt(pixelScaleRadio.value) : 1;
-        const iconUrl = document.getElementById('game-icon-url')?.value.trim() || '';
-
-        // Generate game HTML with bundled SFX data
-        const sfxIds = collectSfxIds();
-        if (sfxIds.length > 0) {
-            showToast('Bundling sound effects...', 'info', 2000);
-        }
-        const gameHTML = await generateGameHTMLAsync(learningMode, pixelScale);
-
-        // Check if already published
-        const checkResponse = await fetch(`/beta/api/v1/apps/check?project_id=${projectId}`, {
-            credentials: 'include'  // Send cookies for authentication
-        });
-        const checkData = await checkResponse.json();
-
-        const existingUrl = checkData.url || null;
-        const existingSlug = checkData.app_slug || null;
-        const existingAppName = checkData.app_name || null;
-        const isUpdate = !!existingUrl;
-
-        // Get project name or use default
-        const currentProjectName = projectName || 'My Platformer Game';
-
-        // Show confirmation dialog
-        const confirmed = await showPublishConfirmDialog(existingAppName || currentProjectName, existingSlug, isUpdate);
-        if (!confirmed) {
-            return;
-        }
-
-        const appName = confirmed.appName;
-        const customSlug = confirmed.customSlug;
-
-        // Show progress
-        showToast('Publishing game...', 'info');
-
-        // Generate PWA files
-        const manifest = generateManifestJSON(appName, iconUrl);
-        const serviceWorker = generateServiceWorker();
-
-        // Inject PWA enhancements into HTML
-        const enhancedHTML = injectPWAScripts(gameHTML, appName);
-
-        // Publish to API
-        const response = await fetch('/beta/api/v1/apps/publish', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',  // Send cookies for authentication
-            body: JSON.stringify({
-                app_name: appName,
-                index_html: enhancedHTML,
-                manifest: manifest,
-                service_worker: serviceWorker,
-                project_id: projectId,
-                custom_slug: customSlug || undefined
-            })
-        });
-
-        if (!response.ok) {
-            // Try to get error message from response
-            const errorText = await response.text();
-            console.error('Server error response:', errorText);
-            showToast(`Publish failed (${response.status}): Check console for details`, 'error');
-            return;
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-            showPublishSuccessModal(data.url, appName, isUpdate);
-        } else {
-            showToast('Publish failed: ' + (data.error || data.message || 'Unknown error'), 'error');
-        }
-
-    } catch (error) {
-        console.error('Publish error:', error);
-        showToast('Failed to publish: ' + error.message, 'error');
-    }
-}
-
 // Generate manifest.json for PWA
 function generateManifestJSON(appName, iconUrl = '') {
-    // Use custom icon if provided, otherwise use GameMaker icon
-    const defaultIcon = 'https://www.mytekos.com/beta/applications/GameMaker/res/icon.svg';
-    const gameIcon = iconUrl || defaultIcon;
+    const gameIcon = iconUrl || 'icon.svg';
 
     return JSON.stringify({
         name: appName,
         short_name: appName,
-        description: `${appName} - Built with mytekOS GameMaker`,
+        description: `${appName} - Built with GameMaker`,
         start_url: "./",
         display: "fullscreen",
         orientation: "landscape",

@@ -1,7 +1,6 @@
 // ============================================
 // EVENT HANDLERS
 // ============================================
-// Extracted from index.php lines 3995-4265
 
 function setupEventListeners() {
     setupTilesetDropzone();

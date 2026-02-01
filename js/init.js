@@ -1,9 +1,7 @@
 // ============================================
 // INITIALIZATION
 // ============================================
-// Extracted from index.php lines 2859-2931
 // Note: PHP variables (projectId, projectName, loginId, INITIAL_DATA, URL_*)
-// are defined inline in index2.php before this file loads
 
 function init() {
     // Apply URL parameters for level size before initializing

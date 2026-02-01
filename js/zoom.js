@@ -1,7 +1,6 @@
 // ============================================
 // ZOOM - Zoom Controls
 // ============================================
-// Extracted from index.php lines 4267-4281
 
 function zoomIn() {
     zoom = Math.min(5, zoom + 0.25);

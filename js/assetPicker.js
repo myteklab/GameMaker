@@ -1,7 +1,6 @@
 // ============================================
 // ASSET LIBRARY PICKER INTEGRATION
 // ============================================
-// Extracted from index.php lines 3845-4042
 // Integrates the asset library picker into GameMaker
 //
 // Dependencies:
@@ -200,34 +199,14 @@
         const formData = new FormData();
         formData.append('name', soundName);
 
-        fetch('/beta/applications/SoundEffectStudio/create_for_gamemaker.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success && result.project_id) {
-                // Store the target input and project ID
-                sfxTargetInputId = inputId;
-                sfxProjectId = result.project_id;
+        // Open SoundEffectStudio in modal with a new session
+        sfxTargetInputId = inputId;
+        sfxProjectId = 'new_' + Date.now();
+        openSfxStudioModal(sfxProjectId);
 
-                // Open SoundEffectStudio in modal
-                openSfxStudioModal(result.project_id);
-
-                if (typeof showToast === 'function') {
-                    showToast('Sound project created! Design your sound, then click "Save & Use Sound".', 'success', 4000);
-                }
-            } else {
-                throw new Error(result.error || 'Failed to create project');
-            }
-        })
-        .catch(error => {
-            console.error('Failed to create SFX project:', error);
-            if (typeof showToast === 'function') {
-                showToast('Failed to create sound project: ' + error.message, 'error');
-            }
-        });
+        if (typeof showToast === 'function') {
+            showToast('Design your sound, then click "Save & Use Sound".', 'success', 4000);
+        }
     };
 
     // Global function to edit an existing linked SoundEffectStudio project
@@ -264,8 +243,9 @@
             return;
         }
 
-        // Load SoundEffectStudio in the iframe with embedded mode
-        iframe.src = '/beta/applications/SoundEffectStudio/?id=' + projectId + '&source=gamemaker&embedded=1';
+        // Load SoundEffectStudio in the iframe
+        var sfxBaseUrl = window.GM_SFX_STUDIO_URL || '/apps/soundeffectstudio/index.html';
+        iframe.src = sfxBaseUrl + '?id=' + projectId + '&source=gamemaker&embedded=1';
         modal.style.display = 'flex';
     }
 
@@ -333,7 +313,7 @@
         window.addEventListener('message', sfxSaveMessageHandler);
 
         // Tell SoundEffectStudio to save
-        iframe.contentWindow.postMessage({ action: 'save' }, '*');
+        iframe.contentWindow.postMessage({ action: 'save' }, window.location.origin);
 
         // Fallback timeout in case saveComplete message isn't received
         sfxSaveTimeout = setTimeout(function() {
@@ -448,34 +428,14 @@
             formData.append('preset', preset);
         }
 
-        fetch('/beta/applications/ParticleFX/create_for_gamemaker.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success && result.project_id) {
-                // Store the target input and project ID
-                pfxTargetInputId = inputId;
-                pfxProjectId = result.project_id;
+        // Open ParticleFX in modal with a new session
+        pfxTargetInputId = inputId;
+        pfxProjectId = 'new_' + Date.now();
+        openPfxStudioModal(pfxProjectId);
 
-                // Open ParticleFX in modal
-                openPfxStudioModal(result.project_id);
-
-                if (typeof showToast === 'function') {
-                    showToast('Effect created! Design your particles, then click "Save & Use Effect".', 'success', 4000);
-                }
-            } else {
-                throw new Error(result.error || 'Failed to create project');
-            }
-        })
-        .catch(error => {
-            console.error('Failed to create PFX project:', error);
-            if (typeof showToast === 'function') {
-                showToast('Failed to create particle effect: ' + error.message, 'error');
-            }
-        });
+        if (typeof showToast === 'function') {
+            showToast('Design your particles, then click "Save & Use Effect".', 'success', 4000);
+        }
     };
 
     // Global function to edit an existing linked ParticleFX project
@@ -512,8 +472,9 @@
             return;
         }
 
-        // Load ParticleFX in the iframe with embedded mode
-        iframe.src = '/beta/applications/ParticleFX/?id=' + projectId + '&source=gamemaker&embedded=1';
+        // Load ParticleFX in the iframe
+        var pfxBaseUrl = window.GM_PFX_STUDIO_URL || '/apps/particlefx/index.html';
+        iframe.src = pfxBaseUrl + '?id=' + projectId + '&source=gamemaker&embedded=1';
         modal.style.display = 'flex';
     }
 
@@ -523,7 +484,7 @@
 
         if (iframe && iframe.contentWindow) {
             // Tell ParticleFX to save
-            iframe.contentWindow.postMessage({ action: 'save' }, '*');
+            iframe.contentWindow.postMessage({ action: 'save' }, window.location.origin);
         }
 
         // Give it a moment to save, then close and update

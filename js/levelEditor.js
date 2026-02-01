@@ -1,7 +1,6 @@
 // ============================================
 // LEVEL EDITING
 // ============================================
-// Extracted from index.php lines 3360-3632
 
 function setTileAt(tileX, tileY, key) {
     if (tileY < 0 || tileY >= level.length) return;

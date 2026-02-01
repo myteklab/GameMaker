@@ -1,7 +1,6 @@
 // ============================================
 // GAME SETTINGS
 // ============================================
-// Extracted from index.php lines 4364-4495
 
 // ============================================
 // GAME TYPE SYSTEM
@@ -1796,7 +1795,8 @@ let testSfxContext = null;
 
 // Test a SoundEffectStudio sound by project ID
 function testSfxSound(projectId) {
-    const fetchUrl = '/beta/applications/SoundEffectStudio/get_synthesis_data.php?id=' + projectId + '&_t=' + Date.now();
+    var sfxApiBase = window.GM_SFX_DATA_API || '/api/v1/sfx/data';
+    const fetchUrl = sfxApiBase + '?id=' + projectId + '&_t=' + Date.now();
     console.log('testSfxSound fetching:', fetchUrl);
     // Fetch the synthesis data (with cache-busting to get fresh data after edits)
     fetch(fetchUrl)

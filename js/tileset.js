@@ -1,7 +1,6 @@
 // ============================================
 // TILESET HANDLING
 // ============================================
-// Extracted from index.php lines 2933-3359
 
 function setupTilesetDropzone() {
     const dropzone = document.getElementById('tileset-dropzone');

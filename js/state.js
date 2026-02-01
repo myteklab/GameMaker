@@ -1,9 +1,7 @@
 // ============================================
 // STATE - GameMaker State Variables
 // ============================================
-// Extracted from index.php lines 2616-2858
 // Note: PHP variables (projectId, projectName, loginId, INITIAL_DATA, URL_*)
-// are defined inline in index2.php before this file loads
 
 // Canvas references
 const canvas = document.getElementById('level-canvas');

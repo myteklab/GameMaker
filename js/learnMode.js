@@ -1,7 +1,6 @@
 // ============================================
 // LEARN MODE
 // ============================================
-// Extracted from index.php lines 5753-5767 and 5984-6117
 
 function showLearnModal() {
     const modal = document.getElementById('learn-modal');

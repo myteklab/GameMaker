@@ -1,7 +1,6 @@
 // ============================================
 // DRAWING/RENDERING
 // ============================================
-// Extracted from index.php lines 3634-3993
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);

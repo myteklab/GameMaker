@@ -1,7 +1,6 @@
 // ============================================
 // DROPDOWN MENU FUNCTIONALITY
 // ============================================
-// Extracted from index.php lines 3687-3729
 // Handles dropdown menu toggle, close, and keyboard navigation
 
 // Toggle dropdown menu visibility

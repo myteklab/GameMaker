@@ -1,7 +1,6 @@
 // ============================================
 // UI - Toast Notifications
 // ============================================
-// Extracted from index.php lines 5065-5082
 
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');

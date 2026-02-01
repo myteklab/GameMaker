@@ -1,7 +1,6 @@
 // ============================================
 // TILES PANEL RESIZE
 // ============================================
-// Extracted from index.php lines 3767-3840
 // Allows resizing the custom tiles section in the sidebar
 
 (function() {

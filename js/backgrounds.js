@@ -1,7 +1,6 @@
 // ============================================
 // BACKGROUND LAYERS
 // ============================================
-// Extracted from index.php lines 4283-4362
 
 // Helper to get the background layers array for the level being edited
 function getEditingBgLayers() {

@@ -1,6 +1,5 @@
 // GAME HTML GENERATOR
 // ============================================
-// Extracted from index.php lines 6164-7488
 
 // Collect all sfx: IDs from game data for bundling
 function collectSfxIds() {
@@ -72,7 +71,8 @@ async function fetchAllSfxData(sfxIds) {
 
     await Promise.all(sfxIds.map(async (id) => {
         try {
-            const response = await fetch('/beta/applications/SoundEffectStudio/get_synthesis_data.php?id=' + id);
+            var sfxApiBase = window.GM_SFX_DATA_API || '/api/v1/sfx/data';
+            const response = await fetch(sfxApiBase + '?id=' + id);
             const result = await response.json();
             if (result.success && result.data) {
                 sfxData[id] = result.data;
@@ -426,7 +426,7 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
         learningHeader = `
 // ╔═══════════════════════════════════════════════════════════════════════════════╗
 // ║                         MY PLATFORMER GAME                                     ║
-// ║                   Created with Game Maker - mytekOS                         ║
+// ║                      Created with GameMaker                                 ║
 // ╚═══════════════════════════════════════════════════════════════════════════════╝
 //
 // Welcome to your game's source code! This file contains everything needed to run
@@ -508,7 +508,7 @@ KEY ELEMENTS:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Platformer Game</title>
-${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown') ? '    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>\n' : ''}${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown' && (gameSettings.multiplayerAllowCustomSprites === true || gameSettings.multiplayerAllowCustomSprites === 'true')) ? '    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">\n    <link rel="stylesheet" href="https://www.mytekos.com/beta/applications/components/asset-library-picker/asset-library-picker.css">\n    <script src="https://www.mytekos.com/beta/applications/components/asset-library-picker/asset-library-picker.js"></script>\n' : ''}    ${includeComments ? `<!--
+${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown') ? '    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>\n' : ''}${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown' && (gameSettings.multiplayerAllowCustomSprites === true || gameSettings.multiplayerAllowCustomSprites === 'true')) ? '    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">\n' : ''}    ${includeComments ? `<!--
     ═══════════════════════════════════════════════════════════════════════════
     CSS STYLES - How the page looks
     ═══════════════════════════════════════════════════════════════════════════
@@ -1336,7 +1336,7 @@ ${includeComments ? `    // ═════════════════�
         if (!value) return value;
         if (value.indexOf('pfx:') === 0) {
             var projectId = value.substring(4);
-            return 'https://www.mytekos.com/beta/applications/ParticleFX/get_effect.php?id=' + projectId;
+            return (window.GM_PFX_DATA_API || '/api/v1/pfx/data') + '?id=' + projectId;
         }
         return value;
     }
@@ -1352,7 +1352,7 @@ ${includeComments ? `    // ═════════════════�
 
         // Convert relative URL to full URL if needed
         if (!url.startsWith('http')) {
-            url = 'https://www.mytekos.com/beta/' + url;
+            url = PLATFORM_BASE_URL + url;
         }
 
         fetch(url)
@@ -1384,7 +1384,7 @@ ${includeComments ? `    // ═════════════════�
         // Convert relative URL to full URL if needed
         var fullUrl = url;
         if (!url.startsWith('http')) {
-            fullUrl = 'https://www.mytekos.com/beta/' + url;
+            fullUrl = PLATFORM_BASE_URL + url;
         }
 
         // Check if already loaded under full URL
@@ -1523,7 +1523,7 @@ ${includeComments ? `    // ═════════════════�
         }
         if (!effectData) {
             // Try with full URL
-            var fullUrl = url.startsWith('http') ? url : 'https://www.mytekos.com/beta/' + url;
+            var fullUrl = url.startsWith('http') ? url : PLATFORM_BASE_URL + url;
             effectData = particleEffectsData[fullUrl];
         }
         if (!effectData) return; // Effect not loaded
@@ -1688,7 +1688,7 @@ ${includeComments ? `    // ═════════════════�
         // Handle pfx:projectId format
         var fetchUrl = convertPfxToUrl(url);
         if (!fetchUrl.startsWith('http')) {
-            fetchUrl = 'https://www.mytekos.com/beta/' + fetchUrl;
+            fetchUrl = PLATFORM_BASE_URL + fetchUrl;
         }
 
         // Check if already cached
@@ -2051,8 +2051,9 @@ ${includeComments ? `    // ═════════════════�
     // ═══════════════════════════════════════════════════════════════════════════
     // MULTIPLAYER STATE (Experimental - Top-Down RPG Only)
     // ═══════════════════════════════════════════════════════════════════════════
+    var PLATFORM_BASE_URL = '${window.GM_PLATFORM_BASE_URL || ''}';
     var MULTIPLAYER_ENABLED = ${gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown'};
-    var MULTIPLAYER_SERVER = 'https://www.mytekos.com:5096';
+    var MULTIPLAYER_SERVER = '${window.GM_MULTIPLAYER_SERVER || ''}';
     var MULTIPLAYER_MAX_PLAYERS = ${gameSettings.multiplayerMaxPlayers || 4};
     var MULTIPLAYER_PLAYER_NAME = '${(gameSettings.multiplayerPlayerName || 'Player').replace(/'/g, "\\'")}';
     var MULTIPLAYER_SHOW_CHAT = ${gameSettings.multiplayerShowChat !== false};
@@ -2246,9 +2247,9 @@ ${includeComments ? `    // ═════════════════�
         if (typeof AssetLibraryPicker === 'function') {
             var picker = new AssetLibraryPicker({
                 categories: ['sprites'],
-                apiBase: 'https://www.mytekos.com/beta/api/v1',
+                apiBase: PLATFORM_BASE_URL + 'api/v1',
                 onSelect: function(asset) {
-                    var fileUrl = asset.file_url || ('https://www.mytekos.com/beta/file.php?file=' + asset.file_path);
+                    var fileUrl = asset.file_url || (PLATFORM_BASE_URL + 'file.php?file=' + asset.file_path);
                     handleAssetSelect(fileUrl, asset.metadata);
                 },
                 onError: function(error) {
@@ -3665,7 +3666,7 @@ ${includeComments ? `    // ═════════════════�
 
         var xhr = new XMLHttpRequest();
         // Add cache-busting to get fresh data (especially important after editing sounds)
-        xhr.open('GET', 'https://www.mytekos.com/beta/applications/SoundEffectStudio/get_synthesis_data.php?id=' + projectId + '&_t=' + Date.now(), true);
+        xhr.open('GET', PLATFORM_BASE_URL + 'api/v1/sfx/data?id=' + projectId + '&_t=' + Date.now(), true);
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
@@ -4692,7 +4693,7 @@ ${includeComments ? `    // ═════════════════�
             if (inventoryOpen) {
                 inventoryOpen = false;
             } else if (window.parent !== window) {
-                window.parent.postMessage({ action: 'closePlayTest' }, '*');
+                window.parent.postMessage({ action: 'closePlayTest' }, window.location.origin);
             }
         }
         // Delete/Backspace key - clear saved progress when inventory is open (RPG mode)

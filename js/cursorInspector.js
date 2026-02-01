@@ -1,7 +1,6 @@
 // ============================================
 // CURSOR INSPECTOR
 // ============================================
-// Extracted from index.php lines 5354-5394
 
 function updateCursorInspector(tileX, tileY) {
     // Cursor inspector elements are optional (not used in GameMaker)

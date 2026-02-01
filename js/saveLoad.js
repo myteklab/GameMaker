@@ -1,7 +1,6 @@
 // ============================================
 // SAVE / LOAD
 // ============================================
-// Extracted from index.php lines 4552-4871
 
 function serializeProject() {
     // Sync current level data before saving
@@ -474,154 +473,29 @@ function migrateGameObjects(lvl) {
     return lvl;
 }
 
-// Helper to show session expired modal
-function showSessionExpiredModal() {
-    // Remove existing modal if any
-    const existing = document.getElementById('session-expired-modal');
-    if (existing) existing.remove();
+// ============================================
+// SAVE / EXPORT
+// ============================================
 
-    const modal = document.createElement('div');
-    modal.id = 'session-expired-modal';
-    modal.innerHTML = `
-        <div class="modal-overlay"></div>
-        <div class="modal-content session-modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #e94560, #ff6b6b);">
-                <h3>⚠️ Session Expired</h3>
-            </div>
-            <div class="modal-body" style="padding: 20px; text-align: center;">
-                <p style="margin-bottom: 16px; color: #fff; font-size: 14px; line-height: 1.6;">
-                    Your mytekOS session has expired.<br>
-                    <strong>Don't close this tab!</strong> Your work is still here.
-                </p>
-                <p style="margin-bottom: 20px; color: #aaa; font-size: 13px;">
-                    Open a new tab, log back into mytekOS from<br>
-                    <a href="https://www.myteklab.com" target="_blank" style="color: #00d9ff;">myteklab.com</a>,
-                    then return here to save.
-                </p>
-                <button onclick="closeSessionExpiredModal()" class="btn" style="padding: 10px 30px; background: linear-gradient(135deg, #667eea, #764ba2);">
-                    Got it
-                </button>
-            </div>
-        </div>
-    `;
-
-    // Add modal styles if not already present
-    if (!document.getElementById('session-modal-styles')) {
-        const styles = document.createElement('style');
-        styles.id = 'session-modal-styles';
-        styles.textContent = `
-            #session-expired-modal {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                z-index: 10001;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            #session-expired-modal .modal-overlay {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.8);
-            }
-            #session-expired-modal .session-modal-content {
-                position: relative;
-                background: #1e1e2e;
-                border-radius: 12px;
-                width: 90%;
-                max-width: 400px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-                border: 2px solid #e94560;
-            }
-            #session-expired-modal .modal-header {
-                padding: 16px 20px;
-                border-radius: 10px 10px 0 0;
-            }
-            #session-expired-modal .modal-header h3 {
-                margin: 0;
-                color: #fff;
-                font-size: 18px;
-            }
-        `;
-        document.head.appendChild(styles);
-    }
-
-    document.body.appendChild(modal);
-}
-
-function closeSessionExpiredModal() {
-    const modal = document.getElementById('session-expired-modal');
-    if (modal) modal.remove();
-}
-
-// Helper to handle session expired responses
-function handleSessionExpired(response, result) {
-    if (response.status === 401 || (result && result.session_expired)) {
-        showSessionExpiredModal();
-        return true;
-    }
-    return false;
-}
-
+// Save project as a JSON file download.
+// Platform adapter overrides this to save to server.
 async function saveProject() {
     try {
         const projectData = serializeProject();
-        const jsonString = JSON.stringify(projectData);
+        const json = JSON.stringify(projectData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
 
-        // For new projects, prompt for name. For existing, use stored name.
-        let saveName;
-        if (projectId && projectName) {
-            saveName = projectName;
-        } else {
-            saveName = prompt('Enter a name for your level:', 'My Level');
-            if (!saveName) saveName = `Level ${new Date().toLocaleDateString()}`;
-            projectName = saveName; // Store for future saves
-        }
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (projectName || 'gamemaker-project') + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
 
-        const formData = new FormData();
-        formData.append('level_data', jsonString);
-        formData.append('name', saveName);
-        if (projectId) {
-            formData.append('project_id', projectId);
-        }
-
-        const response = await fetch('/beta/applications/GameMaker/save_project.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        });
-
-        // Check for session expiration before parsing JSON
-        if (response.status === 401) {
-            let result = {};
-            try { result = await response.json(); } catch (e) {}
-            handleSessionExpired(response, result);
-            return;
-        }
-
-        const result = await response.json();
-
-        if (result.success) {
-            markClean();
-            if (result.action === 'created') {
-                // Save screenshot before redirect
-                projectId = result.project_id;
-                await saveScreenshotSilent();
-                // Redirect to include project ID in URL
-                window.location.href = '?id=' + result.project_id;
-                return;
-            }
-            saveScreenshotSilent(); // Save preview screenshot
-            showToast('Level saved!');
-        } else {
-            if (handleSessionExpired(response, result)) return;
-            throw new Error(result.error || 'Save failed');
-        }
+        markClean();
+        showToast('Project saved!');
     } catch (error) {
         console.error('Save error:', error);
         showToast('Failed to save: ' + error.message, 'error');
@@ -630,139 +504,22 @@ async function saveProject() {
 
 // Save project and reload the page
 async function reloadGame() {
-    try {
-        const projectData = serializeProject();
-        const jsonString = JSON.stringify(projectData);
-
-        // For new projects, prompt for name. For existing, use stored name.
-        let saveName;
-        if (projectId && projectName) {
-            saveName = projectName;
-        } else {
-            saveName = prompt('Enter a name for your level:', 'My Level');
-            if (!saveName) saveName = `Level ${new Date().toLocaleDateString()}`;
-            projectName = saveName;
-        }
-
-        const formData = new FormData();
-        formData.append('level_data', jsonString);
-        formData.append('name', saveName);
-        if (projectId) {
-            formData.append('project_id', projectId);
-        }
-
-        showToast('Saving and reloading...');
-
-        const response = await fetch('/beta/applications/GameMaker/save_project.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        });
-
-        if (response.status === 401) {
-            let result = {};
-            try { result = await response.json(); } catch (e) {}
-            handleSessionExpired(response, result);
-            return;
-        }
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Reload the page after successful save
-            if (result.action === 'created') {
-                window.location.href = '?id=' + result.project_id;
-            } else {
-                window.location.reload();
-            }
-        } else {
-            if (handleSessionExpired(response, result)) return;
-            throw new Error(result.error || 'Save failed');
-        }
-    } catch (error) {
-        console.error('Reload error:', error);
-        showToast('Failed to save: ' + error.message, 'error');
-    }
+    showToast('Reloading...');
+    window.location.reload();
 }
 
-// Silent save for auto-save (no prompts, no redirect)
+// Silent save (no-op in standalone mode, platform adapter overrides)
 async function saveProjectSilent() {
-    if (!projectId || !projectName) return; // Only auto-save existing projects with a name
-
-    try {
-        const projectData = serializeProject();
-        const jsonString = JSON.stringify(projectData);
-
-        const formData = new FormData();
-        formData.append('level_data', jsonString);
-        formData.append('name', projectName);
-        formData.append('project_id', projectId);
-
-        const response = await fetch('/beta/applications/GameMaker/save_project.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        });
-
-        // Check for session expiration before parsing JSON
-        if (response.status === 401) {
-            let result = {};
-            try { result = await response.json(); } catch (e) {}
-            handleSessionExpired(response, result);
-            return;
-        }
-
-        const result = await response.json();
-
-        if (result.success) {
-            markClean();
-            saveScreenshotSilent(); // Save preview screenshot
-            showToast('Auto-saved', 'info');
-        } else if (handleSessionExpired(response, result)) {
-            return;
-        }
-    } catch (error) {
-        console.error('Auto-save error:', error);
-    }
+    // No-op in standalone mode
 }
 
 // ============================================
 // SHARE PROJECT
 // ============================================
 
+// Share project (stub in standalone mode, platform adapter overrides)
 async function shareProject() {
-    // Must save project first
-    if (!projectId) {
-        showToast('Please save your project first', 'error');
-        return;
-    }
-
-    try {
-        showToast('Generating share link...', 'info');
-
-        // Call API to generate share token
-        const response = await fetch(`/beta/api/v1/projects/${projectId}/generate-share-token`, {
-            method: 'POST',
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to generate share link');
-        }
-
-        const data = await response.json();
-        const shareToken = data.share_token;
-
-        // Build preview URL
-        const previewUrl = `https://www.mytekos.com/beta/applications/GameMaker/preview.php?token=${shareToken}`;
-
-        // Show share modal
-        showShareModal(previewUrl);
-
-    } catch (error) {
-        console.error('Share error:', error);
-        showToast('Failed to generate share link: ' + error.message, 'error');
-    }
+    showToast('Share is available when using the platform', 'info');
 }
 
 function showShareModal(url) {
