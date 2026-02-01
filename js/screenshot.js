@@ -125,12 +125,22 @@ function generateScreenshot() {
                 continue;
             }
 
-            // Skip custom tiles for now in screenshot (they need special handling)
-            if (isCustom) continue;
-
             const screenX = offsetX + x * tileSize * scale;
             const screenY = offsetY + y * tileSize * scale;
             const tileScreenSize = tileSize * scale;
+
+            // Draw custom tiles from cached images (data URLs, no CORS issues)
+            if (isCustom) {
+                const customImg = customTileImageCache[char];
+                if (customImg && customImg.complete && customImg.naturalWidth > 0) {
+                    sctx.drawImage(customImg, screenX, screenY, tileScreenSize, tileScreenSize);
+                } else {
+                    // Fallback: colored square for custom tiles without cached images
+                    sctx.fillStyle = '#4a90d9';
+                    sctx.fillRect(screenX, screenY, tileScreenSize, tileScreenSize);
+                }
+                continue;
+            }
 
             if (canUseTileset && tilesetImage) {
                 // Draw actual tileset tile
@@ -141,27 +151,24 @@ function generateScreenshot() {
                 );
             } else {
                 // Fallback: earthy/natural colored squares
-                // Use a palette of browns, grays, greens for a more natural look
                 const earthyColors = [
-                    { fill: '#8B4513', stroke: '#5D2E0C' }, // Saddle brown (brick-like)
-                    { fill: '#A0522D', stroke: '#6B3720' }, // Sienna (brick)
-                    { fill: '#CD853F', stroke: '#8B5A2B' }, // Peru (tan)
-                    { fill: '#6B8E23', stroke: '#4A6317' }, // Olive drab (grass)
-                    { fill: '#556B2F', stroke: '#3A4A20' }, // Dark olive (vegetation)
-                    { fill: '#708090', stroke: '#4A5568' }, // Slate gray (stone)
-                    { fill: '#696969', stroke: '#4A4A4A' }, // Dim gray (rock)
-                    { fill: '#2F4F4F', stroke: '#1A2F2F' }, // Dark slate (dark stone)
-                    { fill: '#B8860B', stroke: '#7D5A07' }, // Dark goldenrod (sand)
-                    { fill: '#D2691E', stroke: '#8B4513' }, // Chocolate (dirt)
+                    { fill: '#8B4513', stroke: '#5D2E0C' },
+                    { fill: '#A0522D', stroke: '#6B3720' },
+                    { fill: '#CD853F', stroke: '#8B5A2B' },
+                    { fill: '#6B8E23', stroke: '#4A6317' },
+                    { fill: '#556B2F', stroke: '#3A4A20' },
+                    { fill: '#708090', stroke: '#4A5568' },
+                    { fill: '#696969', stroke: '#4A4A4A' },
+                    { fill: '#2F4F4F', stroke: '#1A2F2F' },
+                    { fill: '#B8860B', stroke: '#7D5A07' },
+                    { fill: '#D2691E', stroke: '#8B4513' },
                 ];
-                const charCode = char.charCodeAt(0);
                 const colorIdx = charCode % earthyColors.length;
                 const colors = earthyColors[colorIdx];
 
                 sctx.fillStyle = colors.fill;
                 sctx.fillRect(screenX, screenY, tileScreenSize, tileScreenSize);
 
-                // Border for solid tiles
                 if (tile.solid) {
                     sctx.strokeStyle = colors.stroke;
                     sctx.lineWidth = Math.max(1, scale);

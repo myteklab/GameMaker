@@ -88,7 +88,8 @@ function loadProjectData(data) {
 
     // Load shared data
     if (data.tileSize) tileSize = data.tileSize;
-    if (data.tiles) tiles = data.tiles;
+    // PHP json round-trip converts empty {} to [] — ensure tiles is always an object
+    if (data.tiles && !Array.isArray(data.tiles)) tiles = data.tiles;
 
     // Load custom tiles (v3.1+)
     if (data.customTiles) {
