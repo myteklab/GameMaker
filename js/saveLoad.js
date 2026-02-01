@@ -173,6 +173,9 @@ function loadProjectData(data) {
                 levelComplete: ''
             };
         }
+        // Ensure inline SFX/PFX data stores exist for older projects
+        if (!gameSettings.sfxData) gameSettings.sfxData = {};
+        if (!gameSettings.pfxData) gameSettings.pfxData = {};
         updateGameSettingsUI();
     }
 

@@ -65,36 +65,94 @@ function collectSfxIds() {
     return Array.from(sfxIds);
 }
 
-// Fetch all SFX data for bundling (async)
-async function fetchAllSfxData(sfxIds) {
+// Get all SFX data from inline storage (synchronous - no API needed)
+function getAllSfxData(sfxIds) {
     const sfxData = {};
-
-    await Promise.all(sfxIds.map(async (id) => {
-        try {
-            var sfxApiBase = window.GM_SFX_DATA_API || '/api/v1/sfx/data';
-            const response = await fetch(sfxApiBase + '?id=' + id);
-            const result = await response.json();
-            if (result.success && result.data) {
-                sfxData[id] = result.data;
-            }
-        } catch (e) {
-            console.warn('Failed to fetch SFX data for project ' + id);
+    sfxIds.forEach(function(id) {
+        if (gameSettings.sfxData && gameSettings.sfxData[id]) {
+            sfxData[id] = gameSettings.sfxData[id];
         }
-    }));
-
+    });
     return sfxData;
 }
 
-// Async wrapper to generate game with bundled SFX data
-async function generateGameHTMLAsync(includeComments = false, pixelScale = 1) {
-    const sfxIds = collectSfxIds();
-    let bundledSfxData = {};
+// Collect all pfx: IDs from game data for bundling
+function collectPfxIds() {
+    const pfxIds = new Set();
 
-    if (sfxIds.length > 0) {
-        bundledSfxData = await fetchAllSfxData(sfxIds);
+    // Helper to check and add pfx ID
+    function checkValue(val) {
+        if (typeof val === 'string' && val.indexOf('pfx:') === 0) {
+            pfxIds.add(val.substring(4));
+        }
     }
 
-    return generateGameHTML(includeComments, pixelScale, bundledSfxData);
+    // Global particle effects
+    if (gameSettings.particleEffects) {
+        checkValue(gameSettings.particleEffects.playerDamage);
+        checkValue(gameSettings.particleEffects.playerJump);
+        checkValue(gameSettings.particleEffects.checkpoint);
+        checkValue(gameSettings.particleEffects.levelComplete);
+    }
+
+    // Object template particle effects
+    const templateArrays = [
+        { arr: typeof enemyTemplates !== 'undefined' ? enemyTemplates : [], prop: 'particleEffect' },
+        { arr: typeof collectibleTemplates !== 'undefined' ? collectibleTemplates : [], prop: 'particleEffect' },
+        { arr: typeof hazardTemplates !== 'undefined' ? hazardTemplates : [], prop: 'particleEffect' },
+        { arr: typeof powerupTemplates !== 'undefined' ? powerupTemplates : [], prop: 'particleEffect' },
+        { arr: typeof springTemplates !== 'undefined' ? springTemplates : [], prop: 'particleEffect' },
+        { arr: typeof mysteryBlockTemplates !== 'undefined' ? mysteryBlockTemplates : [], prop: 'particleEffect' },
+        { arr: typeof doorTemplates !== 'undefined' ? doorTemplates : [], prop: 'particleEffect' }
+    ];
+
+    templateArrays.forEach(function(entry) {
+        if (Array.isArray(entry.arr)) {
+            entry.arr.forEach(function(template) {
+                if (template) checkValue(template[entry.prop]);
+            });
+        }
+    });
+
+    // Single object templates
+    if (typeof goalTemplate !== 'undefined' && goalTemplate) {
+        checkValue(goalTemplate.particleEffect);
+    }
+
+    // Background particle effects from levels
+    if (typeof levels !== 'undefined') {
+        levels.forEach(function(lvl) {
+            if (lvl.backgroundParticleEffect) {
+                checkValue(lvl.backgroundParticleEffect);
+            }
+        });
+    }
+
+    return Array.from(pfxIds);
+}
+
+// Get all PFX data from inline storage (synchronous - no API needed)
+function getAllPfxData(pfxIds) {
+    const pfxData = {};
+    pfxIds.forEach(function(id) {
+        if (gameSettings.pfxData && gameSettings.pfxData[id]) {
+            pfxData[id] = gameSettings.pfxData[id];
+        }
+    });
+    return pfxData;
+}
+
+// Async wrapper to generate game with bundled SFX and PFX data
+async function generateGameHTMLAsync(includeComments = false, pixelScale = 1) {
+    // Collect and bundle SFX data (synchronous from inline storage)
+    const sfxIds = collectSfxIds();
+    const bundledSfxData = getAllSfxData(sfxIds);
+
+    // Collect and bundle PFX data (synchronous from inline storage)
+    const pfxIds = collectPfxIds();
+    const bundledPfxData = getAllPfxData(pfxIds);
+
+    return generateGameHTML(includeComments, pixelScale, bundledSfxData, bundledPfxData);
 }
 
 // Helper function to format fire key for display
@@ -114,7 +172,7 @@ function formatFireKey(keyCode) {
     return keyMap[keyCode] || keyCode.replace('Key', '');
 }
 
-function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxData = {}) {
+function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxData = {}, bundledPfxData = {}) {
     // Check if any templates have particle effects configured (auto-enable feature)
     const templateArrays = [enemyTemplates, collectibleTemplates, hazardTemplates, powerupTemplates, springTemplates, mysteryBlockTemplates, doorTemplates];
     const hasTemplateParticleEffects = templateArrays.some(templates =>
@@ -1331,11 +1389,17 @@ ${includeComments ? `    // ═════════════════�
     // PARTICLE EFFECTS SYSTEM
     // ═══════════════════════════════════════════════════════════════════════════
 
-    // Convert pfx:projectId to API URL
+    // Convert pfx:projectId to API URL, or use inline data if available
     function convertPfxToUrl(value) {
         if (!value) return value;
         if (value.indexOf('pfx:') === 0) {
             var projectId = value.substring(4);
+            // Check if we have bundled inline data for this effect
+            if (pfxDataCache[projectId]) {
+                // Pre-populate the effects cache so no fetch is needed
+                particleEffectsData[value] = pfxDataCache[projectId];
+                return '__inline__'; // Sentinel - data is already cached
+            }
             return (window.GM_PFX_DATA_API || '/api/v1/pfx/data') + '?id=' + projectId;
         }
         return value;
@@ -1344,11 +1408,21 @@ ${includeComments ? `    // ═════════════════�
     // Load particle effect data from URL (async, caches result by effectType)
     function loadParticleEffect(effectType) {
         if (!PARTICLE_EFFECTS_ENABLED) return;
-        var url = PARTICLE_EFFECT_URLS[effectType];
-        if (!url || particleEffectsByType[effectType]) return; // Already loaded or no URL
+        var originalUrl = PARTICLE_EFFECT_URLS[effectType];
+        if (!originalUrl || particleEffectsByType[effectType]) return; // Already loaded or no URL
 
-        // Handle pfx:projectId format
-        url = convertPfxToUrl(url);
+        // Handle pfx:projectId format (may pre-populate cache from pfxDataCache)
+        var url = convertPfxToUrl(originalUrl);
+
+        // If convertPfxToUrl already cached the data, just use it
+        if (particleEffectsData[originalUrl]) {
+            particleEffectsByType[effectType] = particleEffectsData[originalUrl];
+            console.log('Loaded particle effect from inline data: ' + effectType);
+            return;
+        }
+
+        // Sentinel means data was cached by convertPfxToUrl but under original key
+        if (url === '__inline__') return;
 
         // Convert relative URL to full URL if needed
         if (!url.startsWith('http')) {
@@ -1361,7 +1435,6 @@ ${includeComments ? `    // ═════════════════�
                 particleEffectsByType[effectType] = data;
                 particleEffectsData[url] = data; // Also cache by URL
                 // Also cache under original pfx: key if applicable
-                var originalUrl = PARTICLE_EFFECT_URLS[effectType];
                 if (originalUrl && originalUrl !== url) {
                     particleEffectsData[originalUrl] = data;
                 }
@@ -1378,8 +1451,14 @@ ${includeComments ? `    // ═════════════════�
         var originalUrl = url;
         if (particleEffectsData[url]) return; // Already loaded
 
-        // Handle pfx:projectId format
+        // Handle pfx:projectId format (may pre-populate cache from pfxDataCache)
         url = convertPfxToUrl(url);
+
+        // If convertPfxToUrl already cached the data, we're done
+        if (particleEffectsData[originalUrl]) return;
+
+        // Sentinel means data was already cached
+        if (url === '__inline__') return;
 
         // Convert relative URL to full URL if needed
         var fullUrl = url;
@@ -3482,6 +3561,7 @@ ${includeComments ? `    // ═════════════════�
     // SoundEffectStudio synthesis cache and audio context
     // Pre-populated with bundled data for offline support
     var sfxDataCache = ${JSON.stringify(bundledSfxData)};
+    var pfxDataCache = ${JSON.stringify(bundledPfxData)};
     var sfxAudioContext = null;
 
     // Get or create audio context (shared for BGM and SFX on mobile)

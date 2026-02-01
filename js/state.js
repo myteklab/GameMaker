@@ -256,7 +256,9 @@ let gameSettings = {
         playerJump: '',                // Dust effect when player jumps
         checkpoint: '',                // Effect when checkpoint activated
         levelComplete: ''              // Celebration effect on level complete
-    }
+    },
+    sfxData: {},   // Inline SFX data keyed by project ID (from embedded SoundEffectStudio)
+    pfxData: {}    // Inline PFX data keyed by project ID (from embedded ParticleFX)
 };
 
 // ============================================

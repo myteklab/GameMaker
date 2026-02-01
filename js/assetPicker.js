@@ -233,6 +233,9 @@
         }
     };
 
+    // Track ready message handler so we can clean up
+    let sfxReadyHandler = null;
+
     // Open the SoundEffectStudio modal with the given project
     function openSfxStudioModal(projectId) {
         const modal = document.getElementById('sfx-studio-modal');
@@ -242,6 +245,28 @@
             console.error('SFX Studio modal elements not found');
             return;
         }
+
+        // Clean up previous ready handler if any
+        if (sfxReadyHandler) {
+            window.removeEventListener('message', sfxReadyHandler);
+            sfxReadyHandler = null;
+        }
+
+        // Listen for the ready message from the iframe
+        sfxReadyHandler = function(event) {
+            if (event.data && event.data.action === 'ready') {
+                window.removeEventListener('message', sfxReadyHandler);
+                sfxReadyHandler = null;
+                // If we have existing data for this project, send it to the iframe
+                if (gameSettings.sfxData && gameSettings.sfxData[projectId]) {
+                    iframe.contentWindow.postMessage({
+                        action: 'loadData',
+                        data: gameSettings.sfxData[projectId]
+                    }, window.location.origin);
+                }
+            }
+        };
+        window.addEventListener('message', sfxReadyHandler);
 
         // Load SoundEffectStudio in the iframe
         var sfxBaseUrl = window.GM_SFX_STUDIO_URL || '/apps/soundeffectstudio/index.html';
@@ -270,7 +295,7 @@
         }
 
         // Function to finalize after save
-        const finalizeSave = function() {
+        const finalizeSave = function(effectData) {
             // Clean up listener and timeout
             if (sfxSaveMessageHandler) {
                 window.removeEventListener('message', sfxSaveMessageHandler);
@@ -279,6 +304,13 @@
             if (sfxSaveTimeout) {
                 clearTimeout(sfxSaveTimeout);
                 sfxSaveTimeout = null;
+            }
+
+            // Store inline data in gameSettings
+            if (sfxProjectId && effectData) {
+                if (!gameSettings.sfxData) gameSettings.sfxData = {};
+                gameSettings.sfxData[sfxProjectId] = effectData;
+                markDirty();
             }
 
             // Update the input field with the sfx reference
@@ -307,7 +339,7 @@
                 if (event.data.projectId) {
                     sfxProjectId = event.data.projectId;
                 }
-                finalizeSave();
+                finalizeSave(event.data.data);
             }
         };
         window.addEventListener('message', sfxSaveMessageHandler);
@@ -344,7 +376,17 @@
         const inputEl = document.getElementById(inputId);
         if (!inputEl) return;
 
-        if (confirm('Unlink this sound? The sound project will still exist but won\'t be used here.')) {
+        if (confirm('Unlink this sound? The sound data will be removed from this project.')) {
+            // Delete inline data before clearing input
+            const oldValue = inputEl.value;
+            if (oldValue && oldValue.indexOf('sfx:') === 0) {
+                const oldId = oldValue.substring(4);
+                if (gameSettings.sfxData && gameSettings.sfxData[oldId]) {
+                    delete gameSettings.sfxData[oldId];
+                    markDirty();
+                }
+            }
+
             inputEl.value = '';
             inputEl.dispatchEvent(new Event('change', { bubbles: true }));
             updateSoundButtonStates(inputId);
@@ -431,7 +473,7 @@
         // Open ParticleFX in modal with a new session
         pfxTargetInputId = inputId;
         pfxProjectId = 'new_' + Date.now();
-        openPfxStudioModal(pfxProjectId);
+        openPfxStudioModal(pfxProjectId, preset);
 
         if (typeof showToast === 'function') {
             showToast('Design your particles, then click "Save & Use Effect".', 'success', 4000);
@@ -462,8 +504,11 @@
         }
     };
 
+    // Track ready message handler for PFX
+    let pfxReadyHandler = null;
+
     // Open the ParticleFX modal with the given project
-    function openPfxStudioModal(projectId) {
+    function openPfxStudioModal(projectId, preset) {
         const modal = document.getElementById('pfx-studio-modal');
         const iframe = document.getElementById('pfx-studio-iframe');
 
@@ -472,23 +517,77 @@
             return;
         }
 
+        // Clean up previous ready handler if any
+        if (pfxReadyHandler) {
+            window.removeEventListener('message', pfxReadyHandler);
+            pfxReadyHandler = null;
+        }
+
+        // Listen for the ready message from the iframe
+        pfxReadyHandler = function(event) {
+            if (event.data && event.data.action === 'ready') {
+                window.removeEventListener('message', pfxReadyHandler);
+                pfxReadyHandler = null;
+                // If we have existing data for this project, send it to the iframe
+                if (gameSettings.pfxData && gameSettings.pfxData[projectId]) {
+                    iframe.contentWindow.postMessage({
+                        action: 'loadData',
+                        data: gameSettings.pfxData[projectId]
+                    }, window.location.origin);
+                }
+            }
+        };
+        window.addEventListener('message', pfxReadyHandler);
+
         // Load ParticleFX in the iframe
         var pfxBaseUrl = window.GM_PFX_STUDIO_URL || '/apps/particlefx/index.html';
-        iframe.src = pfxBaseUrl + '?id=' + projectId + '&source=gamemaker&embedded=1';
+        var iframeSrc = pfxBaseUrl + '?id=' + projectId + '&source=gamemaker&embedded=1';
+        if (preset) {
+            iframeSrc += '&preset=' + encodeURIComponent(preset);
+        }
+        iframe.src = iframeSrc;
         modal.style.display = 'flex';
     }
+
+    // Track pending PFX save operation
+    let pfxSaveTimeout = null;
+    let pfxSaveMessageHandler = null;
 
     // Save the PFX project and close the modal
     window.savePfxAndClose = function() {
         const iframe = document.getElementById('pfx-studio-iframe');
 
-        if (iframe && iframe.contentWindow) {
-            // Tell ParticleFX to save
-            iframe.contentWindow.postMessage({ action: 'save' }, window.location.origin);
+        if (!iframe || !iframe.contentWindow) {
+            if (typeof showToast === 'function') {
+                showToast('Error: Could not save particle effect', 'error');
+            }
+            return;
         }
 
-        // Give it a moment to save, then close and update
-        setTimeout(function() {
+        // Show saving indicator
+        if (typeof showToast === 'function') {
+            showToast('Saving particle effect...', 'info', 5000);
+        }
+
+        // Function to finalize after save
+        const finalizeSave = function(effectData) {
+            // Clean up listener and timeout
+            if (pfxSaveMessageHandler) {
+                window.removeEventListener('message', pfxSaveMessageHandler);
+                pfxSaveMessageHandler = null;
+            }
+            if (pfxSaveTimeout) {
+                clearTimeout(pfxSaveTimeout);
+                pfxSaveTimeout = null;
+            }
+
+            // Store inline data in gameSettings
+            if (pfxProjectId && effectData) {
+                if (!gameSettings.pfxData) gameSettings.pfxData = {};
+                gameSettings.pfxData[pfxProjectId] = effectData;
+                markDirty();
+            }
+
             // Update the input field with the pfx reference
             if (pfxTargetInputId && pfxProjectId) {
                 const inputEl = document.getElementById(pfxTargetInputId);
@@ -505,7 +604,28 @@
             if (typeof showToast === 'function') {
                 showToast('Particle effect saved and linked!', 'success', 3000);
             }
-        }, 500);
+        };
+
+        // Listen for saveComplete message from ParticleFX
+        pfxSaveMessageHandler = function(event) {
+            if (event.data && event.data.action === 'saveComplete') {
+                console.log('PFX save confirmed, projectId:', event.data.projectId);
+                if (event.data.projectId) {
+                    pfxProjectId = event.data.projectId;
+                }
+                finalizeSave(event.data.data);
+            }
+        };
+        window.addEventListener('message', pfxSaveMessageHandler);
+
+        // Tell ParticleFX to save
+        iframe.contentWindow.postMessage({ action: 'save' }, window.location.origin);
+
+        // Fallback timeout in case saveComplete message isn't received
+        pfxSaveTimeout = setTimeout(function() {
+            console.warn('PFX save timeout - closing modal without confirmation');
+            finalizeSave(null);
+        }, 3000);
     };
 
     // Close the PFX modal without saving
@@ -530,7 +650,17 @@
         const inputEl = document.getElementById(inputId);
         if (!inputEl) return;
 
-        if (confirm('Unlink this particle effect? The effect will still exist but won\'t be used here.')) {
+        if (confirm('Unlink this particle effect? The effect data will be removed from this project.')) {
+            // Delete inline data before clearing input
+            const oldValue = inputEl.value;
+            if (oldValue && oldValue.indexOf('pfx:') === 0) {
+                const oldId = oldValue.substring(4);
+                if (gameSettings.pfxData && gameSettings.pfxData[oldId]) {
+                    delete gameSettings.pfxData[oldId];
+                    markDirty();
+                }
+            }
+
             inputEl.value = '';
             inputEl.dispatchEvent(new Event('change', { bubbles: true }));
             updateParticleButtonStates(inputId);
