@@ -1397,6 +1397,9 @@ ${includeComments ? `    // ═════════════════�
     // PARTICLE EFFECTS SYSTEM
     // ═══════════════════════════════════════════════════════════════════════════
 
+    // Inline PFX data bundled at generation time (must be declared before convertPfxToUrl)
+    var pfxDataCache = ${JSON.stringify(bundledPfxData)};
+
     // Convert pfx:projectId to API URL, or use inline data if available
     function convertPfxToUrl(value) {
         if (!value) return value;
@@ -3569,7 +3572,7 @@ ${includeComments ? `    // ═════════════════�
     // SoundEffectStudio synthesis cache and audio context
     // Pre-populated with bundled data for offline support
     var sfxDataCache = ${JSON.stringify(bundledSfxData)};
-    var pfxDataCache = ${JSON.stringify(bundledPfxData)};
+    // Note: pfxDataCache is declared earlier (before particle effects system) so it's available during preload
     var sfxAudioContext = null;
 
     // Get or create audio context (shared for BGM and SFX on mobile)
