@@ -1802,25 +1802,9 @@ function testSfxSound(projectId) {
         return;
     }
 
-    // Fall back to API fetch for legacy projects
-    var sfxApiBase = window.GM_SFX_DATA_API || '/api/v1/sfx/data';
-    const fetchUrl = sfxApiBase + '?id=' + projectId + '&_t=' + Date.now();
-    console.log('testSfxSound fetching:', fetchUrl);
-    fetch(fetchUrl)
-        .then(response => response.json())
-        .then(result => {
-            console.log('testSfxSound API response:', result);
-            if (result.success && result.data) {
-                console.log('Playing synthesized sound with layers:', result.data.layers?.length || 0);
-                playTestSynthesizedSound(result.data);
-            } else {
-                showToast('Could not load sound data: ' + (result.error || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Failed to fetch SFX data:', error);
-            showToast('Could not load sound data', 'error');
-        });
+    // No inline data found — sound reference is orphaned
+    console.warn('No inline data for SFX project:', projectId);
+    showToast('Sound data not found. Unlink this sound and create a new one.', 'error');
 }
 
 // Play a synthesized sound for testing (simplified version of gameGenerator's playSynthesizedSound)
