@@ -376,25 +376,31 @@
         const inputEl = document.getElementById(inputId);
         if (!inputEl) return;
 
-        if (confirm('Unlink this sound? The sound data will be removed from this project.')) {
-            // Delete inline data before clearing input
-            const oldValue = inputEl.value;
-            if (oldValue && oldValue.indexOf('sfx:') === 0) {
-                const oldId = oldValue.substring(4);
-                if (gameSettings.sfxData && gameSettings.sfxData[oldId]) {
-                    delete gameSettings.sfxData[oldId];
-                    markDirty();
+        showConfirmModal({
+            title: 'Unlink Sound',
+            message: 'Remove this sound from the project? The sound data will be deleted.',
+            confirmText: 'Unlink',
+            confirmStyle: 'danger',
+            onConfirm: function() {
+                // Delete inline data before clearing input
+                const oldValue = inputEl.value;
+                if (oldValue && oldValue.indexOf('sfx:') === 0) {
+                    const oldId = oldValue.substring(4);
+                    if (gameSettings.sfxData && gameSettings.sfxData[oldId]) {
+                        delete gameSettings.sfxData[oldId];
+                        markDirty();
+                    }
+                }
+
+                inputEl.value = '';
+                inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+                updateSoundButtonStates(inputId);
+
+                if (typeof showToast === 'function') {
+                    showToast('Sound unlinked.', 'info');
                 }
             }
-
-            inputEl.value = '';
-            inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-            updateSoundButtonStates(inputId);
-
-            if (typeof showToast === 'function') {
-                showToast('Sound unlinked.', 'info');
-            }
-        }
+        });
     };
 
     // Update button visibility based on whether a sound is linked
@@ -650,25 +656,31 @@
         const inputEl = document.getElementById(inputId);
         if (!inputEl) return;
 
-        if (confirm('Unlink this particle effect? The effect data will be removed from this project.')) {
-            // Delete inline data before clearing input
-            const oldValue = inputEl.value;
-            if (oldValue && oldValue.indexOf('pfx:') === 0) {
-                const oldId = oldValue.substring(4);
-                if (gameSettings.pfxData && gameSettings.pfxData[oldId]) {
-                    delete gameSettings.pfxData[oldId];
-                    markDirty();
+        showConfirmModal({
+            title: 'Unlink Particle Effect',
+            message: 'Remove this particle effect from the project? The effect data will be deleted.',
+            confirmText: 'Unlink',
+            confirmStyle: 'danger',
+            onConfirm: function() {
+                // Delete inline data before clearing input
+                const oldValue = inputEl.value;
+                if (oldValue && oldValue.indexOf('pfx:') === 0) {
+                    const oldId = oldValue.substring(4);
+                    if (gameSettings.pfxData && gameSettings.pfxData[oldId]) {
+                        delete gameSettings.pfxData[oldId];
+                        markDirty();
+                    }
+                }
+
+                inputEl.value = '';
+                inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+                updateParticleButtonStates(inputId);
+
+                if (typeof showToast === 'function') {
+                    showToast('Particle effect unlinked.', 'info');
                 }
             }
-
-            inputEl.value = '';
-            inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-            updateParticleButtonStates(inputId);
-
-            if (typeof showToast === 'function') {
-                showToast('Particle effect unlinked.', 'info');
-            }
-        }
+        });
     };
 
     // Update button visibility based on whether a particle effect is linked
