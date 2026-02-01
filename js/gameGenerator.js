@@ -3743,34 +3743,14 @@ ${includeComments ? `    // ═════════════════�
         });
     }
 
-    // Fetch and cache SoundEffectStudio synthesis data
+    // Look up SoundEffectStudio synthesis data from bundled cache
     function fetchSfxData(projectId, callback) {
-        // Note: We still use cache for performance during gameplay, but with cache-busting on the URL
-        // to ensure we get fresh data when the game starts. The server has a 60s cache header.
         if (sfxDataCache[projectId]) {
             callback(sfxDataCache[projectId]);
             return;
         }
-
-        var xhr = new XMLHttpRequest();
-        // Add cache-busting to get fresh data (especially important after editing sounds)
-        xhr.open('GET', PLATFORM_BASE_URL + 'api/v1/sfx/data?id=' + projectId + '&_t=' + Date.now(), true);
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                    try {
-                        var response = JSON.parse(xhr.responseText);
-                        if (response.success && response.data) {
-                            sfxDataCache[projectId] = response.data;
-                            callback(response.data);
-                        }
-                    } catch (e) {
-                        console.warn('Failed to parse SFX data for project ' + projectId);
-                    }
-                }
-            }
-        };
-        xhr.send();
+        // All SFX data is bundled at generation time — no API to fetch from
+        console.warn('No bundled SFX data for project ' + projectId);
     }
 
     // Load and cache a sound (with volume applied)
