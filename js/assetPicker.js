@@ -289,9 +289,13 @@
             return;
         }
 
-        // Show saving indicator
-        if (typeof showToast === 'function') {
-            showToast('Saving sound...', 'info', 5000);
+        // Show saving state on the button
+        const saveBtn = document.querySelector('#sfx-studio-modal .btn[onclick*="saveSfxAndClose"]');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn._originalHTML = saveBtn.innerHTML;
+            saveBtn.innerHTML = '⏳ Saving...';
+            saveBtn.style.opacity = '0.7';
         }
 
         // Function to finalize after save
@@ -322,6 +326,13 @@
                     inputEl.dispatchEvent(new Event('input', { bubbles: true }));
                     updateSoundButtonStates(sfxTargetInputId);
                 }
+            }
+
+            // Restore save button state before closing
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = saveBtn._originalHTML || '💾 Save & Use Sound';
+                saveBtn.style.opacity = '';
             }
 
             closeSfxStudioModal();
@@ -570,9 +581,13 @@
             return;
         }
 
-        // Show saving indicator
-        if (typeof showToast === 'function') {
-            showToast('Saving particle effect...', 'info', 5000);
+        // Show saving state on the button
+        const pfxSaveBtn = document.querySelector('#pfx-studio-modal .btn[onclick*="savePfxAndClose"]');
+        if (pfxSaveBtn) {
+            pfxSaveBtn.disabled = true;
+            pfxSaveBtn._originalHTML = pfxSaveBtn.innerHTML;
+            pfxSaveBtn.innerHTML = '⏳ Saving...';
+            pfxSaveBtn.style.opacity = '0.7';
         }
 
         // Function to finalize after save
@@ -603,6 +618,13 @@
                     inputEl.dispatchEvent(new Event('input', { bubbles: true }));
                     updateParticleButtonStates(pfxTargetInputId);
                 }
+            }
+
+            // Restore save button state before closing
+            if (pfxSaveBtn) {
+                pfxSaveBtn.disabled = false;
+                pfxSaveBtn.innerHTML = pfxSaveBtn._originalHTML || '💾 Save & Use Effect';
+                pfxSaveBtn.style.opacity = '';
             }
 
             closePfxStudioModal();
