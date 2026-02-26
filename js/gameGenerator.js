@@ -573,6 +573,7 @@ KEY ELEMENTS:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <base href="${window.location.origin}/">
     <title>My Platformer Game</title>
 ${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown') ? '    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>\n' : ''}${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown' && (gameSettings.multiplayerAllowCustomSprites === true || gameSettings.multiplayerAllowCustomSprites === 'true')) ? '    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">\n' : ''}    ${includeComments ? `<!--
     ═══════════════════════════════════════════════════════════════════════════
@@ -1101,6 +1102,9 @@ ${includeComments ? `    // ═════════════════�
     if (PLAYER_SPRITE_URL) {
         playerSprite = new Image();
         playerSprite.crossOrigin = 'anonymous';
+        playerSprite.onerror = function() {
+            console.warn('Player sprite failed to load:', PLAYER_SPRITE_URL.substring(0, 100));
+        };
         playerSprite.src = PLAYER_SPRITE_URL;
     }
 

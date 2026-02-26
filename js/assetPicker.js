@@ -54,15 +54,23 @@
                                 : asset.metadata;
 
                             // Find related cols/rows inputs
-                            const baseId = inputId.replace('-sprite', '');
+                            // Try common patterns: setting-sprite-cols, setting-sprite-rows
+                            // Also try baseId-cols for other sprite inputs
+                            const baseId = inputId.replace(/-url$/, '');
 
                             if (meta.columns) {
                                 const colsInput = document.getElementById(baseId + '-cols');
-                                if (colsInput) colsInput.value = meta.columns;
+                                if (colsInput) {
+                                    colsInput.value = meta.columns;
+                                    colsInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
                             }
                             if (meta.rows) {
                                 const rowsInput = document.getElementById(baseId + '-rows');
-                                if (rowsInput) rowsInput.value = meta.rows;
+                                if (rowsInput) {
+                                    rowsInput.value = meta.rows;
+                                    rowsInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
                             }
                         } catch (e) {
                             console.log('Could not parse asset metadata');
