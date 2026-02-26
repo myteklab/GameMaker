@@ -1114,6 +1114,12 @@ let playerSpritePreviewInterval = null;
 let playerPreviewImage = null;
 let playerPreviewFrame = 0;
 
+// Frame Editor state
+let frameEditorOpen = false;
+let frameEditorSelectedFrames = []; // [{col, row}, ...]
+let frameEditorImage = null;
+let frameEditorPreviewInterval = null;
+
 function showGamePropertiesModal() {
     // Update modal inputs with current values
     updateGameSettingsUI();
@@ -1174,6 +1180,8 @@ function closePlayerPropertiesModal() {
     document.getElementById('player-properties-modal').style.display = 'none';
     // Stop animation when closing
     stopPlayerSpriteAnimation();
+    // Close frame editor
+    closeFrameEditor();
     // Stop idle effect preview
     stopIdleEffectPreview();
     // Update summary when closing
@@ -1318,8 +1326,16 @@ function updatePlayerSpritePreview() {
     const spriteRows = parseInt(document.getElementById('setting-sprite-rows')?.value) || 1;
     const frameCount = spriteCols; // Animate across the first row
 
-    // Stop any existing animation
+    // Stop any existing animation and close frame editor
     stopPlayerSpriteAnimation();
+    closeFrameEditor();
+
+    // Show/hide frame editor button
+    const frameEditorSection = document.getElementById('frame-editor-section');
+    if (frameEditorSection) {
+        const totalFrames = spriteCols * spriteRows;
+        frameEditorSection.style.display = (spriteUrl && totalFrames > 1) ? 'block' : 'none';
+    }
 
     if (!spriteUrl) {
         previewContainer.innerHTML = '<span style="color: #555; font-size: 10px;">No sprite</span>';
@@ -1414,6 +1430,298 @@ function stopPlayerSpriteAnimation() {
         playerSpritePreviewInterval = null;
     }
     playerPreviewFrame = 0;
+}
+
+// ============================================
+// FRAME EDITOR
+// ============================================
+
+function toggleFrameEditor() {
+    if (frameEditorOpen) {
+        closeFrameEditor();
+    } else {
+        openFrameEditor();
+    }
+}
+
+function openFrameEditor() {
+    const panel = document.getElementById('frame-editor-panel');
+    const btn = document.getElementById('edit-frames-btn');
+    if (!panel) return;
+
+    const spriteUrl = document.getElementById('setting-sprite-url').value.trim();
+    const spriteCols = parseInt(document.getElementById('setting-sprite-cols')?.value) || 1;
+    const spriteRows = parseInt(document.getElementById('setting-sprite-rows')?.value) || 1;
+
+    if (!spriteUrl || (spriteCols * spriteRows) <= 1) return;
+
+    frameEditorOpen = true;
+    panel.style.display = 'block';
+    btn.textContent = 'Close Frame Editor';
+    frameEditorSelectedFrames = [];
+
+    // Load sprite image and populate grid
+    frameEditorImage = new Image();
+    frameEditorImage.crossOrigin = 'anonymous';
+    frameEditorImage.onload = function() {
+        populateFrameGrid(frameEditorImage, spriteCols, spriteRows);
+    };
+    frameEditorImage.onerror = function() {
+        document.getElementById('frame-editor-grid').innerHTML =
+            '<span style="color: #f66; font-size: 10px;">Failed to load sprite</span>';
+    };
+    frameEditorImage.src = spriteUrl;
+}
+
+function closeFrameEditor() {
+    if (!frameEditorOpen) return;
+    frameEditorOpen = false;
+    stopFrameEditorPreview();
+    frameEditorSelectedFrames = [];
+    frameEditorImage = null;
+
+    const panel = document.getElementById('frame-editor-panel');
+    const btn = document.getElementById('edit-frames-btn');
+    if (panel) panel.style.display = 'none';
+    if (btn) btn.textContent = 'Edit Frames';
+}
+
+function populateFrameGrid(img, cols, rows) {
+    const grid = document.getElementById('frame-editor-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const frameWidth = img.width / cols;
+    const frameHeight = img.height / rows;
+
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const cellIndex = row * cols + col;
+            const cell = document.createElement('div');
+            cell.className = 'frame-cell';
+            cell.dataset.col = col;
+            cell.dataset.row = row;
+            cell.onclick = function() { toggleFrameSelection(col, row); };
+
+            // Draw frame into a small canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = frameWidth;
+            canvas.height = frameHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img,
+                col * frameWidth, row * frameHeight, frameWidth, frameHeight,
+                0, 0, frameWidth, frameHeight
+            );
+            cell.appendChild(canvas);
+
+            // Frame index label
+            const indexLabel = document.createElement('div');
+            indexLabel.className = 'frame-cell-index';
+            indexLabel.textContent = cellIndex;
+            cell.appendChild(indexLabel);
+
+            grid.appendChild(cell);
+        }
+    }
+
+    updateFrameSelectionUI();
+}
+
+function toggleFrameSelection(col, row) {
+    // Check if this frame is already selected
+    const idx = frameEditorSelectedFrames.findIndex(f => f.col === col && f.row === row);
+
+    if (idx === -1) {
+        // Not selected: add to sequence
+        frameEditorSelectedFrames.push({ col, row });
+    } else if (idx === frameEditorSelectedFrames.length - 1) {
+        // Last selected: remove it (undo from end)
+        frameEditorSelectedFrames.pop();
+    } else {
+        // Selected but not last: show toast
+        if (typeof showToast === 'function') {
+            showToast('Deselect from the end, or use Clear', 'info');
+        }
+        return;
+    }
+
+    updateFrameSelectionUI();
+    updateFrameEditorPreview();
+}
+
+function clearFrameSelection() {
+    frameEditorSelectedFrames = [];
+    updateFrameSelectionUI();
+    stopFrameEditorPreview();
+
+    const previewEl = document.getElementById('frame-editor-preview');
+    if (previewEl) {
+        previewEl.innerHTML = '<span style="color: #555; font-size: 9px;">Preview</span>';
+    }
+    const seqEl = document.getElementById('frame-editor-sequence');
+    if (seqEl) seqEl.textContent = 'No frames selected';
+
+    const applyBtn = document.getElementById('apply-frames-btn');
+    if (applyBtn) applyBtn.disabled = true;
+}
+
+function updateFrameSelectionUI() {
+    const grid = document.getElementById('frame-editor-grid');
+    if (!grid) return;
+
+    const cells = grid.querySelectorAll('.frame-cell');
+    cells.forEach(cell => {
+        const col = parseInt(cell.dataset.col);
+        const row = parseInt(cell.dataset.row);
+
+        // Remove existing order badge
+        const existingBadge = cell.querySelector('.frame-cell-order');
+        if (existingBadge) existingBadge.remove();
+
+        // Check if selected
+        const idx = frameEditorSelectedFrames.findIndex(f => f.col === col && f.row === row);
+        if (idx !== -1) {
+            cell.classList.add('selected');
+            const badge = document.createElement('div');
+            badge.className = 'frame-cell-order';
+            badge.textContent = idx + 1;
+            cell.appendChild(badge);
+        } else {
+            cell.classList.remove('selected');
+        }
+    });
+
+    // Update sequence text
+    const seqEl = document.getElementById('frame-editor-sequence');
+    if (seqEl) {
+        if (frameEditorSelectedFrames.length === 0) {
+            seqEl.textContent = 'No frames selected';
+        } else {
+            const cols = parseInt(document.getElementById('setting-sprite-cols')?.value) || 1;
+            const indices = frameEditorSelectedFrames.map(f => f.row * cols + f.col);
+            seqEl.textContent = 'Sequence: ' + indices.join(' \u2192 ') + ' (' + frameEditorSelectedFrames.length + ' frames)';
+        }
+    }
+
+    // Enable/disable apply button
+    const applyBtn = document.getElementById('apply-frames-btn');
+    if (applyBtn) applyBtn.disabled = frameEditorSelectedFrames.length === 0;
+}
+
+function updateFrameEditorPreview() {
+    stopFrameEditorPreview();
+
+    if (frameEditorSelectedFrames.length === 0 || !frameEditorImage) return;
+
+    const previewEl = document.getElementById('frame-editor-preview');
+    if (!previewEl) return;
+
+    const spriteCols = parseInt(document.getElementById('setting-sprite-cols')?.value) || 1;
+    const spriteRows = parseInt(document.getElementById('setting-sprite-rows')?.value) || 1;
+    const frameWidth = frameEditorImage.width / spriteCols;
+    const frameHeight = frameEditorImage.height / spriteRows;
+
+    // Calculate display size to fit 64x64
+    const maxSize = 56;
+    const scale = Math.min(maxSize / frameWidth, maxSize / frameHeight, 3);
+    const displayWidth = Math.round(frameWidth * scale);
+    const displayHeight = Math.round(frameHeight * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+    canvas.style.imageRendering = 'pixelated';
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    previewEl.innerHTML = '';
+    previewEl.appendChild(canvas);
+
+    let currentFrame = 0;
+    const drawFrame = () => {
+        const f = frameEditorSelectedFrames[currentFrame];
+        ctx.clearRect(0, 0, displayWidth, displayHeight);
+        ctx.drawImage(frameEditorImage,
+            f.col * frameWidth, f.row * frameHeight, frameWidth, frameHeight,
+            0, 0, displayWidth, displayHeight
+        );
+    };
+
+    drawFrame();
+
+    if (frameEditorSelectedFrames.length > 1) {
+        frameEditorPreviewInterval = setInterval(() => {
+            currentFrame = (currentFrame + 1) % frameEditorSelectedFrames.length;
+            drawFrame();
+        }, 150);
+    }
+}
+
+function stopFrameEditorPreview() {
+    if (frameEditorPreviewInterval) {
+        clearInterval(frameEditorPreviewInterval);
+        frameEditorPreviewInterval = null;
+    }
+}
+
+function applyFrameSelection() {
+    if (frameEditorSelectedFrames.length === 0 || !frameEditorImage) return;
+
+    const spriteCols = parseInt(document.getElementById('setting-sprite-cols')?.value) || 1;
+    const spriteRows = parseInt(document.getElementById('setting-sprite-rows')?.value) || 1;
+    const frameWidth = frameEditorImage.width / spriteCols;
+    const frameHeight = frameEditorImage.height / spriteRows;
+    const selectedCount = frameEditorSelectedFrames.length;
+
+    // Build a 1-row horizontal sprite sheet from selected frames
+    const canvas = document.createElement('canvas');
+    canvas.width = frameWidth * selectedCount;
+    canvas.height = frameHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    frameEditorSelectedFrames.forEach((f, i) => {
+        ctx.drawImage(frameEditorImage,
+            f.col * frameWidth, f.row * frameHeight, frameWidth, frameHeight,
+            i * frameWidth, 0, frameWidth, frameHeight
+        );
+    });
+
+    const dataUrl = canvas.toDataURL('image/png');
+
+    // Update sprite URL
+    const urlInput = document.getElementById('setting-sprite-url');
+    if (urlInput) {
+        urlInput.value = dataUrl;
+        updateGameSetting('playerSpriteURL', dataUrl);
+    }
+
+    // Update cols/rows
+    const colsInput = document.getElementById('setting-sprite-cols');
+    const rowsInput = document.getElementById('setting-sprite-rows');
+    if (colsInput) {
+        colsInput.value = selectedCount;
+        updateGameSetting('playerSpritesheetCols', selectedCount);
+    }
+    if (rowsInput) {
+        rowsInput.value = 1;
+        updateGameSetting('playerSpritesheetRows', 1);
+    }
+
+    // Clear custom tile selection since we have a new sprite
+    if (typeof clearPlayerCustomTileSelection === 'function') {
+        clearPlayerCustomTileSelection();
+    }
+
+    // Close the frame editor and refresh preview
+    closeFrameEditor();
+    updatePlayerSpritePreview();
+    markDirty();
+
+    if (typeof showToast === 'function') {
+        showToast('Sprite sheet rebuilt with ' + selectedCount + ' frames', 'success');
+    }
 }
 
 // ============================================

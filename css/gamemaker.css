@@ -3930,3 +3930,35 @@
     color: #888;
     margin-top: 2px;
 }
+
+/* Frame Editor */
+.frame-editor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    gap: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px;
+}
+.frame-cell {
+    position: relative;
+    aspect-ratio: 1;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+}
+.frame-cell:hover { border-color: rgba(255,255,255,0.3); }
+.frame-cell.selected { border-color: #2a7a5a; box-shadow: 0 0 6px rgba(42,122,90,0.5); }
+.frame-cell canvas { width: 100%; height: 100%; image-rendering: pixelated; }
+.frame-cell-index {
+    position: absolute; bottom: 1px; left: 2px;
+    font-size: 8px; color: rgba(255,255,255,0.4);
+}
+.frame-cell-order {
+    position: absolute; top: 2px; left: 2px;
+    background: #2a7a5a; color: #fff; font-size: 9px; font-weight: bold;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+}

@@ -3699,6 +3699,37 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Frame Editor (hidden by default) -->
+                    <div id="frame-editor-section" style="display: none; margin-top: 8px;">
+                        <button type="button" id="edit-frames-btn" onclick="toggleFrameEditor()"
+                            class="btn-small" style="width: 100%; font-size: 10px;">
+                            Edit Frames
+                        </button>
+                        <div id="frame-editor-panel" style="display: none; margin-top: 8px;
+                            background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-size: 10px; color: #aaa;">Click frames in animation order:</span>
+                                <button type="button" onclick="clearFrameSelection()" class="btn-small"
+                                    style="font-size: 9px; padding: 2px 6px;">Clear</button>
+                            </div>
+                            <div id="frame-editor-grid" class="frame-editor-grid"></div>
+                            <div id="frame-editor-sequence" style="margin-top: 6px; font-size: 10px; color: #888;">
+                                No frames selected
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                <div id="frame-editor-preview" style="width: 64px; height: 64px;
+                                    background: rgba(0,0,0,0.3); border-radius: 4px; display: flex;
+                                    align-items: center; justify-content: center; overflow: hidden;">
+                                    <span style="color: #555; font-size: 9px;">Preview</span>
+                                </div>
+                                <button type="button" id="apply-frames-btn" onclick="applyFrameSelection()"
+                                    disabled class="btn-small"
+                                    style="flex: 1; padding: 6px; font-size: 11px; background: #2a7a5a;">
+                                    Apply Selection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Squash & Stretch Animation -->
                     <div class="form-group platformer-only" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
                         <label style="display: flex; align-items: center; cursor: pointer;">
