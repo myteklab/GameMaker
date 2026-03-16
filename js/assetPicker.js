@@ -339,7 +339,7 @@
             // Restore save button state before closing
             if (saveBtn) {
                 saveBtn.disabled = false;
-                saveBtn.innerHTML = saveBtn._originalHTML || '💾 Save & Use Sound';
+                saveBtn.innerHTML = saveBtn._originalHTML || '<svg class="gm-icon"><use href="#icon-save"/></svg> Save & Use Sound';
                 saveBtn.style.opacity = '';
             }
 
@@ -631,7 +631,7 @@
             // Restore save button state before closing
             if (pfxSaveBtn) {
                 pfxSaveBtn.disabled = false;
-                pfxSaveBtn.innerHTML = pfxSaveBtn._originalHTML || '💾 Save & Use Effect';
+                pfxSaveBtn.innerHTML = pfxSaveBtn._originalHTML || '<svg class="gm-icon"><use href="#icon-save"/></svg> Save & Use Effect';
                 pfxSaveBtn.style.opacity = '';
             }
 

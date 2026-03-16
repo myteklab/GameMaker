@@ -456,7 +456,7 @@ function updateLevelsList() {
             <div class="level-preview">
                 <canvas id="${previewId}" width="80" height="60"></canvas>
                 <span class="level-preview-number">${index + 1}</span>
-                ${isMenuLevel ? '<span class="level-preview-type">📋</span>' : ''}
+                ${isMenuLevel ? '<span class="level-preview-type"><svg class="gm-icon"><use href="#icon-clipboard"/></svg></span>' : ''}
             </div>
             <div class="level-content">
                 <div class="level-header">
@@ -480,7 +480,7 @@ function updateLevelsList() {
                 <div class="level-actions-row">
                     <button class="level-action-btn" onclick="event.stopPropagation(); moveLevelUp(${index});" ${isFirst ? 'disabled' : ''} title="Move Up">▲</button>
                     <button class="level-action-btn" onclick="event.stopPropagation(); moveLevelDown(${index});" ${isLast ? 'disabled' : ''} title="Move Down">▼</button>
-                    <button class="level-action-btn danger" onclick="event.stopPropagation(); deleteLevel(${index});" ${levels.length <= 1 ? 'disabled' : ''} title="Delete">🗑️</button>
+                    <button class="level-action-btn danger" onclick="event.stopPropagation(); deleteLevel(${index});" ${levels.length <= 1 ? 'disabled' : ''} title="Delete"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>
                 </div>
             </div>
         `;
@@ -756,10 +756,10 @@ function drawMenuButtonsPreview(ctx, lvl, width, height) {
 
 function getGoalConditionLabel(condition) {
     const labels = {
-        'goal': '🚩 Reach Goal',
+        'goal': '<svg class="gm-icon"><use href="#icon-flag"/></svg> Reach Goal',
         'collect_all': '⭐ Collect All',
-        'score': '🎯 Reach Score',
-        'survive': '⏱️ Survive Time'
+        'score': '<svg class="gm-icon"><use href="#icon-target"/></svg> Reach Score',
+        'survive': '<svg class="gm-icon"><use href="#icon-timer"/></svg> Survive Time'
     };
     return labels[condition] || condition;
 }

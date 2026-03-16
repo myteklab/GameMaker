@@ -49,7 +49,7 @@ function renderBackgroundLayers() {
 
         div.innerHTML = `
             <div class="bg-layer-preview" id="${previewId}" style="width: 50px; height: 35px; min-width: 50px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
-                ${hasImage ? `<img src="${layer.src}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:10px;color:#666;\\'>❌</span>'">` : '<span style="font-size: 10px; color: #555;">No img</span>'}
+                ${hasImage ? `<img src="${layer.src}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:10px;color:#666;\\'><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>'">` : '<span style="font-size: 10px; color: #555;">No img</span>'}
             </div>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
                 <input type="text" value="${layer.src || ''}" placeholder="Image URL..."
@@ -92,7 +92,7 @@ function updateBgPreview(index, url) {
         preview.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover;">`;
     };
     img.onerror = function() {
-        preview.innerHTML = '<span style="font-size: 10px; color: #e74c3c;">❌</span>';
+        preview.innerHTML = '<span style="font-size: 10px; color: #e74c3c;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>';
     };
     img.src = url;
 }

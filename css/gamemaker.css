@@ -8,6 +8,161 @@
  * MAIN STYLES (from lines 58-3299)
  * ============================================ */
 
+        /* ============================================
+           SVG ICON SYSTEM
+           ============================================ */
+        .gm-icon {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.125em;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        /* Dropdown menu icons */
+        .dropdown-item .icon .gm-icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: -2px;
+        }
+
+        /* Toolbar tool buttons */
+        .tool-btn .icon .gm-icon {
+            width: 14px;
+            height: 14px;
+            vertical-align: -2px;
+        }
+
+        /* Undo/redo buttons in menubar */
+        .btn-icon .gm-icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: -2px;
+        }
+
+        /* Play button in menubar */
+        .btn-play .gm-icon {
+            width: 14px;
+            height: 14px;
+            vertical-align: -2px;
+            margin-right: 2px;
+        }
+
+        /* Object category grid icons */
+        .object-category .obj-icon .gm-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Tileset dropzone icon */
+        #tileset-dropzone .icon .gm-icon {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Custom tiles empty state icon */
+        .empty-icon .gm-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Section heading icons */
+        h2 .gm-icon {
+            width: 14px;
+            height: 14px;
+            vertical-align: -1px;
+        }
+
+        /* Settings summary icons */
+        .section-summary .gm-icon {
+            width: 11px;
+            height: 11px;
+            vertical-align: -1px;
+        }
+
+        /* Level bar hint icon */
+        .level-bar-hint .gm-icon {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Code panel prompt icon */
+        .prompt-icon .gm-icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: -2px;
+        }
+
+        /* Editor section headers */
+        .editor-section-header .gm-icon {
+            width: 13px;
+            height: 13px;
+            vertical-align: -1px;
+        }
+
+        /* Nav icons in settings modals */
+        .nav-icon .gm-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Pixel editor tool buttons */
+        .pixel-tool-btn .gm-icon {
+            width: 15px;
+            height: 15px;
+            vertical-align: -2px;
+            color: #e0e0e0;
+        }
+
+        .pixel-tool-btn.small .gm-icon {
+            width: 13px;
+            height: 13px;
+        }
+
+        /* SFX/PFX action buttons */
+        .browse-library-btn .gm-icon,
+        .sfx-create-btn .gm-icon,
+        .sfx-edit-btn .gm-icon,
+        .sfx-preview-btn .gm-icon,
+        .sfx-unlink-btn .gm-icon,
+        .pfx-create-btn .gm-icon,
+        .pfx-edit-btn .gm-icon,
+        .pfx-unlink-btn .gm-icon {
+            width: 12px;
+            height: 12px;
+            vertical-align: -1px;
+        }
+
+        /* Labels in object editors */
+        label .gm-icon {
+            width: 13px;
+            height: 13px;
+            vertical-align: -2px;
+        }
+
+        /* Dropdown option icons */
+        option .gm-icon {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Generic inline icon sizing */
+        p .gm-icon,
+        span .gm-icon,
+        div .gm-icon,
+        small .gm-icon,
+        strong .gm-icon,
+        li .gm-icon {
+            width: 14px;
+            height: 14px;
+            vertical-align: -2px;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -3422,13 +3577,14 @@
 
 /* Pixel Editor Styles */
 .pixel-tool-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border: 1px solid rgba(255,255,255,0.1);
     background: rgba(0,0,0,0.3);
+    color: #e0e0e0;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3594,9 +3750,9 @@
 }
 
 .pixel-tool-btn.small {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
 }
 
 #pixel-editor-onion-btn.active {

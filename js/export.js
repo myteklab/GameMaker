@@ -107,7 +107,7 @@ function selectExportOption(option) {
 function updateExportButtonText() {
     const exportBtn = document.getElementById('export-action-btn');
     if (exportBtn) {
-        exportBtn.textContent = '📥 Download File';
+        exportBtn.textContent = 'Download File';
         exportBtn.style.background = 'linear-gradient(135deg, #e94560, #0f3460)';
     }
 }
@@ -182,7 +182,7 @@ function updateExportExplanation(format) {
                 <li>Uses string arrays</li>
             </ul>`,
 
-        platformer: `<h4>🎮 Complete Platformer Game</h4>
+        platformer: `<h4><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Complete Platformer Game</h4>
             <p>Export as a fully playable HTML5 game! Includes:</p>
             <ul style="margin: 5px 0 0 20px; color: #aaa; font-size: 11px;">
                 <li>Your level and tile graphics</li>

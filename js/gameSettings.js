@@ -1011,15 +1011,15 @@ const gameFeelPresets = {
 
 // Preset details metadata for display
 const presetDetails = {
-    balanced: { icon: '⚖️', color: '#3498db' },
-    floaty: { icon: '☁️', color: '#e91e63' },
-    tight: { icon: '⚡', color: '#9b59b6' },
-    heavy: { icon: '🏰', color: '#607d8b' },
-    bouncy: { icon: '🔵', color: '#ff9800' },
-    flappy: { icon: '🐦', color: '#4caf50' },
-    topdown_rpg: { icon: '🗺️', color: '#27ae60' },
-    topdown_action: { icon: '🎯', color: '#e74c3c' },
-    topdown_zelda: { icon: '⚔️', color: '#f39c12' }
+    balanced: { icon: '<svg class="gm-icon"><use href="#icon-balance"/></svg>', color: '#3498db' },
+    floaty: { icon: '<svg class="gm-icon"><use href="#icon-cloud"/></svg>', color: '#e91e63' },
+    tight: { icon: '<svg class="gm-icon"><use href="#icon-bolt"/></svg>', color: '#9b59b6' },
+    heavy: { icon: '<svg class="gm-icon"><use href="#icon-castle"/></svg>', color: '#607d8b' },
+    bouncy: { icon: '<svg class="gm-icon"><use href="#icon-circle-fill"/></svg>', color: '#ff9800' },
+    flappy: { icon: '<svg class="gm-icon"><use href="#icon-bird"/></svg>', color: '#4caf50' },
+    topdown_rpg: { icon: '<svg class="gm-icon"><use href="#icon-map"/></svg>', color: '#27ae60' },
+    topdown_action: { icon: '<svg class="gm-icon"><use href="#icon-target"/></svg>', color: '#e74c3c' },
+    topdown_zelda: { icon: '<svg class="gm-icon"><use href="#icon-swords"/></svg>', color: '#f39c12' }
 };
 
 function showPresetDetails(presetName) {
@@ -2279,7 +2279,7 @@ function showLevelSettingsSection(sectionName) {
 function toggleMultiplayer(enabled) {
     // Multiplayer only works with Top-Down RPG mode
     if (enabled && gameSettings.gameType !== 'topdown') {
-        showToast('⚠️ Multiplayer only works with Top-Down RPG mode', 'warning');
+        showToast('Multiplayer only works with Top-Down RPG mode', 'warning');
         const checkbox = document.getElementById('setting-multiplayer-enabled');
         if (checkbox) checkbox.checked = false;
         return;
@@ -2299,7 +2299,7 @@ function toggleMultiplayer(enabled) {
     }
 
     if (enabled) {
-        showToast('🌐 Multiplayer enabled (Experimental)', 'info');
+        showToast('Multiplayer enabled (Experimental)', 'info');
     }
 }
 
@@ -2413,18 +2413,18 @@ function togglePvPSettings(enabled) {
 
 // Available cheat effects with display names
 const cheatEffects = {
-    invincibility: { name: 'Invincibility', icon: '🛡️', hasDuration: true },
-    infiniteLives: { name: 'Infinite Lives (99)', icon: '❤️', hasDuration: false },
-    speedBoost: { name: 'Speed Boost (2x)', icon: '⚡', hasDuration: true },
-    jumpBoost: { name: 'Super Jump (1.5x)', icon: '🦘', hasDuration: true },
-    lowGravity: { name: 'Low Gravity (Moon)', icon: '🌙', hasDuration: true },
-    oneHitKill: { name: 'One-Hit Kill', icon: '💥', hasDuration: false },
-    maxAmmo: { name: 'Max Ammo', icon: '🔫', hasDuration: false },
-    levelSkip: { name: 'Skip Level', icon: '⏭️', hasDuration: false },
-    scoreBoost: { name: 'Score +1000', icon: '💰', hasDuration: false },
-    tinyMode: { name: 'Tiny Mode (0.5x)', icon: '🐜', hasDuration: true },
-    giantMode: { name: 'Giant Mode (1.5x)', icon: '🦖', hasDuration: true },
-    turboFire: { name: 'Turbo Fire (3x)', icon: '🔥', hasDuration: true }
+    invincibility: { name: 'Invincibility', icon: '<svg class="gm-icon"><use href="#icon-shield"/></svg>', hasDuration: true },
+    infiniteLives: { name: 'Infinite Lives (99)', icon: '<svg class="gm-icon"><use href="#icon-heart"/></svg>', hasDuration: false },
+    speedBoost: { name: 'Speed Boost (2x)', icon: '<svg class="gm-icon"><use href="#icon-bolt"/></svg>', hasDuration: true },
+    jumpBoost: { name: 'Super Jump (1.5x)', icon: '<svg class="gm-icon"><use href="#icon-spring"/></svg>', hasDuration: true },
+    lowGravity: { name: 'Low Gravity (Moon)', icon: '<svg class="gm-icon"><use href="#icon-moon"/></svg>', hasDuration: true },
+    oneHitKill: { name: 'One-Hit Kill', icon: '<svg class="gm-icon"><use href="#icon-explosion"/></svg>', hasDuration: false },
+    maxAmmo: { name: 'Max Ammo', icon: '<svg class="gm-icon"><use href="#icon-gun"/></svg>', hasDuration: false },
+    levelSkip: { name: 'Skip Level', icon: '<svg class="gm-icon"><use href="#icon-skip"/></svg>', hasDuration: false },
+    scoreBoost: { name: 'Score +1000', icon: '<svg class="gm-icon"><use href="#icon-money"/></svg>', hasDuration: false },
+    tinyMode: { name: 'Tiny Mode (0.5x)', icon: '<svg class="gm-icon"><use href="#icon-shrink"/></svg>', hasDuration: true },
+    giantMode: { name: 'Giant Mode (1.5x)', icon: '<svg class="gm-icon"><use href="#icon-expand"/></svg>', hasDuration: true },
+    turboFire: { name: 'Turbo Fire (3x)', icon: '<svg class="gm-icon"><use href="#icon-fire"/></svg>', hasDuration: true }
 };
 
 // Render the cheat codes list in the Cheats tab
@@ -2439,7 +2439,7 @@ function renderCheatCodesList() {
 
     let html = '';
     cheatCodeTemplates.forEach((cheat, index) => {
-        const effectInfo = cheatEffects[cheat.effect] || { name: cheat.effect, icon: '🎮' };
+        const effectInfo = cheatEffects[cheat.effect] || { name: cheat.effect, icon: '<svg class="gm-icon"><use href="#icon-gamepad"/></svg>' };
         const durationText = cheat.duration > 0 ? cheat.duration + 's' : 'Permanent';
 
         html += `

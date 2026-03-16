@@ -254,7 +254,7 @@ function renderEnemyTemplatesList() {
         html += `
             <div class="template-item" data-id="${template.id}">
                 <div class="template-preview" style="${getTemplatePreviewBackground(template)}">
-                    ${getTemplatePreviewHTML(template, '👾')}
+                    ${getTemplatePreviewHTML(template, '<svg class="gm-icon"><use href="#icon-alien"/></svg>')}
                 </div>
                 <div class="template-info">
                     <div class="template-name">${template.name}</div>
@@ -928,7 +928,7 @@ function renderPowerupTemplatesList() {
         html += `
             <div class="template-item" data-id="${template.id}">
                 <div class="template-preview" style="${getTemplatePreviewBackground(template)}">
-                    ${getTemplatePreviewHTML(template, '❤️')}
+                    ${getTemplatePreviewHTML(template, '<svg class="gm-icon"><use href="#icon-heart"/></svg>')}
                 </div>
                 <div class="template-info">
                     <div class="template-name">${template.name}</div>
@@ -1151,7 +1151,7 @@ function renderSpringTemplatesList() {
         html += `
             <div class="template-item" data-id="${template.id}">
                 <div class="template-preview" style="${getTemplatePreviewBackground(template)}">
-                    ${getTemplatePreviewHTML(template, '🔼')}
+                    ${getTemplatePreviewHTML(template, '<svg class="gm-icon"><use href="#icon-spring"/></svg>')}
                 </div>
                 <div class="template-info">
                     <div class="template-name">${template.name}</div>
@@ -1522,7 +1522,7 @@ function selectTerrainZoneForPlacement(templateId) {
         statusEl.style.display = 'block';
     }
     if (nameEl) {
-        nameEl.innerHTML = `<span style="color: ${template.tintColor};">🌊</span> ${template.name}`;
+        nameEl.innerHTML = `<span style="color: ${template.tintColor};"><svg class="gm-icon"><use href="#icon-waves"/></svg></span> ${template.name}`;
     }
 
     // Update cursor and tool hint
@@ -2015,7 +2015,7 @@ function renderNPCTemplatesList() {
         html += `
             <div class="template-item" data-id="${template.id}">
                 <div class="template-preview" style="${getTemplatePreviewBackground(template)}">
-                    ${getTemplatePreviewHTML(template, '👤')}
+                    ${getTemplatePreviewHTML(template, '<svg class="gm-icon"><use href="#icon-person"/></svg>')}
                 </div>
                 <div class="template-info">
                     <div class="template-name">${template.name}</div>
@@ -2221,7 +2221,7 @@ function renderDoorTemplatesList() {
         html += `
             <div class="template-item" data-id="${template.id}">
                 <div class="template-preview" style="${getTemplatePreviewBackground(template)}">
-                    ${getTemplatePreviewHTML(template, '🚪')}
+                    ${getTemplatePreviewHTML(template, '<svg class="gm-icon"><use href="#icon-door"/></svg>')}
                 </div>
                 <div class="template-info">
                     <div class="template-name">${template.name}</div>
@@ -2932,14 +2932,14 @@ function showObjectPlacementModal(type) {
 
     // Default symbols for each type (used as fallback)
     const defaultSymbols = {
-        'enemy': '👾',
+        'enemy': '<svg class="gm-icon"><use href="#icon-alien"/></svg>',
         'collectible': '🪙',
         'hazard': '▲',
-        'powerup': '❤️',
-        'spring': '🔼',
+        'powerup': '<svg class="gm-icon"><use href="#icon-heart"/></svg>',
+        'spring': '<svg class="gm-icon"><use href="#icon-spring"/></svg>',
         'movingPlatform': '═',
-        'npc': '👤',
-        'door': '🚪',
+        'npc': '<svg class="gm-icon"><use href="#icon-person"/></svg>',
+        'door': '<svg class="gm-icon"><use href="#icon-door"/></svg>',
         'mysteryBlock': '?'
     };
 
@@ -2960,8 +2960,8 @@ function showObjectPlacementModal(type) {
                     <div class="placement-name">${template.name}</div>
                 </div>
                 <div class="placement-actions">
-                    <button class="placement-action-btn edit" onclick="event.stopPropagation(); closeObjectPlacementModal(); ${editFuncs[type]}('${template.id}')" title="Edit">✏️</button>
-                    ${!isDefault ? `<button class="placement-action-btn delete" onclick="event.stopPropagation(); ${deleteFuncs[type]}('${template.id}'); showObjectPlacementModal('${type}');" title="Delete">🗑️</button>` : ''}
+                    <button class="placement-action-btn edit" onclick="event.stopPropagation(); closeObjectPlacementModal(); ${editFuncs[type]}('${template.id}')" title="Edit"><svg class="gm-icon"><use href="#icon-pencil"/></svg></button>
+                    ${!isDefault ? `<button class="placement-action-btn delete" onclick="event.stopPropagation(); ${deleteFuncs[type]}('${template.id}'); showObjectPlacementModal('${type}');" title="Delete"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>` : ''}
                 </div>
             </div>
         `;

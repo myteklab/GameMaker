@@ -300,7 +300,7 @@ function changeTileset() {
     if (tileCount > 0) {
         message += `
             <div class="warning">
-                <strong>⚠️ Warning:</strong> You have <strong>${tileCount} tile${tileCount > 1 ? 's' : ''}</strong> selected from the current tileset.
+                <strong><svg class="gm-icon"><use href="#icon-warning"/></svg> Warning:</strong> You have <strong>${tileCount} tile${tileCount > 1 ? 's' : ''}</strong> selected from the current tileset.
                 <br><br>
                 If the new tileset has a different layout, your tiles will reference wrong positions and your game may look broken.
                 <br><br>
@@ -346,7 +346,7 @@ function refreshTileset() {
     if (tileCount > 0) {
         message += `
             <div class="warning">
-                <strong>⚠️ Warning:</strong> You have <strong>${tileCount} tile${tileCount > 1 ? 's' : ''}</strong> selected.
+                <strong><svg class="gm-icon"><use href="#icon-warning"/></svg> Warning:</strong> You have <strong>${tileCount} tile${tileCount > 1 ? 's' : ''}</strong> selected.
                 <br><br>
                 If you've changed the tileset externally (added/removed/moved tiles), your existing tile selections may no longer match.
                 <br><br>
@@ -571,7 +571,7 @@ function deleteTile(key) {
     // Build message with optional warning
     let message = `Remove <strong>"${tileName}"</strong> from the tile palette?`;
     if (totalUsage > 0) {
-        message += `<div class="warning">⚠️ This tile is used <strong>${totalUsage} time${totalUsage > 1 ? 's' : ''}</strong> in your level${levels.length > 1 ? 's' : ''}. Those tiles will be cleared.</div>`;
+        message += `<div class="warning"><svg class="gm-icon"><use href="#icon-warning"/></svg> This tile is used <strong>${totalUsage} time${totalUsage > 1 ? 's' : ''}</strong> in your level${levels.length > 1 ? 's' : ''}. Those tiles will be cleared.</div>`;
     }
 
     showConfirmModal({
@@ -788,8 +788,8 @@ function renderCustomTilesPalette() {
         const actions = document.createElement('div');
         actions.className = 'custom-tile-actions';
         actions.innerHTML = `
-            <button onclick="openPixelEditor('${key}')" title="Edit">✏️</button>
-            <button onclick="deleteCustomTile('${key}')" title="Delete">🗑️</button>
+            <button onclick="openPixelEditor('${key}')" title="Edit"><svg class="gm-icon"><use href="#icon-pencil"/></svg></button>
+            <button onclick="deleteCustomTile('${key}')" title="Delete"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>
         `;
         div.appendChild(actions);
 
@@ -827,7 +827,7 @@ function deleteCustomTile(key) {
     // Build message
     let message = `Delete custom tile <strong>"${tileName}"</strong>?`;
     if (totalUsage > 0) {
-        message += `<div class="warning">⚠️ This tile is used <strong>${totalUsage} time${totalUsage > 1 ? 's' : ''}</strong> in your level${levels.length > 1 ? 's' : ''}. Those tiles will be cleared.</div>`;
+        message += `<div class="warning"><svg class="gm-icon"><use href="#icon-warning"/></svg> This tile is used <strong>${totalUsage} time${totalUsage > 1 ? 's' : ''}</strong> in your level${levels.length > 1 ? 's' : ''}. Those tiles will be cleared.</div>`;
     }
 
     showConfirmModal({

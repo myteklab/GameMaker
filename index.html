@@ -13,9 +13,650 @@
 </head>
 <body>
 
+<!-- SVG Icon Sprite -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+
+<!-- pencil: draw tool -->
+<symbol id="icon-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+  <path d="M15 5l4 4"/>
+</symbol>
+
+<!-- bucket: fill tool -->
+<symbol id="icon-bucket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 8h14"/>
+  <path d="M4 8l2 13h8l2-13"/>
+  <path d="M7 8V5a3 3 0 0 1 6 0v3"/>
+  <path d="M19 11s2 2 2 4a2 2 0 0 1-4 0c0-2 2-4 2-4z"/>
+</symbol>
+
+<!-- eraser: erase tool -->
+<symbol id="icon-eraser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M7 21h10"/>
+  <path d="M19.07 7.07L10.5 15.64a2 2 0 0 1-2.83 0L4.93 12.9a2 2 0 0 1 0-2.83L13.5 1.5a2 2 0 0 1 2.83 0l2.74 2.74a2 2 0 0 1 0 2.83z"/>
+</symbol>
+
+<!-- move: four-directional arrows -->
+<symbol id="icon-move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="5 9 2 12 5 15"/>
+  <polyline points="9 5 12 2 15 5"/>
+  <polyline points="15 19 12 22 9 19"/>
+  <polyline points="19 9 22 12 19 15"/>
+  <line x1="2" y1="12" x2="22" y2="12"/>
+  <line x1="12" y1="2" x2="12" y2="22"/>
+</symbol>
+
+<!-- undo -->
+<symbol id="icon-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="1 4 1 10 7 10"/>
+  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+</symbol>
+
+<!-- redo -->
+<symbol id="icon-redo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="23 4 23 10 17 10"/>
+  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+</symbol>
+
+<!-- play -->
+<symbol id="icon-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="5 3 19 12 5 21 5 3"/>
+</symbol>
+
+<!-- save: floppy disk -->
+<symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+  <polyline points="17 21 17 13 7 13 7 21"/>
+  <polyline points="7 3 7 8 15 8"/>
+</symbol>
+
+<!-- share: upload from box -->
+<symbol id="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+  <polyline points="16 6 12 2 8 6"/>
+  <line x1="12" y1="2" x2="12" y2="15"/>
+</symbol>
+
+<!-- reload: circular arrows -->
+<symbol id="icon-reload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="23 4 23 10 17 10"/>
+  <polyline points="1 20 1 14 7 14"/>
+  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/>
+  <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/>
+</symbol>
+
+<!-- package: 3D box -->
+<symbol id="icon-package" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+  <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+  <line x1="12" y1="22.08" x2="12" y2="12"/>
+</symbol>
+
+<!-- fill-down: arrow down to bottom line -->
+<symbol id="icon-fill-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="12" y1="3" x2="12" y2="15"/>
+  <polyline points="8 11 12 15 16 11"/>
+  <line x1="4" y1="21" x2="20" y2="21"/>
+</symbol>
+
+<!-- trash -->
+<symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="3 6 5 6 21 6"/>
+  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+</symbol>
+
+<!-- x-circle: clear / remove -->
+<symbol id="icon-x-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="10"/>
+  <line x1="15" y1="9" x2="9" y2="15"/>
+  <line x1="9" y1="9" x2="15" y2="15"/>
+</symbol>
+
+<!-- zoom-in -->
+<symbol id="icon-zoom-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="11" cy="11" r="8"/>
+  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  <line x1="11" y1="8" x2="11" y2="14"/>
+  <line x1="8" y1="11" x2="14" y2="11"/>
+</symbol>
+
+<!-- zoom-out -->
+<symbol id="icon-zoom-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="11" cy="11" r="8"/>
+  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  <line x1="8" y1="11" x2="14" y2="11"/>
+</symbol>
+
+<!-- zoom-reset: counter-clockwise arrow -->
+<symbol id="icon-zoom-reset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="1 4 1 10 7 10"/>
+  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+</symbol>
+
+<!-- gear: settings -->
+<symbol id="icon-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="3"/>
+  <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42m12.72-12.72l1.42-1.42"/>
+</symbol>
+
+<!-- gamepad: game controller -->
+<symbol id="icon-gamepad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="2" y="6" width="20" height="12" rx="6"/>
+  <line x1="6" y1="10" x2="6" y2="14"/>
+  <line x1="4" y1="12" x2="8" y2="12"/>
+  <line x1="15" y1="10" x2="15" y2="10.01"/>
+  <line x1="18" y1="12" x2="18" y2="12.01"/>
+</symbol>
+
+<!-- layers: stacked layers / levels -->
+<symbol id="icon-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+  <polyline points="2 17 12 22 22 17"/>
+  <polyline points="2 12 12 17 22 12"/>
+</symbol>
+
+<!-- palette: artist palette / tile colors -->
+<symbol id="icon-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.1 0 2-.9 2-2 0-.53-.21-1-.55-1.36-.34-.36-.55-.83-.55-1.36 0-1.1.9-2 2-2h2.36c3.07 0 5.64-2.57 5.64-5.64C22.9 5.84 18.05 2 12 2z"/>
+  <circle cx="7.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/>
+  <circle cx="10.5" cy="7" r="1.5" fill="currentColor" stroke="none"/>
+  <circle cx="15" cy="7" r="1.5" fill="currentColor" stroke="none"/>
+  <circle cx="17.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/>
+</symbol>
+
+<!-- alien: space invader / enemy -->
+<symbol id="icon-alien" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 15V9a8 8 0 0 1 16 0v6"/>
+  <path d="M4 15l-2 4h6l1-4"/>
+  <path d="M20 15l2 4h-6l-1-4"/>
+  <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/>
+  <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none"/>
+  <path d="M9 14h6"/>
+</symbol>
+
+<!-- warning: triangle with exclamation -->
+<symbol id="icon-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+  <line x1="12" y1="9" x2="12" y2="13"/>
+  <line x1="12" y1="17" x2="12.01" y2="17"/>
+</symbol>
+
+<!-- heart: powerups / health -->
+<symbol id="icon-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+</symbol>
+
+<!-- flag: goal -->
+<symbol id="icon-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+  <line x1="4" y1="22" x2="4" y2="15"/>
+</symbol>
+
+<!-- spring: zigzag with up arrow -->
+<symbol id="icon-spring" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="8 4 12 1 16 4"/>
+  <line x1="12" y1="1" x2="12" y2="8"/>
+  <polyline points="6 10 18 13 6 16 18 19"/>
+  <line x1="6" y1="22" x2="18" y2="22"/>
+</symbol>
+
+<!-- waves: water / terrain zones -->
+<symbol id="icon-waves" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M2 6c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>
+  <path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>
+  <path d="M2 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>
+</symbol>
+
+<!-- platform: horizontal lines with arrows -->
+<symbol id="icon-platform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="3" y1="10" x2="21" y2="10"/>
+  <line x1="3" y1="14" x2="21" y2="14"/>
+  <polyline points="7 7 12 3 17 7"/>
+  <polyline points="7 17 12 21 17 17"/>
+</symbol>
+
+<!-- question: mystery block -->
+<symbol id="icon-question" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="3" width="18" height="18" rx="2"/>
+  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+  <line x1="12" y1="17" x2="12.01" y2="17"/>
+</symbol>
+
+<!-- checkpoint: flag in ground -->
+<symbol id="icon-checkpoint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="4" y1="22" x2="4" y2="6"/>
+  <path d="M4 6l10-3v8L4 14"/>
+  <line x1="1" y1="22" x2="20" y2="22"/>
+</symbol>
+
+<!-- person: NPC / character -->
+<symbol id="icon-person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="7" r="4"/>
+  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+</symbol>
+
+<!-- door -->
+<symbol id="icon-door" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="4" y="2" width="16" height="20" rx="1"/>
+  <path d="M9 2v20"/>
+  <circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"/>
+</symbol>
+
+<!-- x-mark: deselect / cancel -->
+<symbol id="icon-x-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="18" y1="6" x2="6" y2="18"/>
+  <line x1="6" y1="6" x2="18" y2="18"/>
+</symbol>
+
+<!-- image: tileset dropzone -->
+<symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+  <circle cx="8.5" cy="8.5" r="1.5"/>
+  <polyline points="21 15 16 10 5 21"/>
+</symbol>
+
+<!-- lightbulb: tips / info -->
+<symbol id="icon-lightbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9 18h6"/>
+  <path d="M10 22h4"/>
+  <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
+</symbol>
+
+<!-- BATCH 2: Modal & editor icons -->
+
+<!-- target: crosshair -->
+<symbol id="icon-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="10"/>
+  <circle cx="12" cy="12" r="6"/>
+  <circle cx="12" cy="12" r="2"/>
+  <line x1="12" y1="2" x2="12" y2="6"/>
+  <line x1="12" y1="18" x2="12" y2="22"/>
+  <line x1="2" y1="12" x2="6" y2="12"/>
+  <line x1="18" y1="12" x2="22" y2="12"/>
+</symbol>
+
+<!-- download: arrow into tray -->
+<symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+  <polyline points="7 10 12 15 17 10"/>
+  <line x1="12" y1="15" x2="12" y2="3"/>
+</symbol>
+
+<!-- book: open book -->
+<symbol id="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+</symbol>
+
+<!-- smartphone: phone -->
+<symbol id="icon-smartphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+  <line x1="12" y1="18" x2="12.01" y2="18"/>
+</symbol>
+
+<!-- party: celebration -->
+<symbol id="icon-party" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M5.8 11.3L2 22l10.7-3.8"/>
+  <path d="M4 3v.01M8 2v.01M12 4v.01M3 8v.01"/>
+  <path d="M5.8 11.3C7.1 8.5 10 4 16 4c0 6-4.5 8.9-7.3 10.2"/>
+  <path d="M18 8l2-2M20 14l2-1M14 18l1 2"/>
+</symbol>
+
+<!-- music: music note -->
+<symbol id="icon-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9 18V5l12-2v13"/>
+  <circle cx="6" cy="18" r="3"/>
+  <circle cx="18" cy="16" r="3"/>
+</symbol>
+
+<!-- volume: speaker with waves -->
+<symbol id="icon-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+</symbol>
+
+<!-- sparkles: particle/magic effects -->
+<symbol id="icon-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/>
+  <path d="M19 13l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z"/>
+  <path d="M5 17l.5 1.5L7 19l-1.5.5L5 21l-.5-1.5L3 19l1.5-.5L5 17z"/>
+</symbol>
+
+<!-- swords: crossed swords / combat -->
+<symbol id="icon-swords" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
+  <path d="M13 19l6-6"/>
+  <path d="M16 16l4 4"/>
+  <path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/>
+  <path d="M11 19l-6-6"/>
+  <path d="M8 16l-4 4"/>
+</symbol>
+
+<!-- bolt: lightning -->
+<symbol id="icon-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+</symbol>
+
+<!-- shield: protection -->
+<symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+</symbol>
+
+<!-- moon: crescent -->
+<symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+</symbol>
+
+<!-- fire: flame -->
+<symbol id="icon-fire" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 22c-4 0-8-3.58-8-8 0-5 4-8 6-10 .67 2.33 2 4 4 4 2.67 0 4-2 4-4 2 2 4 4.58 4 10 0 4.42-4 8-8 8z"/>
+  <path d="M12 22c-1.5 0-3-1.34-3-3 0-2 1.5-3 2.5-4 .33.83.83 1.5 1.5 1.5s1.5-.75 1.5-1.5c.67.67 1.5 1.84 1.5 4 0 1.66-1.5 3-3 3z"/>
+</symbol>
+
+<!-- skull: game over -->
+<symbol id="icon-skull" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="10" r="8"/>
+  <path d="M8 22v-4M16 22v-4M12 22v-4"/>
+  <path d="M4 18h16"/>
+  <circle cx="9" cy="10" r="1.5" fill="currentColor" stroke="none"/>
+  <circle cx="15" cy="10" r="1.5" fill="currentColor" stroke="none"/>
+  <path d="M10 15h4"/>
+</symbol>
+
+<!-- globe: world/online -->
+<symbol id="icon-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="10"/>
+  <line x1="2" y1="12" x2="22" y2="12"/>
+  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+</symbol>
+
+<!-- runner: running person -->
+<symbol id="icon-runner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="14" cy="4" r="2"/>
+  <path d="M18 22l-4-8-4 2-3-3"/>
+  <path d="M7 11l3 3 4-2 2 4"/>
+  <path d="M2 18l5-7"/>
+</symbol>
+
+<!-- map: world map -->
+<symbol id="icon-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+  <line x1="8" y1="2" x2="8" y2="18"/>
+  <line x1="16" y1="6" x2="16" y2="22"/>
+</symbol>
+
+<!-- broken-heart: damage -->
+<symbol id="icon-broken-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  <path d="M12 5.67l-2 4 4 3-3 4.5"/>
+</symbol>
+
+<!-- wind: air/bounce effect -->
+<symbol id="icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9.59 4.59A2 2 0 1 1 11 8H2"/>
+  <path d="M12.59 19.41A2 2 0 1 0 14 16H2"/>
+  <path d="M17.73 7.73A2.5 2.5 0 1 1 19.5 12H2"/>
+</symbol>
+
+<!-- gift: item/emitter -->
+<symbol id="icon-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="20 12 20 22 4 22 4 12"/>
+  <rect x="2" y="7" width="20" height="5"/>
+  <line x1="12" y1="22" x2="12" y2="7"/>
+  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+</symbol>
+
+<!-- grid: tile pattern -->
+<symbol id="icon-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="3" width="18" height="18" rx="2"/>
+  <line x1="3" y1="9" x2="21" y2="9"/>
+  <line x1="3" y1="15" x2="21" y2="15"/>
+  <line x1="9" y1="3" x2="9" y2="21"/>
+  <line x1="15" y1="3" x2="15" y2="21"/>
+</symbol>
+
+<!-- explosion: burst -->
+<symbol id="icon-explosion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 2l2 5 5-1-3 4 4 3-5 1 1 5-4-3-3 4-1-5-5 1 3-4-4-3 5-1-1-5 4 3z"/>
+</symbol>
+
+<!-- foot: stomp -->
+<symbol id="icon-foot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 16c0 2.21 3.58 4 8 4s8-1.79 8-4"/>
+  <ellipse cx="8" cy="6" rx="2" ry="3"/>
+  <ellipse cx="13" cy="4" rx="2" ry="3"/>
+  <ellipse cx="17" cy="7" rx="1.5" ry="2.5"/>
+  <ellipse cx="11" cy="13" rx="5" ry="4"/>
+</symbol>
+
+<!-- recycle: respawn/refresh -->
+<symbol id="icon-recycle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M7.5 7.5L12 2l4.5 5.5"/>
+  <path d="M16.5 7.5L21 14H14"/>
+  <path d="M3 14h7l-4.5 6.5"/>
+  <path d="M10 20.5L14 22l2-6"/>
+  <path d="M12 2v5.5"/>
+</symbol>
+
+<!-- external: open in new window -->
+<symbol id="icon-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+  <polyline points="15 3 21 3 21 9"/>
+  <line x1="10" y1="14" x2="21" y2="3"/>
+</symbol>
+
+<!-- timer: stopwatch -->
+<symbol id="icon-timer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="14" r="8"/>
+  <line x1="12" y1="14" x2="12" y2="10"/>
+  <line x1="10" y1="2" x2="14" y2="2"/>
+  <line x1="12" y1="2" x2="12" y2="6"/>
+</symbol>
+
+<!-- star: collect/rating -->
+<symbol id="icon-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+</symbol>
+
+<!-- trophy: achievement -->
+<symbol id="icon-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M6 9H3V5h3M18 9h3V5h-3"/>
+  <path d="M6 5h12v6a6 6 0 0 1-12 0V5z"/>
+  <path d="M12 17v3"/>
+  <path d="M8 22h8"/>
+</symbol>
+
+<!-- pin: spawn/location -->
+<symbol id="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+  <circle cx="12" cy="10" r="3"/>
+</symbol>
+
+<!-- chat: speech bubble -->
+<symbol id="icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+</symbol>
+
+<!-- flask: experimental -->
+<symbol id="icon-flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9 3h6M10 3v6.5L4 20h16L14 9.5V3"/>
+  <path d="M6 16h12"/>
+</symbol>
+
+<!-- PIXEL EDITOR ICONS -->
+
+<!-- droplet: eyedropper -->
+<symbol id="icon-droplet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+</symbol>
+
+<!-- hand: grab/pan -->
+<symbol id="icon-hand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M18 11V6a2 2 0 0 0-4 0"/>
+  <path d="M14 10V4a2 2 0 0 0-4 0v6"/>
+  <path d="M10 10.5V6a2 2 0 0 0-4 0v8"/>
+  <path d="M18 11a2 2 0 0 1 4 0v3a8 8 0 0 1-8 8h-2c-2.76 0-3.78-1.06-6-4l-1-1.5a2 2 0 0 1 3-2.5"/>
+</symbol>
+
+<!-- line-diagonal: line tool -->
+<symbol id="icon-line-tool" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="5" y1="19" x2="19" y2="5"/>
+  <circle cx="5" cy="19" r="2"/>
+  <circle cx="19" cy="5" r="2"/>
+</symbol>
+
+<!-- square: rectangle outline -->
+<symbol id="icon-square" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="3" width="18" height="18" rx="1"/>
+</symbol>
+
+<!-- square-fill: filled rectangle -->
+<symbol id="icon-square-fill" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="3" width="18" height="18" rx="1" fill="currentColor"/>
+</symbol>
+
+<!-- circle-outline: circle tool -->
+<symbol id="icon-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="9"/>
+</symbol>
+
+<!-- circle-fill: filled circle -->
+<symbol id="icon-circle-fill" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="9" fill="currentColor"/>
+</symbol>
+
+<!-- flip-h: horizontal flip -->
+<symbol id="icon-flip-h" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="7 8 3 12 7 16"/>
+  <polyline points="17 8 21 12 17 16"/>
+  <line x1="3" y1="12" x2="21" y2="12"/>
+  <line x1="12" y1="3" x2="12" y2="21"/>
+</symbol>
+
+<!-- flip-v: vertical flip -->
+<symbol id="icon-flip-v" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="8 7 12 3 16 7"/>
+  <polyline points="8 17 12 21 16 17"/>
+  <line x1="12" y1="3" x2="12" y2="21"/>
+  <line x1="3" y1="12" x2="21" y2="12"/>
+</symbol>
+
+<!-- plus: add -->
+<symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="12" y1="5" x2="12" y2="19"/>
+  <line x1="5" y1="12" x2="19" y2="12"/>
+</symbol>
+
+<!-- clipboard: copy/duplicate -->
+<symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+</symbol>
+
+<!-- onion-skin: layered transparency -->
+<symbol id="icon-onion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="9" cy="12" r="6" opacity="0.4"/>
+  <circle cx="15" cy="12" r="6"/>
+</symbol>
+
+<!-- leaf: sway/nature -->
+<symbol id="icon-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-4.78 10-10 10z"/>
+  <path d="M2 21c0-3 1.85-5.36 5.08-7C9.5 12.52 14 13 17 11"/>
+</symbol>
+
+<!-- cloud: floaty -->
+<symbol id="icon-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+</symbol>
+
+<!-- castle: heavy -->
+<symbol id="icon-castle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 22V8l2-2V2h2v4h2V2h2v4h2V2h2v4h2V2h2v4l2 2v14"/>
+  <path d="M9 22v-5a3 3 0 0 1 6 0v5"/>
+</symbol>
+
+<!-- bird: flappy -->
+<symbol id="icon-bird" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M2 8c0 0 3-5 10-5s10 5 10 5"/>
+  <path d="M12 3c-2 3-3 6-3 9 0 4 2 7 3 8 1-1 3-4 3-8 0-3-1-6-3-9z"/>
+  <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/>
+</symbol>
+
+<!-- balance: scales -->
+<symbol id="icon-balance" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="12" y1="3" x2="12" y2="21"/>
+  <line x1="3" y1="7" x2="21" y2="7"/>
+  <path d="M3 7l3 8h6l-3-8"/>
+  <path d="M15 7l3 8h6l-3-8"/>
+</symbol>
+
+<!-- skip: skip forward -->
+<symbol id="icon-skip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="5 4 15 12 5 20 5 4"/>
+  <line x1="19" y1="5" x2="19" y2="19"/>
+</symbol>
+
+<!-- money: coins/score -->
+<symbol id="icon-money" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="12" y1="1" x2="12" y2="23"/>
+  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+</symbol>
+
+<!-- shrink: tiny mode -->
+<symbol id="icon-shrink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="4 14 10 14 10 20"/>
+  <polyline points="20 10 14 10 14 4"/>
+  <line x1="14" y1="10" x2="21" y2="3"/>
+  <line x1="3" y1="21" x2="10" y2="14"/>
+</symbol>
+
+<!-- expand: giant mode -->
+<symbol id="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="15 3 21 3 21 9"/>
+  <polyline points="9 21 3 21 3 15"/>
+  <line x1="21" y1="3" x2="14" y2="10"/>
+  <line x1="3" y1="21" x2="10" y2="14"/>
+</symbol>
+
+<!-- gun: projectile/ammo -->
+<symbol id="icon-gun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M2 12h14l4-4h2v6h-2l-1-1H15"/>
+  <path d="M8 12v6a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-4"/>
+</symbol>
+
+<!-- ruler-triangle: dimensions -->
+<symbol id="icon-ruler" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 3H3l18 18V3z"/>
+  <path d="M21 9l-4 0M21 15l-4 0M9 21l0-4M15 21l0-4"/>
+</symbol>
+
+<!-- scroll: story/narrative -->
+<symbol id="icon-scroll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 0 1-2 2z"/>
+  <path d="M4 3h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+  <path d="M8 3h12a2 2 0 0 1 2 2v12"/>
+</symbol>
+
+<!-- radio: dot/option -->
+<symbol id="icon-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="10"/>
+  <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>
+</symbol>
+
+<!-- magic: wand/effects -->
+<symbol id="icon-magic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M15 4l-1 6 6-1-6 1 1 6-1-6-6 1 6-1-1-6z"/>
+  <line x1="2" y1="22" x2="13" y2="11"/>
+</symbol>
+
+</svg>
+
 <!-- TOP MENU BAR -->
 <div id="top-menu-bar">
-    <span class="app-title">🎮 Game Maker <span class="help-icon" onclick="showHelp('about')" style="font-size: 12px; vertical-align: middle;">?</span></span>
+    <span class="app-title"><svg class="gm-icon" style="width:18px;height:18px;vertical-align:-3px;margin-right:2px;"><use href="#icon-gamepad"/></svg> Game Maker <span class="help-icon" onclick="showHelp('about')" style="font-size: 12px; vertical-align: middle;">?</span></span>
 
     <div class="menu-divider"></div>
 
@@ -24,18 +665,18 @@
         <button class="dropdown-toggle" onclick="toggleDropdown('file-menu')">File</button>
         <div class="dropdown-menu" id="file-menu">
             <button class="dropdown-item" onclick="saveProject(); closeAllDropdowns();">
-                <span class="icon">💾</span> Save Project
+                <span class="icon"><svg class="gm-icon"><use href="#icon-save"/></svg></span> Save Project
                 <span class="shortcut">Ctrl+S</span>
             </button>
             <button class="dropdown-item" onclick="shareProject(); closeAllDropdowns();">
-                <span class="icon">📤</span> Share
+                <span class="icon"><svg class="gm-icon"><use href="#icon-share"/></svg></span> Share
             </button>
             <button class="dropdown-item" onclick="reloadGame(); closeAllDropdowns();">
-                <span class="icon">🔄</span> Reload Game
+                <span class="icon"><svg class="gm-icon"><use href="#icon-reload"/></svg></span> Reload Game
             </button>
             <div class="dropdown-separator"></div>
             <button class="dropdown-item" onclick="showExportModal(); closeAllDropdowns();">
-                <span class="icon">📦</span> Export...
+                <span class="icon"><svg class="gm-icon"><use href="#icon-package"/></svg></span> Export...
             </button>
         </div>
     </div>
@@ -45,22 +686,22 @@
         <button class="dropdown-toggle" onclick="toggleDropdown('edit-menu')">Edit</button>
         <div class="dropdown-menu" id="edit-menu">
             <button class="dropdown-item" id="menu-undo" onclick="undo(); closeAllDropdowns();">
-                <span class="icon">↩️</span> Undo
+                <span class="icon"><svg class="gm-icon"><use href="#icon-undo"/></svg></span> Undo
                 <span class="shortcut">Ctrl+Z</span>
             </button>
             <button class="dropdown-item" id="menu-redo" onclick="redo(); closeAllDropdowns();">
-                <span class="icon">↪️</span> Redo
+                <span class="icon"><svg class="gm-icon"><use href="#icon-redo"/></svg></span> Redo
                 <span class="shortcut">Ctrl+Y</span>
             </button>
             <div class="dropdown-separator"></div>
             <button class="dropdown-item" onclick="fillRow(); closeAllDropdowns();">
-                <span class="icon">⬇️</span> Fill Bottom Row
+                <span class="icon"><svg class="gm-icon"><use href="#icon-fill-down"/></svg></span> Fill Bottom Row
             </button>
             <button class="dropdown-item" onclick="clearLevel(); closeAllDropdowns();">
-                <span class="icon">🗑️</span> Clear Level
+                <span class="icon"><svg class="gm-icon"><use href="#icon-trash"/></svg></span> Clear Level
             </button>
             <button class="dropdown-item" onclick="clearAllObjects(); closeAllDropdowns();">
-                <span class="icon">✖️</span> Clear All Objects
+                <span class="icon"><svg class="gm-icon"><use href="#icon-x-circle"/></svg></span> Clear All Objects
             </button>
         </div>
     </div>
@@ -83,15 +724,15 @@
             </label>
             <div class="dropdown-separator"></div>
             <button class="dropdown-item" onclick="zoomIn(); closeAllDropdowns();">
-                <span class="icon">🔍</span> Zoom In
+                <span class="icon"><svg class="gm-icon"><use href="#icon-zoom-in"/></svg></span> Zoom In
                 <span class="shortcut">+</span>
             </button>
             <button class="dropdown-item" onclick="zoomOut(); closeAllDropdowns();">
-                <span class="icon">🔍</span> Zoom Out
+                <span class="icon"><svg class="gm-icon"><use href="#icon-zoom-out"/></svg></span> Zoom Out
                 <span class="shortcut">-</span>
             </button>
             <button class="dropdown-item" onclick="zoom = 1; document.getElementById('zoom-display').textContent = '100%'; draw(); closeAllDropdowns();">
-                <span class="icon">↺</span> Reset Zoom (100%)
+                <span class="icon"><svg class="gm-icon"><use href="#icon-zoom-reset"/></svg></span> Reset Zoom (100%)
             </button>
         </div>
     </div>
@@ -101,19 +742,19 @@
         <button class="dropdown-toggle" onclick="toggleDropdown('game-menu')">Game</button>
         <div class="dropdown-menu" id="game-menu">
             <button class="dropdown-item" onclick="showPlayTestModal(); closeAllDropdowns();" style="color: #2ecc71;">
-                <span class="icon">▶️</span> Play Test
+                <span class="icon"><svg class="gm-icon"><use href="#icon-play"/></svg></span> Play Test
                 <span class="shortcut">Esc</span>
             </button>
             <div class="dropdown-separator"></div>
             <button class="dropdown-item" onclick="showGamePropertiesModal(); closeAllDropdowns();">
-                <span class="icon">⚙️</span> Game Settings
+                <span class="icon"><svg class="gm-icon"><use href="#icon-gear"/></svg></span> Game Settings
             </button>
             <button class="dropdown-item" onclick="showPlayerPropertiesModal(); closeAllDropdowns();">
-                <span class="icon">🎮</span> Player Properties
+                <span class="icon"><svg class="gm-icon"><use href="#icon-gamepad"/></svg></span> Player Properties
             </button>
             <div class="dropdown-separator"></div>
             <button class="dropdown-item" onclick="showLevelManagerModal(); closeAllDropdowns();">
-                <span class="icon">📚</span> Manage Levels
+                <span class="icon"><svg class="gm-icon"><use href="#icon-layers"/></svg></span> Manage Levels
             </button>
         </div>
     </div>
@@ -123,19 +764,19 @@
         <button class="dropdown-toggle" onclick="toggleDropdown('help-menu')">Help</button>
         <div class="dropdown-menu" id="help-menu">
             <button class="dropdown-item" onclick="showHelp('tools'); closeAllDropdowns();">
-                <span class="icon">✏️</span> Drawing Tools
+                <span class="icon"><svg class="gm-icon"><use href="#icon-pencil"/></svg></span> Drawing Tools
             </button>
             <button class="dropdown-item" onclick="showHelp('palette'); closeAllDropdowns();">
-                <span class="icon">🎨</span> Tile Palette
+                <span class="icon"><svg class="gm-icon"><use href="#icon-palette"/></svg></span> Tile Palette
             </button>
             <button class="dropdown-item" onclick="showHelp('gameObjects'); closeAllDropdowns();">
-                <span class="icon">👾</span> Game Objects
+                <span class="icon"><svg class="gm-icon"><use href="#icon-alien"/></svg></span> Game Objects
             </button>
             <button class="dropdown-item" onclick="showHelp('physics'); closeAllDropdowns();">
-                <span class="icon">⚙️</span> Physics Settings
+                <span class="icon"><svg class="gm-icon"><use href="#icon-gear"/></svg></span> Physics Settings
             </button>
             <button class="dropdown-item" onclick="showHelp('levels'); closeAllDropdowns();">
-                <span class="icon">📚</span> Multi-Level Games
+                <span class="icon"><svg class="gm-icon"><use href="#icon-layers"/></svg></span> Multi-Level Games
             </button>
         </div>
     </div>
@@ -144,16 +785,16 @@
 
     <!-- Tools in menu bar -->
     <div class="menubar-tools">
-        <button class="tool-btn active" id="tool-draw" onclick="setTool('draw')" title="Draw Tool (D)"><span class="icon">✏️</span></button>
-        <button class="tool-btn" id="tool-fill" onclick="setTool('fill')" title="Fill Tool (F)"><span class="icon">🪣</span></button>
-        <button class="tool-btn" id="tool-erase" onclick="setTool('erase')" title="Erase Tool (E)"><span class="icon">🧹</span></button>
-        <button class="tool-btn" id="tool-move" onclick="setTool('move')" title="Move Tool (M)"><span class="icon">🔄</span></button>
+        <button class="tool-btn active" id="tool-draw" onclick="setTool('draw')" title="Draw Tool (D)"><span class="icon"><svg class="gm-icon"><use href="#icon-pencil"/></svg></span></button>
+        <button class="tool-btn" id="tool-fill" onclick="setTool('fill')" title="Fill Tool (F)"><span class="icon"><svg class="gm-icon"><use href="#icon-bucket"/></svg></span></button>
+        <button class="tool-btn" id="tool-erase" onclick="setTool('erase')" title="Erase Tool (E)"><span class="icon"><svg class="gm-icon"><use href="#icon-eraser"/></svg></span></button>
+        <button class="tool-btn" id="tool-move" onclick="setTool('move')" title="Move Tool (M)"><span class="icon"><svg class="gm-icon"><use href="#icon-move"/></svg></span></button>
     </div>
 
     <!-- Right side items -->
     <div class="menubar-right">
-        <button class="btn btn-icon" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)" disabled>↩️</button>
-        <button class="btn btn-icon" id="btn-redo" onclick="redo()" title="Redo (Ctrl+Y)" disabled>↪️</button>
+        <button class="btn btn-icon" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)" disabled><svg class="gm-icon"><use href="#icon-undo"/></svg></button>
+        <button class="btn btn-icon" id="btn-redo" onclick="redo()" title="Redo (Ctrl+Y)" disabled><svg class="gm-icon"><use href="#icon-redo"/></svg></button>
         <div class="menu-divider"></div>
         <button class="btn btn-icon" onclick="zoomOut()" title="Zoom Out">-</button>
         <span id="zoom-display" style="font-family: monospace; font-size: 12px; color: #e94560; min-width: 45px; text-align: center;">125%</span>
@@ -161,7 +802,7 @@
         <div class="menu-divider"></div>
         <span id="coordinates" style="font-family: monospace; font-size: 12px; color: #888;">X: 0, Y: 0</span>
         <div class="menu-divider"></div>
-        <button class="btn btn-play" onclick="showPlayTestModal()" title="Play Test (Esc)">▶ Play</button>
+        <button class="btn btn-play" onclick="showPlayTestModal()" title="Play Test (Esc)"><svg class="gm-icon"><use href="#icon-play"/></svg> Play</button>
     </div>
 </div>
 
@@ -177,7 +818,7 @@
 
         <!-- Tileset Drop Zone -->
         <div id="tileset-dropzone">
-            <div class="icon">🖼️</div>
+            <div class="icon"><svg class="gm-icon"><use href="#icon-image"/></svg></div>
             <div class="text">Drop tileset image here</div>
             <div class="subtext">or click to browse</div>
             <input type="file" id="tileset-input" accept="image/*" style="display: none;">
@@ -263,7 +904,7 @@
                 <div class="tile-grid" id="custom-tile-grid">
                     <!-- Custom tiles will be rendered here -->
                     <div id="custom-tiles-empty">
-                        <div class="empty-icon">🎨</div>
+                        <div class="empty-icon"><svg class="gm-icon"><use href="#icon-palette"/></svg></div>
                         <div class="empty-text">No custom tiles yet<br><span style="color: #666;">Click "+ New" to draw or "Browse" to edit an asset</span></div>
                     </div>
                 </div>
@@ -317,7 +958,7 @@
 // use File → Export to get your game's source.</code></pre>
                 </div>
                 <div class="code-panel-footer" id="code-edit-prompt" style="display: none;">
-                    <span class="prompt-icon">💡</span>
+                    <span class="prompt-icon"><svg class="gm-icon"><use href="#icon-lightbulb"/></svg></span>
                     <span class="prompt-text">
                         This panel is for learning - try changing the settings above and watch the code update!
                         <br>
@@ -341,7 +982,7 @@
             <h2>Levels <span class="help-icon" onclick="showHelp('levels')">?</span></h2>
             <div class="level-indicator-bar" onclick="showLevelManagerModal()" title="Click to manage levels">
                 <span id="current-level-indicator">Level 1 (1/1)</span>
-                <span class="level-bar-hint">⚙️</span>
+                <span class="level-bar-hint"><svg class="gm-icon"><use href="#icon-gear"/></svg></span>
             </div>
             <div class="level-quick-actions">
                 <button class="btn btn-small" onclick="addNewLevel()">+ New Level</button>
@@ -355,19 +996,19 @@
         <!-- Game Settings Section -->
         <div id="game-settings-section">
             <div class="clickable-section" onclick="showGamePropertiesModal()">
-                <h2>⚙️ Game Settings <span class="help-icon" onclick="event.stopPropagation(); showHelp('gameRules')">?</span></h2>
+                <h2><svg class="gm-icon"><use href="#icon-gear"/></svg> Game Settings <span class="help-icon" onclick="event.stopPropagation(); showHelp('gameRules')">?</span></h2>
                 <p style="font-size: 10px; color: #555; margin-bottom: 8px;">Volume, rules & mobile controls</p>
                 <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888;">
-                    <span>❤️ Lives: <span id="summary-lives">3</span></span>
-                    <span>📱 Mobile: <span id="summary-mobile">On</span></span>
+                    <span><svg class="gm-icon"><use href="#icon-heart"/></svg> Lives: <span id="summary-lives">3</span></span>
+                    <span><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Mobile: <span id="summary-mobile">On</span></span>
                 </div>
                 <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888; margin-top: 6px;">
-                    <span>🔊 Master: <span id="summary-master-vol">100%</span></span>
-                    <span>🎵 Music: <span id="summary-music-vol">50%</span></span>
-                    <span>🔔 SFX: <span id="summary-sfx-vol">70%</span></span>
+                    <span>Master: <span id="summary-master-vol">100%</span></span>
+                    <span>Music: <span id="summary-music-vol">50%</span></span>
+                    <span>SFX: <span id="summary-sfx-vol">70%</span></span>
                 </div>
                 <div class="section-summary topdown-only" style="display: none; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888; margin-top: 6px;">
-                    <span>🌐 Online: <span id="summary-online">Off</span></span>
+                    <span>Online: <span id="summary-online">Off</span></span>
                 </div>
             </div>
         </div>
@@ -375,16 +1016,16 @@
         <!-- Player Properties Section -->
         <div id="player-settings-section">
             <div class="clickable-section" onclick="showPlayerPropertiesModal()">
-                <h2>🎮 Player Properties <span class="help-icon" onclick="event.stopPropagation(); showHelp('physics')">?</span></h2>
+                <h2><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Player Properties <span class="help-icon" onclick="event.stopPropagation(); showHelp('physics')">?</span></h2>
                 <p style="font-size: 10px; color: #555; margin-bottom: 8px;">Physics, appearance, sounds & projectiles</p>
                 <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888;">
-                    <span>⚙️ Gravity: <span id="summary-gravity">0.5</span></span>
-                    <span>🦘 Jump: <span id="summary-jump">10</span></span>
-                    <span>🏃 Speed: <span id="summary-speed">4</span></span>
+                    <span>Gravity: <span id="summary-gravity">0.5</span></span>
+                    <span>Jump: <span id="summary-jump">10</span></span>
+                    <span>Speed: <span id="summary-speed">4</span></span>
                 </div>
                 <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888; margin-top: 6px;">
-                    <span>📏 Size: <span id="summary-player-size">32×32</span></span>
-                    <span>🎯 Projectiles: <span id="summary-projectiles">Off</span></span>
+                    <span>Size: <span id="summary-player-size">32x32</span></span>
+                    <span>Projectiles: <span id="summary-projectiles">Off</span></span>
                 </div>
             </div>
         </div>
@@ -398,7 +1039,7 @@
             <div class="object-category-grid">
                 <div class="object-category" onclick="showObjectPlacementModal('enemy')">
                     <div class="object-btn" id="btn-enemy" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
-                        <span class="obj-icon">👾</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-alien"/></svg></span>
                     </div>
                     <span class="obj-label">Enemies</span>
                 </div>
@@ -410,68 +1051,68 @@
                 </div>
                 <div class="object-category" onclick="showObjectPlacementModal('hazard')">
                     <div class="object-btn" id="btn-hazard" style="background: linear-gradient(135deg, #7f8c8d, #636e72);">
-                        <span class="obj-icon">⚠️</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-warning"/></svg></span>
                     </div>
                     <span class="obj-label">Hazards</span>
                 </div>
                 <div class="object-category" onclick="showObjectPlacementModal('powerup')">
                     <div class="object-btn" id="btn-powerup" style="background: linear-gradient(135deg, #e91e63, #c2185b);">
-                        <span class="obj-icon">❤️</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-heart"/></svg></span>
                     </div>
                     <span class="obj-label">Powerups</span>
                 </div>
                 <div class="object-category" onclick="selectGoalForPlacement()">
                     <div class="object-btn" id="btn-goal" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
-                        <span class="obj-icon">🚩</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-flag"/></svg></span>
                     </div>
                     <span class="obj-label">Goal</span>
                 </div>
                 <div class="object-category" onclick="showObjectPlacementModal('spring')">
                     <div class="object-btn" id="btn-spring" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
-                        <span class="obj-icon">🔼</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-spring"/></svg></span>
                     </div>
                     <span class="obj-label">Springs</span>
                 </div>
                 <div class="object-category" onclick="showTerrainZoneTemplatesModal()">
                     <div class="object-btn" id="btn-terrainZone" style="background: linear-gradient(135deg, #4a90d9, #2c5f8a);">
-                        <span class="obj-icon">🌊</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-waves"/></svg></span>
                     </div>
                     <span class="obj-label">Zones</span>
                 </div>
                 <div class="object-category platformer-only" onclick="showObjectPlacementModal('movingPlatform')">
                     <div class="object-btn" id="btn-movingPlatform" style="background: linear-gradient(135deg, #8B4513, #654321);">
-                        <span class="obj-icon">═</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-platform"/></svg></span>
                     </div>
                     <span class="obj-label">Platforms</span>
                 </div>
                 <div class="object-category platformer-only" onclick="showObjectPlacementModal('mysteryBlock')">
                     <div class="object-btn" id="btn-mysteryBlock" style="background: linear-gradient(135deg, #f1c40f, #e67e22);">
-                        <span class="obj-icon">?</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-question"/></svg></span>
                     </div>
                     <span class="obj-label">Mystery</span>
                 </div>
                 <div class="object-category" onclick="selectCheckpointForPlacement()">
                     <div class="object-btn" id="btn-checkpoint" style="background: linear-gradient(135deg, #3498db, #2980b9);">
-                        <span class="obj-icon">⛳</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-checkpoint"/></svg></span>
                     </div>
                     <span class="obj-label">Checkpoint</span>
                 </div>
                 <!-- Top-Down RPG Objects -->
                 <div class="object-category topdown-only" onclick="showObjectPlacementModal('npc')" style="display: none;">
                     <div class="object-btn" id="btn-npc" style="background: linear-gradient(135deg, #3498db, #2c3e50);">
-                        <span class="obj-icon">👤</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-person"/></svg></span>
                     </div>
                     <span class="obj-label">NPC</span>
                 </div>
                 <div class="object-category topdown-only" onclick="showObjectPlacementModal('door')" style="display: none;">
                     <div class="object-btn" id="btn-door" style="background: linear-gradient(135deg, #8b4513, #654321);">
-                        <span class="obj-icon">🚪</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-door"/></svg></span>
                     </div>
                     <span class="obj-label">Door</span>
                 </div>
                 <div class="object-category" onclick="clearObjectSelection()">
                     <div class="object-btn" style="background: linear-gradient(135deg, #444, #333);">
-                        <span class="obj-icon">✖</span>
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>
                     </div>
                     <span class="obj-label">Deselect</span>
                 </div>
