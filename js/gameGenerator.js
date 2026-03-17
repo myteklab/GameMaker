@@ -4364,6 +4364,7 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.jumpPower = template.jumpPower || 8;
                     gameObj.stompable = template.stompable || false;
                     gameObj.stompScore = template.stompScore || 50;
+                    gameObj.spriteOffsetY = (template.spriteOffsetY || 0) * TILE_SCALE;
                     gameObj.respawnTime = (template.respawnTime || 0) * 1000; // Convert seconds to ms
                     gameObj.deathTime = 0; // Timestamp when enemy was killed (for respawn)
                     gameObj.velocityY = 0;
@@ -6622,13 +6623,15 @@ ${includeComments ? `        // ────────────────
             var enemyHeight = obj.height || RENDER_SIZE;
             var enemyTop = obj.y - enemyHeight / 2;
 
-            // Super generous stomp zone: top 80% of enemy
-            // Only the bottom 20% of enemy will hurt player
+            // Stomp zone: top 80% of enemy
             var stompZone = enemyTop + enemyHeight * 0.80;
 
-            // Stomp succeeds if player's feet are in the top portion of enemy
-            // No velocity check - if you're on top, you stomp
-            if (playerBottom <= stompZone) {
+            // Account for fast falling: also check where player was last frame
+            var playerBottomLastFrame = playerBottom - player.speedY;
+            var isStomping = (player.speedY > 0 && (playerBottom <= stompZone || playerBottomLastFrame <= stompZone))
+                          || (playerBottom <= stompZone);
+
+            if (isStomping) {
                 // Successful stomp!
                 obj.active = false;
                 obj.deathTime = Date.now(); // Record death time for respawn
@@ -8473,6 +8476,11 @@ ${includeComments ? `        // ────────────────
 
             var screenX = obj.x - objW/2 - camX;
             var screenY = obj.y - objH/2 - camY;
+
+            // Apply sprite Y offset (shifts visual position without changing collision)
+            if (obj.spriteOffsetY) {
+                screenY += obj.spriteOffsetY;
+            }
 
             // Skip if off-screen
             if (screenX + objW < 0 || screenX > CANVAS_WIDTH ||

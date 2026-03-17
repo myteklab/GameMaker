@@ -294,6 +294,7 @@ function showAddEnemyTemplate() {
     document.getElementById('enemy-template-contact-sound').value = '';
     document.getElementById('enemy-template-stompable').checked = false;
     document.getElementById('enemy-template-stomp-score').value = '50';
+    document.getElementById('enemy-template-sprite-offset-y').value = '0';
     document.getElementById('enemy-template-respawn-time').value = '0';
 
     // Reset behavior-specific options
@@ -341,6 +342,7 @@ function editEnemyTemplate(id) {
     }
     document.getElementById('enemy-template-stompable').checked = template.stompable || false;
     document.getElementById('enemy-template-stomp-score').value = template.stompScore || 50;
+    document.getElementById('enemy-template-sprite-offset-y').value = template.spriteOffsetY || 0;
     document.getElementById('enemy-template-respawn-time').value = template.respawnTime || 0;
 
     // Set behavior-specific options
@@ -421,6 +423,7 @@ function saveEnemyTemplate() {
         contactSound: document.getElementById('enemy-template-contact-sound').value.trim(),
         stompable: document.getElementById('enemy-template-stompable').checked,
         stompScore: parseInt(document.getElementById('enemy-template-stomp-score').value) || 50,
+        spriteOffsetY: parseInt(document.getElementById('enemy-template-sprite-offset-y').value) || 0,
         respawnTime: parseInt(document.getElementById('enemy-template-respawn-time').value) || 0,
         particleEffect: document.getElementById('enemy-template-death-particle')?.value.trim() || ''
     };
