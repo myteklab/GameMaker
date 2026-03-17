@@ -8479,6 +8479,11 @@ ${includeComments ? `        // ────────────────
                 continue;
             }
 
+            // Skip drawing collapsed platforms
+            if (obj.type === 'movingPlatform' && obj.collapseState === 'collapsed') {
+                continue;
+            }
+
             // Update animation - supports grid-based spritesheets
             var spriteCols = obj.spritesheetCols || obj.frameCount || 1;
             var spriteRows = obj.spritesheetRows || 1;
@@ -8644,11 +8649,6 @@ ${includeComments ? `        // ────────────────
                     ctx.fill();
                     ctx.globalAlpha = 1;
                 } else if (!IS_TOPDOWN && obj.type === 'movingPlatform') {
-                    // Skip drawing collapsed platforms
-                    if (obj.collapseState === 'collapsed') {
-                        continue;
-                    }
-
                     // Draw moving platform
                     var platX = screenX;
                     var platY = screenY;
