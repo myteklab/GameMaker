@@ -8484,6 +8484,11 @@ ${includeComments ? `        // ────────────────
                 continue;
             }
 
+            // Apply shake offset for collapsing platforms
+            if (obj.type === 'movingPlatform' && obj.collapseState === 'shaking' && obj.shakeOffset) {
+                screenX += obj.shakeOffset;
+            }
+
             // Update animation - supports grid-based spritesheets
             var spriteCols = obj.spritesheetCols || obj.frameCount || 1;
             var spriteRows = obj.spritesheetRows || 1;
@@ -8649,14 +8654,9 @@ ${includeComments ? `        // ────────────────
                     ctx.fill();
                     ctx.globalAlpha = 1;
                 } else if (!IS_TOPDOWN && obj.type === 'movingPlatform') {
-                    // Draw moving platform
+                    // Draw moving platform (shake offset already applied to screenX above)
                     var platX = screenX;
                     var platY = screenY;
-
-                    // Apply shake offset for shaking platforms
-                    if (obj.collapseState === 'shaking' && obj.shakeOffset) {
-                        platX += obj.shakeOffset;
-                    }
 
                     var tileDrawn = false;
 
