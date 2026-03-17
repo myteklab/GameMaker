@@ -1610,6 +1610,7 @@ function showAddMovingPlatformTemplate() {
     // Populate tile selector and reset
     populatePlatformTileSelector();
     document.getElementById('moving-platform-template-tile').value = '';
+    document.getElementById('moving-platform-template-tilemode').value = 'tile';
     updatePlatformTilePreview();
 
     // Reset collapsing options to defaults
@@ -1654,6 +1655,7 @@ function editMovingPlatformTemplate(id) {
     // Populate tile selector and set value
     populatePlatformTileSelector();
     document.getElementById('moving-platform-template-tile').value = template.tileKey || '';
+    document.getElementById('moving-platform-template-tilemode').value = template.tileMode || 'tile';
     updatePlatformTilePreview();
 
     // Collapsing options
@@ -1701,6 +1703,7 @@ function saveMovingPlatformTemplate() {
         collisionMode: document.getElementById('moving-platform-template-collision').value || 'solid',
         activation: document.getElementById('moving-platform-template-activation').value || 'always',
         tileKey: document.getElementById('moving-platform-template-tile').value || '',
+        tileMode: document.getElementById('moving-platform-template-tilemode').value || 'tile',
         symbol: document.getElementById('moving-platform-template-symbol').value || '═',
         color: document.getElementById('moving-platform-template-color').value || '#8B4513',
         moveSound: document.getElementById('moving-platform-template-sound').value.trim(),
@@ -1846,8 +1849,14 @@ function populatePlatformTileSelector() {
 function updatePlatformTilePreview() {
     const preview = document.getElementById('platform-tile-preview');
     const tileKey = document.getElementById('moving-platform-template-tile').value;
+    const tileModeGroup = document.getElementById('platform-tile-mode-group');
 
     if (!preview) return;
+
+    // Show/hide tile mode selector based on whether a tile is selected
+    if (tileModeGroup) {
+        tileModeGroup.style.display = tileKey ? '' : 'none';
+    }
 
     if (!tileKey) {
         preview.innerHTML = '<span style="color:#888;font-size:11px;">Select a tile to preview</span>';

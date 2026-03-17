@@ -4438,6 +4438,7 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.lastY = gameObj.y;
                     gameObj.deltaX = 0;
                     gameObj.deltaY = 0;
+                    gameObj.tileMode = template.tileMode || 'tile'; // 'tile' or 'stretch'
                     // Collapsing platform properties
                     gameObj.collapsing = template.collapsing || false;
                     gameObj.collapseDelay = (template.collapseDelay || 1.0) * 1000; // Convert to ms
@@ -8565,8 +8566,9 @@ ${includeComments ? `        // ────────────────
                     );
                 }
                 ctx.restore();
-            } else if (obj.tileKey && tileTypes[obj.tileKey]) {
+            } else if (obj.tileKey && tileTypes[obj.tileKey] && obj.type !== 'movingPlatform') {
                 // Try to draw with tile if tileKey is set (no sprite available)
+                // Moving platforms are handled separately with tiling support
                 var tile = tileTypes[obj.tileKey];
                 var tileDrawn = false;
                 ctx.imageSmoothingEnabled = false;
@@ -8665,40 +8667,59 @@ ${includeComments ? `        // ────────────────
                         var tile = tileTypes[obj.tileKey];
                         if (tile) {
                             ctx.imageSmoothingEnabled = false;
-                            // Tile platform across its width/height
-                            var tilesX = Math.ceil(objW / RENDER_SIZE);
-                            var tilesY = Math.ceil(objH / RENDER_SIZE);
 
-                            for (var ty = 0; ty < tilesY; ty++) {
-                                for (var tx = 0; tx < tilesX; tx++) {
-                                    var drawX = platX + tx * RENDER_SIZE;
-                                    var drawY = platY + ty * RENDER_SIZE;
-                                    // Destination size (in rendered/world coordinates)
-                                    var destW = Math.min(RENDER_SIZE, objW - tx * RENDER_SIZE);
-                                    var destH = Math.min(RENDER_SIZE, objH - ty * RENDER_SIZE);
-                                    // Source size (portion of the source tile to read)
-                                    var srcW = destW / TILE_SCALE;
-                                    var srcH = destH / TILE_SCALE;
+                            if (obj.tileMode === 'stretch') {
+                                // Stretch: draw single tile across entire platform
+                                if (tile.custom && customTileImages[obj.tileKey]) {
+                                    var ctImg;
+                                    if (tile.animated && typeof animatedTileImages !== 'undefined' && animatedTileImages[obj.tileKey]) {
+                                        var frameIdx = animatedTileCurrentFrames[obj.tileKey] || 0;
+                                        ctImg = animatedTileImages[obj.tileKey][frameIdx];
+                                    } else {
+                                        ctImg = customTileImages[obj.tileKey];
+                                    }
+                                    if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
+                                        ctx.drawImage(ctImg, 0, 0, ctImg.naturalWidth, ctImg.naturalHeight, platX, platY, objW, objH);
+                                        tileDrawn = true;
+                                    }
+                                } else if (tileset.complete && tileset.naturalWidth > 0) {
+                                    ctx.drawImage(tileset,
+                                        tile.col * TILE_SIZE, tile.row * TILE_SIZE, TILE_SIZE, TILE_SIZE,
+                                        platX, platY, objW, objH);
+                                    tileDrawn = true;
+                                }
+                            } else {
+                                // Tile/Repeat: tile across platform width/height
+                                var tilesX = Math.ceil(objW / RENDER_SIZE);
+                                var tilesY = Math.ceil(objH / RENDER_SIZE);
 
-                                    if (tile.custom && customTileImages[obj.tileKey]) {
-                                        // Custom tile (check for animated)
-                                        var ctImg;
-                                        if (tile.animated && typeof animatedTileImages !== 'undefined' && animatedTileImages[obj.tileKey]) {
-                                            var frameIdx = animatedTileCurrentFrames[obj.tileKey] || 0;
-                                            ctImg = animatedTileImages[obj.tileKey][frameIdx];
-                                        } else {
-                                            ctImg = customTileImages[obj.tileKey];
-                                        }
-                                        if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
-                                            ctx.drawImage(ctImg, 0, 0, srcW, srcH, drawX, drawY, destW, destH);
+                                for (var ty = 0; ty < tilesY; ty++) {
+                                    for (var tx = 0; tx < tilesX; tx++) {
+                                        var drawX = platX + tx * RENDER_SIZE;
+                                        var drawY = platY + ty * RENDER_SIZE;
+                                        var destW = Math.min(RENDER_SIZE, objW - tx * RENDER_SIZE);
+                                        var destH = Math.min(RENDER_SIZE, objH - ty * RENDER_SIZE);
+                                        var srcW = destW / TILE_SCALE;
+                                        var srcH = destH / TILE_SCALE;
+
+                                        if (tile.custom && customTileImages[obj.tileKey]) {
+                                            var ctImg;
+                                            if (tile.animated && typeof animatedTileImages !== 'undefined' && animatedTileImages[obj.tileKey]) {
+                                                var frameIdx = animatedTileCurrentFrames[obj.tileKey] || 0;
+                                                ctImg = animatedTileImages[obj.tileKey][frameIdx];
+                                            } else {
+                                                ctImg = customTileImages[obj.tileKey];
+                                            }
+                                            if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
+                                                ctx.drawImage(ctImg, 0, 0, srcW, srcH, drawX, drawY, destW, destH);
+                                                tileDrawn = true;
+                                            }
+                                        } else if (tileset.complete && tileset.naturalWidth > 0) {
+                                            ctx.drawImage(tileset,
+                                                tile.col * TILE_SIZE, tile.row * TILE_SIZE, srcW, srcH,
+                                                drawX, drawY, destW, destH);
                                             tileDrawn = true;
                                         }
-                                    } else if (tileset.complete && tileset.naturalWidth > 0) {
-                                        // Tileset tile
-                                        ctx.drawImage(tileset,
-                                            tile.col * TILE_SIZE, tile.row * TILE_SIZE, srcW, srcH,
-                                            drawX, drawY, destW, destH);
-                                        tileDrawn = true;
                                     }
                                 }
                             }
