@@ -62,7 +62,9 @@ function createNewLevel(id, name, levelType = 'gameplay') {
         autoscrollMode: 'end',    // 'end' = stop at finish, 'loop' = endless
         // Background particle effect (ambient particles like snow, rain, fog)
         backgroundParticleEffect: '',
-        backgroundParticleSpawnMode: 'auto' // 'auto', 'top', 'bottom', 'full'
+        backgroundParticleSpawnMode: 'auto', // 'auto', 'top', 'bottom', 'full'
+        // Background color (empty = default dark gradient)
+        bgColor: ''
     };
 
     // Add menu-specific properties for menu levels

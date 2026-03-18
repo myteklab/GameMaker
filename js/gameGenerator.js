@@ -485,6 +485,9 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
     }
     bgLayersCode += '    ];\n';
     bgLayersCode += '    var loadedBgImages = [];\n';
+    // Set initial bg color from first level
+    const firstLevelBgColor = levels[0] && levels[0].bgColor ? levels[0].bgColor.replace(/'/g, "\\'") : '';
+    bgLayersCode += `    var currentBgColor = '${firstLevelBgColor}';\n`;
 
     // Build the comprehensive learning mode header
     let learningHeader = '';
@@ -3972,7 +3975,8 @@ ${includeComments ? `    // ═════════════════�
             menuPressAnyKeyText = lvl.pressAnyKeyText || 'Press any key to start';
             menuWaitingForKey = menuPressAnyKey; // Start waiting if press any key is enabled
 
-            // Load background layers for menu
+            // Load background color and layers for menu
+            currentBgColor = lvl.bgColor || '';
             backgroundLayers = lvl.backgroundLayers || [];
             loadedBgImages = [];
             loadBackgrounds();
@@ -4032,7 +4036,8 @@ ${includeComments ? `    // ═════════════════�
         autoscrollMode = lvl.autoscrollMode || 'end';
         autoscrollX = 0; // Reset autoscroll position for new level
 
-        // Load level-specific background layers
+        // Load level background color and layers
+        currentBgColor = lvl.bgColor || '';
         backgroundLayers = lvl.backgroundLayers || [];
         loadedBgImages = []; // Clear old images
         loadBackgrounds(); // Load new background images
@@ -7919,14 +7924,18 @@ ${includeComments ? `    // ═════════════════�
 ${includeComments ? `        // ───────────────────────────────────────────────────────────────────────
         // BACKGROUND - Fallback gradient if no background images loaded
         // ───────────────────────────────────────────────────────────────────────
-` : ''}        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-        var gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-        gradient.addColorStop(0, '#1a1a3e');
-        gradient.addColorStop(1, '#2d1b4e');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+` : ''}        if (currentBgColor) {
+            ctx.fillStyle = currentBgColor;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        } else {
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            var gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+            gradient.addColorStop(0, '#1a1a3e');
+            gradient.addColorStop(1, '#2d1b4e');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        }
 
 ${includeComments ? `        // ───────────────────────────────────────────────────────────────────────
         // PARALLAX BACKGROUNDS

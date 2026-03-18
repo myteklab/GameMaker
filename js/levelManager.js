@@ -826,6 +826,16 @@ function showLevelSettingsModal(index) {
     document.getElementById('level-settings-autoscroll-mode').value = lvl.autoscrollMode || 'end';
     toggleAutoscrollOptions();
 
+    // Load background color
+    var bgColorPicker = document.getElementById('level-settings-bg-color');
+    var bgColorHex = document.getElementById('level-settings-bg-color-hex');
+    if (bgColorPicker) {
+        bgColorPicker.value = lvl.bgColor || '#1a1a2e';
+    }
+    if (bgColorHex) {
+        bgColorHex.textContent = lvl.bgColor || 'default';
+    }
+
     // Load background particle effect
     document.getElementById('level-settings-bg-particle').value = lvl.backgroundParticleEffect || '';
     document.getElementById('level-settings-bg-particle-spawn').value = lvl.backgroundParticleSpawnMode || 'auto';
@@ -896,6 +906,28 @@ function toggleAutoscrollOptions() {
     if (checkbox && options) {
         options.style.display = checkbox.checked ? 'block' : 'none';
     }
+}
+
+// Update level background color
+function updateLevelBgColor(value) {
+    if (editingLevelIndex < 0) return;
+    const lvl = levels[editingLevelIndex];
+    lvl.bgColor = value;
+    const hex = document.getElementById('level-settings-bg-color-hex');
+    if (hex) hex.textContent = value;
+    markDirty();
+}
+
+// Clear level background color (reset to default gradient)
+function clearLevelBgColor() {
+    if (editingLevelIndex < 0) return;
+    const lvl = levels[editingLevelIndex];
+    lvl.bgColor = '';
+    const picker = document.getElementById('level-settings-bg-color');
+    if (picker) picker.value = '#1a1a2e';
+    const hex = document.getElementById('level-settings-bg-color-hex');
+    if (hex) hex.textContent = 'default';
+    markDirty();
 }
 
 // Update level background particle effect (called from input onchange)
