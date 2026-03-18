@@ -5560,18 +5560,18 @@ ${includeComments ? `        // ────────────────
         if (activeEffects.speedBoost > 0) activeEffects.speedBoost -= 1/60;
         if (activeEffects.jumpBoost > 0) activeEffects.jumpBoost -= 1/60;
 
+        // Player hitbox (constant for this frame)
+        var sprOfsY = player.spriteOffsetY || 0;
+        var hbLeft = hbCollision.x;
+        var hbRight = hbCollision.x + hbCollision.width;
+        var hbTop = hbCollision.y + sprOfsY;
+        var hbBottom = hbCollision.y + hbCollision.height + sprOfsY;
+
         for (var i = 0; i < activeObjects.length; i++) {
             var obj = activeObjects[i];
             if (!obj.active) continue;
 
-            // Check collision with player (AABB)
-            // Player: apply spriteOffsetY so collision matches visual position
-            var sprOfsY = player.spriteOffsetY || 0;
-            var hbLeft = hbCollision.x;
-            var hbRight = hbCollision.x + hbCollision.width;
-            var hbTop = hbCollision.y + sprOfsY;
-            var hbBottom = hbCollision.y + hbCollision.height + sprOfsY;
-            // Object: use collision dimensions if set, otherwise use visual size
+            // Object collision box: use custom dimensions if set, otherwise visual size
             var objVisW = obj.width || RENDER_SIZE;
             var objVisH = obj.height || RENDER_SIZE;
             var objColW = obj.collisionWidth || objVisW;
@@ -7987,6 +7987,9 @@ ${includeComments ? `        // ────────────────
         var endCol = startCol + Math.ceil(CANVAS_WIDTH / RENDER_SIZE) + 2;
         var startRow = Math.floor(camY / RENDER_SIZE);
         var endRow = startRow + Math.ceil(CANVAS_HEIGHT / RENDER_SIZE) + 2;
+        var hasTileEffects = typeof tileEffects !== 'undefined';
+
+        ctx.imageSmoothingEnabled = false;
 
         for (var y = Math.max(0, startRow); y < Math.min(level.length, endRow); y++) {
             for (var x = startCol; x < endCol && x < level[y].length; x++) {
@@ -8008,10 +8011,9 @@ ${includeComments ? `        // ────────────────
                             ctImg = customTileImages[char];
                         }
                         if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
-                            ctx.imageSmoothingEnabled = false;
 
                             // Check for tile effects
-                            var tileEffect = (typeof tileEffects !== 'undefined') ? tileEffects[char] : null;
+                            var tileEffect = hasTileEffects ? tileEffects[char] : null;
                             if (tileEffect && typeof tileEffectTime !== 'undefined') {
                                 ctx.save();
 
@@ -8084,7 +8086,6 @@ ${includeComments ? `        // ────────────────
                             ctx.fillRect(screenX, screenY, RENDER_SIZE, RENDER_SIZE);
                         }
                     } else if (tileset.complete && tileset.naturalWidth > 0) {
-                        ctx.imageSmoothingEnabled = false;
                         ctx.drawImage(
                             tileset,
                             tile.col * TILE_SIZE, tile.row * TILE_SIZE,
