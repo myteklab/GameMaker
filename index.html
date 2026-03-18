@@ -1768,15 +1768,30 @@
                         <input type="number" id="enemy-template-height" value="32" min="8" max="128">
                     </div>
                     <div class="form-group" style="flex: 0.6;">
-                        <label>Y Offset</label>
-                        <input type="number" id="enemy-template-sprite-offset-y" value="0" min="-32" max="32" title="Shift sprite up (negative) or down (positive) without moving collision box">
+                        <label>Sprite Y Offset</label>
+                        <input type="number" id="enemy-template-sprite-offset-y" value="0" min="-32" max="32" title="Shift sprite rendering without moving collision box">
                     </div>
                     <div class="form-group" style="flex: 0.5;">
                         <label>Color</label>
                         <input type="color" id="enemy-template-color" value="#ff4444">
                     </div>
                 </div>
-                <small style="color: #666; font-size: 9px; margin-top: -8px; display: block;">Color is used as fallback when no sprite is set</small>
+
+                <div class="form-row" style="margin-top: 8px;">
+                    <div class="form-group">
+                        <label>Hitbox W</label>
+                        <input type="number" id="enemy-template-collision-width" value="" min="4" max="128" placeholder="auto" title="Collision width (leave empty to match sprite width)">
+                    </div>
+                    <div class="form-group">
+                        <label>Hitbox H</label>
+                        <input type="number" id="enemy-template-collision-height" value="" min="4" max="128" placeholder="auto" title="Collision height (leave empty to match sprite height)">
+                    </div>
+                    <div class="form-group" style="flex: 0.6;">
+                        <label>Hitbox Y Offset</label>
+                        <input type="number" id="enemy-template-collision-offset-y" value="0" min="-32" max="32" title="Shift collision box up (negative) or down (positive)">
+                    </div>
+                </div>
+                <small style="color: #666; font-size: 9px; display: block; margin-top: 4px;">Hitbox controls collision. Leave empty to match sprite size. Press H in play test to visualize.</small>
             </div>
 
             <!-- Right Column: Behavior & Combat -->

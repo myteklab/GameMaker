@@ -4366,6 +4366,9 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.stompable = template.stompable || false;
                     gameObj.stompScore = template.stompScore || 50;
                     gameObj.spriteOffsetY = (template.spriteOffsetY || 0) * TILE_SCALE;
+                    gameObj.collisionWidth = template.collisionWidth ? template.collisionWidth * TILE_SCALE : 0;
+                    gameObj.collisionHeight = template.collisionHeight ? template.collisionHeight * TILE_SCALE : 0;
+                    gameObj.collisionOffsetY = (template.collisionOffsetY || 0) * TILE_SCALE;
                     gameObj.respawnTime = (template.respawnTime || 0) * 1000; // Convert seconds to ms
                     gameObj.deathTime = 0; // Timestamp when enemy was killed (for respawn)
                     gameObj.velocityY = 0;
@@ -5556,19 +5559,23 @@ ${includeComments ? `        // ────────────────
             var obj = activeObjects[i];
             if (!obj.active) continue;
 
-            // Check collision with player (AABB using player hitbox)
-            // Apply spriteOffsetY so collision matches visual position
+            // Check collision with player (AABB)
+            // Player: apply spriteOffsetY so collision matches visual position
             var sprOfsY = player.spriteOffsetY || 0;
-            var objW = obj.width || RENDER_SIZE;
-            var objH = obj.height || RENDER_SIZE;
-            var objLeft = obj.x - objW / 2;
-            var objRight = obj.x + objW / 2;
-            var objTop = obj.y - objH / 2;
-            var objBottom = obj.y + objH / 2;
             var hbLeft = hbCollision.x;
             var hbRight = hbCollision.x + hbCollision.width;
             var hbTop = hbCollision.y + sprOfsY;
             var hbBottom = hbCollision.y + hbCollision.height + sprOfsY;
+            // Object: use collision dimensions if set, otherwise use visual size
+            var objVisW = obj.width || RENDER_SIZE;
+            var objVisH = obj.height || RENDER_SIZE;
+            var objColW = obj.collisionWidth || objVisW;
+            var objColH = obj.collisionHeight || objVisH;
+            var objColOfsY = obj.collisionOffsetY || 0;
+            var objLeft = obj.x - objColW / 2;
+            var objRight = obj.x + objColW / 2;
+            var objTop = obj.y - objVisH / 2 + (objVisH - objColH) + objColOfsY;
+            var objBottom = objTop + objColH;
 
             if (hbRight > objLeft && hbLeft < objRight && hbBottom > objTop && hbTop < objBottom) {
                 // Collision detected!
@@ -6626,11 +6633,13 @@ ${includeComments ? `        // ────────────────
         if (!IS_TOPDOWN && obj.stompable) {
             var hb = getPlayerHitbox();
             var playerBottom = hb.y + hb.height + (player.spriteOffsetY || 0);
-            var enemyHeight = obj.height || RENDER_SIZE;
-            var enemyTop = obj.y - enemyHeight / 2;
+            var eVisH = obj.height || RENDER_SIZE;
+            var eColH = obj.collisionHeight || eVisH;
+            var eColOfsY = obj.collisionOffsetY || 0;
+            var enemyTop = obj.y - eVisH / 2 + (eVisH - eColH) + eColOfsY;
 
-            // Stomp zone: top 80% of enemy
-            var stompZone = enemyTop + enemyHeight * 0.80;
+            // Stomp zone: top 80% of enemy collision box
+            var stompZone = enemyTop + eColH * 0.80;
 
             // Account for fast falling: also check where player was last frame
             var playerBottomLastFrame = playerBottom - player.speedY;
@@ -8378,17 +8387,20 @@ ${includeComments ? `        // ────────────────
             ctx.fillStyle = '#00ff00';
             ctx.font = '10px monospace';
             ctx.fillText(hbDebug.width + 'x' + hbDebug.height, hbScreenX, hbScreenY - 4);
-            // Draw object hitboxes in red
+            // Draw object collision boxes
             for (var di = 0; di < activeObjects.length; di++) {
                 var dObj = activeObjects[di];
                 if (!dObj.active) continue;
-                var dW = dObj.width || RENDER_SIZE;
-                var dH = dObj.height || RENDER_SIZE;
-                var dX = dObj.x - dW/2 - camX;
-                var dY = dObj.y - dH/2 - camY;
+                var dVisW = dObj.width || RENDER_SIZE;
+                var dVisH = dObj.height || RENDER_SIZE;
+                var dColW = dObj.collisionWidth || dVisW;
+                var dColH = dObj.collisionHeight || dVisH;
+                var dColOfsY = dObj.collisionOffsetY || 0;
+                var dX = dObj.x - dColW/2 - camX;
+                var dY = dObj.y - dVisH/2 + (dVisH - dColH) + dColOfsY - camY;
                 ctx.strokeStyle = dObj.type === 'enemy' ? '#ff4444' : '#ffaa00';
                 ctx.lineWidth = 1;
-                ctx.strokeRect(dX, dY, dW, dH);
+                ctx.strokeRect(dX, dY, dColW, dColH);
             }
         }
 
