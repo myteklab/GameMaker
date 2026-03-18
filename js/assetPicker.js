@@ -265,8 +265,13 @@
             if (event.data && event.data.action === 'ready') {
                 window.removeEventListener('message', sfxReadyHandler);
                 sfxReadyHandler = null;
-                // If we have existing data for this project, send it to the iframe
+                // If we have existing data for this project, load it
                 if (gameSettings.sfxData && gameSettings.sfxData[projectId]) {
+                    try {
+                        iframe.contentWindow.loadProjectData(gameSettings.sfxData[projectId]);
+                        return;
+                    } catch(e) {}
+                    // Fallback to postMessage
                     iframe.contentWindow.postMessage({
                         action: 'loadData',
                         data: gameSettings.sfxData[projectId]
@@ -297,14 +302,13 @@
             return;
         }
 
-        // Try to get data directly (same-origin, no postMessage needed)
+        // Get data directly from iframe (same-origin)
+        // SoundEffectStudio uses serializeProjectData(), not getProjectData()
         var effectData = null;
         try {
-            if (typeof iframe.contentWindow.getProjectData === 'function') {
-                effectData = iframe.contentWindow.getProjectData();
-            }
+            effectData = iframe.contentWindow.serializeProjectData();
         } catch(e) {
-            console.warn('Could not get SFX data directly:', e);
+            console.warn('Could not get SFX data:', e);
         }
 
         // Store inline data in gameSettings
