@@ -382,8 +382,11 @@
             modal.style.display = 'none';
         }
         if (iframe) {
-            try { iframe.contentWindow.onbeforeunload = null; } catch(e) {}
-            iframe.src = 'about:blank';
+            var parent = iframe.parentNode;
+            var newIframe = document.createElement('iframe');
+            newIframe.id = 'sfx-studio-iframe';
+            newIframe.style.cssText = iframe.style.cssText;
+            parent.replaceChild(newIframe, iframe);
         }
 
         // Clear tracking variables
@@ -674,8 +677,13 @@
             modal.style.display = 'none';
         }
         if (iframe) {
-            try { iframe.contentWindow.onbeforeunload = null; } catch(e) {}
-            iframe.src = 'about:blank';
+            // Replace iframe entirely to avoid beforeunload dialogs
+            // (setting src='about:blank' triggers the iframe app's leave-site warning)
+            var parent = iframe.parentNode;
+            var newIframe = document.createElement('iframe');
+            newIframe.id = 'pfx-studio-iframe';
+            newIframe.style.cssText = iframe.style.cssText;
+            parent.replaceChild(newIframe, iframe);
         }
 
         // Clear tracking variables
