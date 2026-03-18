@@ -8660,15 +8660,75 @@ ${includeComments ? `        // ────────────────
                     ctx.fill();
                     ctx.globalAlpha = 1;
                 } else if (!IS_TOPDOWN && obj.type === 'spring') {
-                    // Rounded rectangle background for springs (more visible on mobile)
-                    ctx.fillStyle = color;
-                    ctx.globalAlpha = 0.9;
+                    // Draw a spring pad with coil
+                    var sx = screenX;
+                    var sy = screenY;
+                    var pad = 2;
+
+                    // Base platform
+                    ctx.fillStyle = color || '#9b59b6';
                     ctx.beginPath();
-                    var springPadding = 2;
-                    ctx.roundRect(screenX + springPadding, screenY + springPadding,
-                                  objW - springPadding * 2, objH - springPadding * 2, 4);
+                    ctx.roundRect(sx + pad, sy + objH * 0.75, objW - pad * 2, objH * 0.25 - pad, 3);
                     ctx.fill();
-                    ctx.globalAlpha = 1;
+
+                    // Darker base outline
+                    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    // Spring coil
+                    var coilLeft = sx + objW * 0.3;
+                    var coilRight = sx + objW * 0.7;
+                    var coilTop = sy + objH * 0.15;
+                    var coilBottom = sy + objH * 0.75;
+                    var coils = 3;
+                    var coilH = (coilBottom - coilTop) / coils;
+
+                    ctx.strokeStyle = '#ccc';
+                    ctx.lineWidth = Math.max(2, objW * 0.08);
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(coilLeft, coilBottom);
+                    for (var c = 0; c < coils; c++) {
+                        var cy1 = coilBottom - c * coilH;
+                        var cy2 = coilBottom - (c + 0.5) * coilH;
+                        ctx.lineTo(c % 2 === 0 ? coilRight : coilLeft, cy2);
+                    }
+                    ctx.lineTo(coils % 2 === 0 ? coilLeft : coilRight, coilTop);
+                    ctx.stroke();
+
+                    // Metallic coil highlight
+                    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                    ctx.lineWidth = Math.max(1, objW * 0.04);
+                    ctx.beginPath();
+                    ctx.moveTo(coilLeft + 1, coilBottom - 1);
+                    for (var c = 0; c < coils; c++) {
+                        var cy2 = coilBottom - (c + 0.5) * coilH;
+                        ctx.lineTo((c % 2 === 0 ? coilRight : coilLeft) + 1, cy2 - 1);
+                    }
+                    ctx.lineTo((coils % 2 === 0 ? coilLeft : coilRight) + 1, coilTop - 1);
+                    ctx.stroke();
+
+                    // Top cap
+                    ctx.fillStyle = color || '#9b59b6';
+                    ctx.beginPath();
+                    ctx.roundRect(sx + pad, sy + pad, objW - pad * 2, objH * 0.2, 3);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    // Arrow indicator on top cap
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    var arrowCx = sx + objW / 2;
+                    var arrowCy = sy + pad + objH * 0.1;
+                    var arrowSize = Math.min(objW, objH) * 0.12;
+                    ctx.moveTo(arrowCx, arrowCy - arrowSize);
+                    ctx.lineTo(arrowCx - arrowSize, arrowCy + arrowSize * 0.5);
+                    ctx.lineTo(arrowCx + arrowSize, arrowCy + arrowSize * 0.5);
+                    ctx.closePath();
+                    ctx.fill();
                 } else if (!IS_TOPDOWN && obj.type === 'movingPlatform') {
                     // Draw moving platform (shake offset already applied to screenX above)
                     var platX = screenX;
@@ -8909,7 +8969,7 @@ ${includeComments ? `        // ────────────────
                 // Draw symbol/emoji - white for types with colored backgrounds, template color for others
                 // Springs now have a background, so use white emoji on colored bg
                 // Skip emoji for movingPlatform (has custom directional arrows) and mysteryBlock (has custom rendering)
-                if (obj.type !== 'movingPlatform' && obj.type !== 'mysteryBlock') {
+                if (obj.type !== 'movingPlatform' && obj.type !== 'mysteryBlock' && obj.type !== 'spring') {
                     ctx.fillStyle = (obj.type === 'hazard' || obj.type === 'goal' || obj.type === 'powerup' || obj.type === 'checkpoint') ? color : '#fff';
                     ctx.font = (Math.min(objW, objH) * 0.7) + 'px sans-serif';
                     ctx.textAlign = 'center';
