@@ -355,6 +355,8 @@ function updateGameSettingsUI() {
     // Collision offset (default 0)
     setInputValue('setting-collision-offset-x', gameSettings.playerCollisionOffsetX || 0);
     setInputValue('setting-collision-offset-y', gameSettings.playerCollisionOffsetY || 0);
+    // Sprite rendering offset
+    setInputValue('setting-player-sprite-offset-y', gameSettings.playerSpriteOffsetY || 0);
     setInputValue('setting-lives', gameSettings.startLives || 3);
 
     // Checkbox for mobile controls

@@ -4279,6 +4279,14 @@
                         </div>
                     </div>
                     <small style="color: #666; font-size: 9px; display: block; margin-bottom: 8px;">Hitbox is centered horizontally, bottom-aligned. Offset adjusts position from default.</small>
+
+                    <div class="form-row" style="margin-bottom: 8px;">
+                        <div class="form-group">
+                            <label>Sprite Y Offset</label>
+                            <input type="number" id="setting-player-sprite-offset-y" value="0" min="-32" max="32" oninput="updateGameSetting('playerSpriteOffsetY', this.value);" title="Shift player sprite up (negative) or down (positive) without moving collision.">
+                        </div>
+                    </div>
+                    <small style="color: #666; font-size: 9px; display: block; margin-bottom: 8px;">Shifts where the player is drawn without changing collision. Align the visible sprite with the hitbox.</small>
                     <!-- Hitbox Preview -->
                     <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
                         <div style="flex-shrink: 0;">
