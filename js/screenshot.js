@@ -16,7 +16,12 @@ function generateScreenshot() {
     // Try to capture the editor canvas directly (best quality)
     try {
         if (canvas && canvas.width > 0 && canvas.height > 0) {
-            // Ensure the editor is fully drawn
+            // Temporarily hide grid for clean screenshot
+            var gridCheckbox = document.getElementById('show-grid');
+            var gridWasChecked = gridCheckbox && gridCheckbox.checked;
+            if (gridCheckbox) gridCheckbox.checked = false;
+
+            // Redraw without grid
             if (typeof draw === 'function') {
                 draw();
             }
@@ -34,10 +39,22 @@ function generateScreenshot() {
             sctx.fillRect(0, 0, previewWidth, previewHeight);
 
             sctx.drawImage(canvas, drawX, drawY, drawW, drawH);
+
+            // Restore grid
+            if (gridCheckbox && gridWasChecked) {
+                gridCheckbox.checked = true;
+                draw();
+            }
+
             return screenshotCanvas.toDataURL('image/png');
         }
     } catch (e) {
         // Canvas tainted by CORS images, fall back to manual rendering
+        // Restore grid if we toggled it
+        if (typeof gridCheckbox !== 'undefined' && gridCheckbox && gridWasChecked) {
+            gridCheckbox.checked = true;
+            if (typeof draw === 'function') draw();
+        }
     }
 
     // Fallback: render the visible portion manually (CORS-safe)
