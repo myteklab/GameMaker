@@ -5557,6 +5557,8 @@ ${includeComments ? `        // ────────────────
             if (!obj.active) continue;
 
             // Check collision with player (AABB using player hitbox)
+            // Apply spriteOffsetY so collision matches visual position
+            var sprOfsY = player.spriteOffsetY || 0;
             var objW = obj.width || RENDER_SIZE;
             var objH = obj.height || RENDER_SIZE;
             var objLeft = obj.x - objW / 2;
@@ -5565,8 +5567,8 @@ ${includeComments ? `        // ────────────────
             var objBottom = obj.y + objH / 2;
             var hbLeft = hbCollision.x;
             var hbRight = hbCollision.x + hbCollision.width;
-            var hbTop = hbCollision.y;
-            var hbBottom = hbCollision.y + hbCollision.height;
+            var hbTop = hbCollision.y + sprOfsY;
+            var hbBottom = hbCollision.y + hbCollision.height + sprOfsY;
 
             if (hbRight > objLeft && hbLeft < objRight && hbBottom > objTop && hbTop < objBottom) {
                 // Collision detected!
@@ -6623,7 +6625,7 @@ ${includeComments ? `        // ────────────────
         // Check for stomp (player jumping on top of enemy) - platformer only
         if (!IS_TOPDOWN && obj.stompable) {
             var hb = getPlayerHitbox();
-            var playerBottom = hb.y + hb.height;
+            var playerBottom = hb.y + hb.height + (player.spriteOffsetY || 0);
             var enemyHeight = obj.height || RENDER_SIZE;
             var enemyTop = obj.y - enemyHeight / 2;
 
