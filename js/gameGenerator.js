@@ -8157,40 +8157,40 @@ ${includeComments ? `        // ────────────────
             switch (PLAYER_IDLE_EFFECT) {
                 case 'sway':
                     // Gentle rotation (pivot from bottom)
-                    var swayAngle = Math.sin(idleTime * idleSpeed * 3) * 0.15 * idleIntensity;
+                    var swayAngle = Math.sin(idleTime * idleSpeed * 3) * 0.25 * idleIntensity;
                     ctx.translate(0, player.height / 2 - 4);
                     ctx.rotate(swayAngle);
                     ctx.translate(0, -(player.height / 2 - 4));
                     break;
                 case 'pulse':
                     // Scale up and down
-                    var pulseScale = 1 + Math.sin(idleTime * idleSpeed * 4) * 0.1 * idleIntensity;
+                    var pulseScale = 1 + Math.sin(idleTime * idleSpeed * 4) * 0.15 * idleIntensity;
                     ctx.scale(pulseScale, pulseScale);
                     break;
                 case 'bounce':
                     // Move up and down (bouncy)
-                    var bounceY = -Math.abs(Math.sin(idleTime * idleSpeed * 5)) * 4 * idleIntensity;
+                    var bounceY = -Math.abs(Math.sin(idleTime * idleSpeed * 5)) * 8 * idleIntensity;
                     ctx.translate(0, bounceY);
                     break;
                 case 'float':
                     // Gentle up and down floating
-                    var floatY = Math.sin(idleTime * idleSpeed * 2) * 3 * idleIntensity;
+                    var floatY = Math.sin(idleTime * idleSpeed * 2) * 6 * idleIntensity;
                     ctx.translate(0, floatY);
                     break;
                 case 'shimmer':
                     // Alpha pulsing
-                    var shimmerAlpha = 0.7 + Math.sin(idleTime * idleSpeed * 6) * 0.3 * idleIntensity;
+                    var shimmerAlpha = 0.5 + Math.sin(idleTime * idleSpeed * 6) * 0.5 * idleIntensity;
                     ctx.globalAlpha = ctx.globalAlpha * shimmerAlpha;
                     break;
                 case 'wave':
                     // Horizontal wave distortion (skew)
-                    var waveSkew = Math.sin(idleTime * idleSpeed * 4) * 0.1 * idleIntensity;
+                    var waveSkew = Math.sin(idleTime * idleSpeed * 4) * 0.15 * idleIntensity;
                     ctx.transform(1, 0, waveSkew, 1, 0, 0);
                     break;
                 case 'shake':
                     // Random shake
-                    var shakeX = (Math.random() - 0.5) * 4 * idleIntensity;
-                    var shakeY = (Math.random() - 0.5) * 4 * idleIntensity;
+                    var shakeX = (Math.random() - 0.5) * 8 * idleIntensity;
+                    var shakeY = (Math.random() - 0.5) * 8 * idleIntensity;
                     ctx.translate(shakeX, shakeY);
                     break;
             }
