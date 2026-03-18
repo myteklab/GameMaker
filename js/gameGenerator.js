@@ -5544,11 +5544,15 @@ ${includeComments ? `        // ────────────────
             }
         }
 
-        // Use hitbox for collision detection (may be smaller than visual sprite)
+        // Use player visual bounds for object collision (matches what player sees)
+        // The precise hitbox (getPlayerHitbox) is used for tile/ground collisions only
+        var playerVisLeft = player.x;
+        var playerVisRight = player.x + player.width;
+        var playerVisTop = player.y;
+        var playerVisBottom = player.y + player.height;
+
+        // Also get hitbox for stomp detection (needs precise foot position)
         var hbCollision = getPlayerHitbox();
-        var playerCenterX = hbCollision.x + hbCollision.width / 2;
-        var playerCenterY = hbCollision.y + hbCollision.height / 2;
-        var playerRadius = Math.min(hbCollision.width, hbCollision.height) / 2;
 
         // Update powerup effect timers
         if (activeEffects.speedBoost > 0) activeEffects.speedBoost -= 1/60;
@@ -5558,19 +5562,15 @@ ${includeComments ? `        // ────────────────
             var obj = activeObjects[i];
             if (!obj.active) continue;
 
-            // Check collision with player (AABB collision)
+            // Check collision with player (AABB using visual sprite bounds)
             var objW = obj.width || RENDER_SIZE;
             var objH = obj.height || RENDER_SIZE;
             var objLeft = obj.x - objW / 2;
             var objRight = obj.x + objW / 2;
             var objTop = obj.y - objH / 2;
             var objBottom = obj.y + objH / 2;
-            var hbLeft = hbCollision.x;
-            var hbRight = hbCollision.x + hbCollision.width;
-            var hbTop = hbCollision.y;
-            var hbBottom = hbCollision.y + hbCollision.height;
 
-            if (hbRight > objLeft && hbLeft < objRight && hbBottom > objTop && hbTop < objBottom) {
+            if (playerVisRight > objLeft && playerVisLeft < objRight && playerVisBottom > objTop && playerVisTop < objBottom) {
                 // Collision detected!
                 switch (obj.type) {
                     case 'collectible':
@@ -6624,8 +6624,8 @@ ${includeComments ? `        // ────────────────
 
         // Check for stomp (player jumping on top of enemy) - platformer only
         if (!IS_TOPDOWN && obj.stompable) {
-            var hbStomp = getPlayerHitbox();
-            var playerBottom = hbStomp.y + hbStomp.height;
+            // Use visual sprite bottom for stomp detection (matches what player sees)
+            var playerBottom = player.y + player.height;
             var enemyHeight = obj.height || RENDER_SIZE;
             var enemyTop = obj.y - enemyHeight / 2;
 
