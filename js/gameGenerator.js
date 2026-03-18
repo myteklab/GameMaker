@@ -6622,7 +6622,8 @@ ${includeComments ? `        // ────────────────
 
         // Check for stomp (player jumping on top of enemy) - platformer only
         if (!IS_TOPDOWN && obj.stompable) {
-            var playerBottom = hbCollision.y + hbCollision.height;
+            var hb = getPlayerHitbox();
+            var playerBottom = hb.y + hb.height;
             var enemyHeight = obj.height || RENDER_SIZE;
             var enemyTop = obj.y - enemyHeight / 2;
 
