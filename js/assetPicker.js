@@ -297,80 +297,43 @@
             return;
         }
 
-        // Show saving state on the button
-        const saveBtn = document.querySelector('#sfx-studio-modal .btn[onclick*="saveSfxAndClose"]');
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn._originalHTML = saveBtn.innerHTML;
-            saveBtn.innerHTML = '⏳ Saving...';
-            saveBtn.style.opacity = '0.7';
+        // Try to get data directly (same-origin, no postMessage needed)
+        var effectData = null;
+        try {
+            if (typeof iframe.contentWindow.getProjectData === 'function') {
+                effectData = iframe.contentWindow.getProjectData();
+            }
+        } catch(e) {
+            console.warn('Could not get SFX data directly:', e);
         }
 
-        // Function to finalize after save
-        const finalizeSave = function(effectData) {
-            // Clean up listener and timeout
-            if (sfxSaveMessageHandler) {
-                window.removeEventListener('message', sfxSaveMessageHandler);
-                sfxSaveMessageHandler = null;
-            }
-            if (sfxSaveTimeout) {
-                clearTimeout(sfxSaveTimeout);
-                sfxSaveTimeout = null;
-            }
+        // Store inline data in gameSettings
+        if (sfxProjectId && effectData) {
+            if (!gameSettings.sfxData) gameSettings.sfxData = {};
+            gameSettings.sfxData[sfxProjectId] = effectData;
+            markDirty();
+        }
 
-            // Store inline data in gameSettings
-            if (sfxProjectId && effectData) {
-                if (!gameSettings.sfxData) gameSettings.sfxData = {};
-                gameSettings.sfxData[sfxProjectId] = effectData;
-                markDirty();
+        // Update the input field with the sfx reference
+        if (sfxTargetInputId && sfxProjectId) {
+            const inputEl = document.getElementById(sfxTargetInputId);
+            if (inputEl) {
+                inputEl.value = 'sfx:' + sfxProjectId;
+                inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+                inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                updateSoundButtonStates(sfxTargetInputId);
             }
+        }
 
-            // Update the input field with the sfx reference
-            if (sfxTargetInputId && sfxProjectId) {
-                const inputEl = document.getElementById(sfxTargetInputId);
-                if (inputEl) {
-                    inputEl.value = 'sfx:' + sfxProjectId;
-                    inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-                    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-                    updateSoundButtonStates(sfxTargetInputId);
-                }
-            }
+        closeSfxStudioModal();
 
-            // Restore save button state before closing
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = saveBtn._originalHTML || '<svg class="gm-icon"><use href="#icon-save"/></svg> Save & Use Sound';
-                saveBtn.style.opacity = '';
-            }
-
-            closeSfxStudioModal();
-
-            if (typeof showToast === 'function') {
+        if (typeof showToast === 'function') {
+            if (effectData) {
                 showToast('Sound saved and linked!', 'success', 3000);
+            } else {
+                showToast('Sound linked (could not save inline data)', 'warning', 3000);
             }
-        };
-
-        // Listen for saveComplete message from SoundEffectStudio
-        sfxSaveMessageHandler = function(event) {
-            if (event.data && event.data.action === 'saveComplete') {
-                console.log('SFX save confirmed, projectId:', event.data.projectId);
-                // Update projectId if provided (in case it was created during save)
-                if (event.data.projectId) {
-                    sfxProjectId = event.data.projectId;
-                }
-                finalizeSave(event.data.data);
-            }
-        };
-        window.addEventListener('message', sfxSaveMessageHandler);
-
-        // Tell SoundEffectStudio to save
-        iframe.contentWindow.postMessage({ action: 'save' }, window.location.origin);
-
-        // Fallback timeout in case saveComplete message isn't received
-        sfxSaveTimeout = setTimeout(function() {
-            console.warn('SFX save timeout - closing modal without confirmation');
-            finalizeSave();
-        }, 3000); // 3 second timeout as fallback
+        }
     };
 
     // Close the SFX modal without saving
@@ -552,13 +515,21 @@
             pfxReadyHandler = null;
         }
 
-        // Listen for the ready message from the iframe
+        // Listen for the ready message from the iframe, then load saved data
         pfxReadyHandler = function(event) {
             if (event.data && event.data.action === 'ready') {
                 window.removeEventListener('message', pfxReadyHandler);
                 pfxReadyHandler = null;
-                // If we have existing data for this project, send it to the iframe
+                // If we have existing data for this project, load it
                 if (gameSettings.pfxData && gameSettings.pfxData[projectId]) {
+                    // Try direct function call first (same-origin)
+                    try {
+                        if (typeof iframe.contentWindow.loadProjectData === 'function') {
+                            iframe.contentWindow.loadProjectData(gameSettings.pfxData[projectId]);
+                            return;
+                        }
+                    } catch(e) {}
+                    // Fallback to postMessage
                     iframe.contentWindow.postMessage({
                         action: 'loadData',
                         data: gameSettings.pfxData[projectId]
@@ -593,79 +564,43 @@
             return;
         }
 
-        // Show saving state on the button
-        const pfxSaveBtn = document.querySelector('#pfx-studio-modal .btn[onclick*="savePfxAndClose"]');
-        if (pfxSaveBtn) {
-            pfxSaveBtn.disabled = true;
-            pfxSaveBtn._originalHTML = pfxSaveBtn.innerHTML;
-            pfxSaveBtn.innerHTML = '⏳ Saving...';
-            pfxSaveBtn.style.opacity = '0.7';
+        // Try to get data directly (same-origin, no postMessage needed)
+        var effectData = null;
+        try {
+            if (typeof iframe.contentWindow.getProjectData === 'function') {
+                effectData = iframe.contentWindow.getProjectData();
+            }
+        } catch(e) {
+            console.warn('Could not get PFX data directly:', e);
         }
 
-        // Function to finalize after save
-        const finalizeSave = function(effectData) {
-            // Clean up listener and timeout
-            if (pfxSaveMessageHandler) {
-                window.removeEventListener('message', pfxSaveMessageHandler);
-                pfxSaveMessageHandler = null;
-            }
-            if (pfxSaveTimeout) {
-                clearTimeout(pfxSaveTimeout);
-                pfxSaveTimeout = null;
-            }
+        // Store inline data in gameSettings
+        if (pfxProjectId && effectData) {
+            if (!gameSettings.pfxData) gameSettings.pfxData = {};
+            gameSettings.pfxData[pfxProjectId] = effectData;
+            markDirty();
+        }
 
-            // Store inline data in gameSettings
-            if (pfxProjectId && effectData) {
-                if (!gameSettings.pfxData) gameSettings.pfxData = {};
-                gameSettings.pfxData[pfxProjectId] = effectData;
-                markDirty();
+        // Update the input field with the pfx reference
+        if (pfxTargetInputId && pfxProjectId) {
+            const inputEl = document.getElementById(pfxTargetInputId);
+            if (inputEl) {
+                inputEl.value = 'pfx:' + pfxProjectId;
+                inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+                inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                updateParticleButtonStates(pfxTargetInputId);
             }
+        }
 
-            // Update the input field with the pfx reference
-            if (pfxTargetInputId && pfxProjectId) {
-                const inputEl = document.getElementById(pfxTargetInputId);
-                if (inputEl) {
-                    inputEl.value = 'pfx:' + pfxProjectId;
-                    inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-                    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-                    updateParticleButtonStates(pfxTargetInputId);
-                }
-            }
+        closePfxStudioModal();
 
-            // Restore save button state before closing
-            if (pfxSaveBtn) {
-                pfxSaveBtn.disabled = false;
-                pfxSaveBtn.innerHTML = pfxSaveBtn._originalHTML || '<svg class="gm-icon"><use href="#icon-save"/></svg> Save & Use Effect';
-                pfxSaveBtn.style.opacity = '';
-            }
-
-            closePfxStudioModal();
-
-            if (typeof showToast === 'function') {
+        if (typeof showToast === 'function') {
+            if (effectData) {
                 showToast('Particle effect saved and linked!', 'success', 3000);
+            } else {
+                showToast('Particle effect linked (could not save inline data)', 'warning', 3000);
             }
-        };
-
-        // Listen for saveComplete message from ParticleFX
-        pfxSaveMessageHandler = function(event) {
-            if (event.data && event.data.action === 'saveComplete') {
-                console.log('PFX save confirmed, projectId:', event.data.projectId);
-                if (event.data.projectId) {
-                    pfxProjectId = event.data.projectId;
-                }
-                finalizeSave(event.data.data);
-            }
-        };
-        window.addEventListener('message', pfxSaveMessageHandler);
-
-        // Tell ParticleFX to save
-        iframe.contentWindow.postMessage({ action: 'save' }, window.location.origin);
-
-        // Fallback timeout in case saveComplete message isn't received
-        pfxSaveTimeout = setTimeout(function() {
-            console.warn('PFX save timeout - closing modal without confirmation');
-            finalizeSave(null);
-        }, 3000);
+        }
     };
 
     // Close the PFX modal without saving
