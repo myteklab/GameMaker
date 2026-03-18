@@ -225,6 +225,7 @@ function updateGameSetting(key, value) {
              key === 'playerWidth' || key === 'playerHeight' ||
              key === 'playerCollisionWidth' || key === 'playerCollisionHeight' ||
              key === 'playerCollisionOffsetX' || key === 'playerCollisionOffsetY' ||
+             key === 'playerSpriteOffsetY' ||
              key === 'projectileWidth' || key === 'projectileHeight' || key === 'projectileFrameCount' ||
              key === 'projectileSpritesheetCols' || key === 'projectileSpritesheetRows' ||
              key === 'projectileCooldown' || key === 'projectileStartAmmo' || key === 'projectileMaxAmmo' ||
