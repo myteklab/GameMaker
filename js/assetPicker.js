@@ -382,6 +382,7 @@
             modal.style.display = 'none';
         }
         if (iframe) {
+            try { iframe.contentWindow.onbeforeunload = null; } catch(e) {}
             iframe.src = 'about:blank';
         }
 
@@ -673,6 +674,7 @@
             modal.style.display = 'none';
         }
         if (iframe) {
+            try { iframe.contentWindow.onbeforeunload = null; } catch(e) {}
             iframe.src = 'about:blank';
         }
 
