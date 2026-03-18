@@ -522,12 +522,9 @@
                 pfxReadyHandler = null;
                 // If we have existing data for this project, load it
                 if (gameSettings.pfxData && gameSettings.pfxData[projectId]) {
-                    // Try direct function call first (same-origin)
                     try {
-                        if (typeof iframe.contentWindow.loadProjectData === 'function') {
-                            iframe.contentWindow.loadProjectData(gameSettings.pfxData[projectId]);
-                            return;
-                        }
+                        iframe.contentWindow.loadProjectData(gameSettings.pfxData[projectId]);
+                        return;
                     } catch(e) {}
                     // Fallback to postMessage
                     iframe.contentWindow.postMessage({
@@ -564,14 +561,12 @@
             return;
         }
 
-        // Try to get data directly (same-origin, no postMessage needed)
+        // Get data directly from iframe (same-origin)
         var effectData = null;
         try {
-            if (typeof iframe.contentWindow.getProjectData === 'function') {
-                effectData = iframe.contentWindow.getProjectData();
-            }
+            effectData = iframe.contentWindow.getProjectData();
         } catch(e) {
-            console.warn('Could not get PFX data directly:', e);
+            console.warn('Could not get PFX data:', e);
         }
 
         // Store inline data in gameSettings
