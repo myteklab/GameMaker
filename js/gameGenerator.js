@@ -8365,8 +8365,10 @@ ${includeComments ? `        // ────────────────
         // DEBUG: Draw hitbox visualization (toggle with H key)
         if (showHitboxDebug) {
             var hbDebug = getPlayerHitbox();
+            var sprOfsDebug = player.spriteOffsetY || 0;
+            // Draw actual collision box (shifted by spriteOffsetY) - this is what objects collide with
             var hbScreenX = hbDebug.x - camX;
-            var hbScreenY = hbDebug.y - camY;
+            var hbScreenY = hbDebug.y + sprOfsDebug - camY;
             ctx.strokeStyle = '#00ff00';
             ctx.lineWidth = 2;
             ctx.strokeRect(hbScreenX, hbScreenY, hbDebug.width, hbDebug.height);
@@ -8376,6 +8378,18 @@ ${includeComments ? `        // ────────────────
             ctx.fillStyle = '#00ff00';
             ctx.font = '10px monospace';
             ctx.fillText(hbDebug.width + 'x' + hbDebug.height, hbScreenX, hbScreenY - 4);
+            // Draw object hitboxes in red
+            for (var di = 0; di < activeObjects.length; di++) {
+                var dObj = activeObjects[di];
+                if (!dObj.active) continue;
+                var dW = dObj.width || RENDER_SIZE;
+                var dH = dObj.height || RENDER_SIZE;
+                var dX = dObj.x - dW/2 - camX;
+                var dY = dObj.y - dH/2 - camY;
+                ctx.strokeStyle = dObj.type === 'enemy' ? '#ff4444' : '#ffaa00';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(dX, dY, dW, dH);
+            }
         }
 
         // Multiplayer: Draw remote players
