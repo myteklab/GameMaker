@@ -5558,13 +5558,19 @@ ${includeComments ? `        // ────────────────
             var obj = activeObjects[i];
             if (!obj.active) continue;
 
-            // Check collision with player (circle collision)
-            var dx = obj.x - playerCenterX;
-            var dy = obj.y - playerCenterY;
-            var dist = Math.sqrt(dx * dx + dy * dy);
-            var objRadius = RENDER_SIZE / 2 * 0.8;
+            // Check collision with player (AABB collision)
+            var objW = obj.width || RENDER_SIZE;
+            var objH = obj.height || RENDER_SIZE;
+            var objLeft = obj.x - objW / 2;
+            var objRight = obj.x + objW / 2;
+            var objTop = obj.y - objH / 2;
+            var objBottom = obj.y + objH / 2;
+            var hbLeft = hbCollision.x;
+            var hbRight = hbCollision.x + hbCollision.width;
+            var hbTop = hbCollision.y;
+            var hbBottom = hbCollision.y + hbCollision.height;
 
-            if (dist < playerRadius + objRadius) {
+            if (hbRight > objLeft && hbLeft < objRight && hbBottom > objTop && hbTop < objBottom) {
                 // Collision detected!
                 switch (obj.type) {
                     case 'collectible':
