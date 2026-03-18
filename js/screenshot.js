@@ -2,140 +2,153 @@
 // SCREENSHOT GENERATION
 // ============================================
 
-// Generate a preview screenshot of the level
+// Generate a preview screenshot of the current editor viewport
 function generateScreenshot() {
-    const previewWidth = 600;
-    const previewHeight = 400;
+    const previewWidth = 800;
+    const previewHeight = 500;
 
-    // Calculate scale to fit the level
-    const levelPixelWidth = levelWidth * tileSize;
-    const levelPixelHeight = levelHeight * tileSize;
-    const scaleX = previewWidth / levelPixelWidth;
-    const scaleY = previewHeight / levelPixelHeight;
-    const scale = Math.min(scaleX, scaleY, 1);
-
-    // Calculate offset to center
-    const offsetX = (previewWidth - levelPixelWidth * scale) / 2;
-    const offsetY = (previewHeight - levelPixelHeight * scale) / 2;
-
-    // Test CORS on separate canvases BEFORE drawing to main canvas
-    let canUseTileset = false;
-    let safeBackgroundIndices = [];
-
-    // Test each background image for CORS
-    for (let i = 0; i < backgroundLayers.length; i++) {
-        const layer = backgroundLayers[i];
-        const img = loadedBackgroundImages[i];
-
-        if (!layer || !layer.src) continue;
-        if (layer.visible === false) continue;
-
-        if (img && img.complete && img.naturalWidth > 0) {
-            try {
-                const testCanvas = document.createElement('canvas');
-                testCanvas.width = 1;
-                testCanvas.height = 1;
-                const testCtx = testCanvas.getContext('2d');
-                testCtx.drawImage(img, 0, 0, 1, 1);
-                testCtx.getImageData(0, 0, 1, 1);
-                safeBackgroundIndices.push(i);
-            } catch (e) {
-                // CORS blocked - skip this layer
-            }
-        }
-    }
-
-    // Test tileset image for CORS
-    if (tilesetImage && tilesetImage.complete) {
-        try {
-            const testCanvas = document.createElement('canvas');
-            testCanvas.width = 1;
-            testCanvas.height = 1;
-            const testCtx = testCanvas.getContext('2d');
-            testCtx.drawImage(tilesetImage, 0, 0, 1, 1);
-            testCtx.getImageData(0, 0, 1, 1);
-            canUseTileset = true;
-        } catch (e) {
-            // CORS blocked - will use fallback colors
-        }
-    }
-
-    // Now create the actual screenshot canvas (guaranteed not tainted)
+    // Create screenshot canvas
     const screenshotCanvas = document.createElement('canvas');
     const sctx = screenshotCanvas.getContext('2d');
     screenshotCanvas.width = previewWidth;
     screenshotCanvas.height = previewHeight;
 
-    // Calculate the actual level area dimensions
-    const levelAreaWidth = levelPixelWidth * scale;
-    const levelAreaHeight = levelPixelHeight * scale;
-
-    // Draw gradient background for full canvas
-    const gradient = sctx.createLinearGradient(0, 0, 0, previewHeight);
-    gradient.addColorStop(0, '#1a1a3e');
-    gradient.addColorStop(1, '#2d1b4e');
-    sctx.fillStyle = gradient;
-    sctx.fillRect(0, 0, previewWidth, previewHeight);
-
-    // Draw ALL safe background layers - clipped to level area
-    sctx.save();
-    sctx.beginPath();
-    sctx.rect(offsetX, offsetY, levelAreaWidth, levelAreaHeight);
-    sctx.clip();
-
-    for (let i = 0; i < safeBackgroundIndices.length; i++) {
-        const idx = safeBackgroundIndices[i];
-        const img = loadedBackgroundImages[idx];
-        if (img) {
-            // Scale background to match level height, not preview height
-            const bgScale = levelAreaHeight / img.naturalHeight;
-            const bgWidth = img.naturalWidth * bgScale;
-            const bgHeight = levelAreaHeight;
-            for (let x = offsetX; x < offsetX + levelAreaWidth; x += bgWidth) {
-                sctx.drawImage(img, x, offsetY, bgWidth, bgHeight);
+    // Try to capture the editor canvas directly (best quality)
+    try {
+        if (canvas && canvas.width > 0 && canvas.height > 0) {
+            // Ensure the editor is fully drawn
+            if (typeof draw === 'function') {
+                draw();
             }
+            // Scale the editor canvas to fit the screenshot
+            var scaleX = previewWidth / canvas.width;
+            var scaleY = previewHeight / canvas.height;
+            var scale = Math.min(scaleX, scaleY);
+            var drawW = canvas.width * scale;
+            var drawH = canvas.height * scale;
+            var drawX = (previewWidth - drawW) / 2;
+            var drawY = (previewHeight - drawH) / 2;
+
+            // Fill background
+            sctx.fillStyle = '#1a1a2e';
+            sctx.fillRect(0, 0, previewWidth, previewHeight);
+
+            sctx.drawImage(canvas, drawX, drawY, drawW, drawH);
+            return screenshotCanvas.toDataURL('image/png');
+        }
+    } catch (e) {
+        // Canvas tainted by CORS images, fall back to manual rendering
+    }
+
+    // Fallback: render the visible portion manually (CORS-safe)
+    var viewLeft = Math.floor(cameraX);
+    var viewTop = Math.floor(cameraY);
+    var viewWidth = Math.ceil(canvas.width / zoom);
+    var viewHeight = Math.ceil(canvas.height / zoom);
+
+    var scale = Math.min(previewWidth / viewWidth, previewHeight / viewHeight, 2);
+    var renderW = viewWidth * scale;
+    var renderH = viewHeight * scale;
+    var offsetX = (previewWidth - renderW) / 2;
+    var offsetY = (previewHeight - renderH) / 2;
+
+    // Test CORS on tileset
+    var canUseTileset = false;
+    if (tilesetImage && tilesetImage.complete) {
+        try {
+            var testCanvas = document.createElement('canvas');
+            testCanvas.width = 1;
+            testCanvas.height = 1;
+            var testCtx = testCanvas.getContext('2d');
+            testCtx.drawImage(tilesetImage, 0, 0, 1, 1);
+            testCtx.getImageData(0, 0, 1, 1);
+            canUseTileset = true;
+        } catch (e) {}
+    }
+
+    // Test CORS on background images
+    var safeBackgroundIndices = [];
+    for (var i = 0; i < backgroundLayers.length; i++) {
+        var layer = backgroundLayers[i];
+        var img = loadedBackgroundImages[i];
+        if (!layer || !layer.src || layer.visible === false) continue;
+        if (img && img.complete && img.naturalWidth > 0) {
+            try {
+                var testCanvas = document.createElement('canvas');
+                testCanvas.width = 1;
+                testCanvas.height = 1;
+                var testCtx = testCanvas.getContext('2d');
+                testCtx.drawImage(img, 0, 0, 1, 1);
+                testCtx.getImageData(0, 0, 1, 1);
+                safeBackgroundIndices.push(i);
+            } catch (e) {}
         }
     }
 
-    sctx.restore(); // Remove clipping
+    // Draw background color or default gradient
+    var currentLevel = typeof getCurrentLevel === 'function' ? getCurrentLevel() : null;
+    var bgColor = currentLevel && currentLevel.bgColor;
+    if (bgColor) {
+        sctx.fillStyle = bgColor;
+        sctx.fillRect(0, 0, previewWidth, previewHeight);
+    } else {
+        var gradient = sctx.createLinearGradient(0, 0, 0, previewHeight);
+        gradient.addColorStop(0, '#1a1a3e');
+        gradient.addColorStop(1, '#2d1b4e');
+        sctx.fillStyle = gradient;
+        sctx.fillRect(0, 0, previewWidth, previewHeight);
+    }
 
-    // Draw tiles
+    // Draw safe background layers
+    sctx.save();
+    sctx.beginPath();
+    sctx.rect(offsetX, offsetY, renderW, renderH);
+    sctx.clip();
+
+    for (var i = 0; i < safeBackgroundIndices.length; i++) {
+        var idx = safeBackgroundIndices[i];
+        var img = loadedBackgroundImages[idx];
+        if (img) {
+            var bgScale = renderH / img.naturalHeight;
+            var bgWidth = img.naturalWidth * bgScale;
+            var parallaxX = viewLeft * (backgroundLayers[idx].speed || 0);
+            var startBgX = offsetX - (parallaxX * scale) % bgWidth;
+            for (var bx = startBgX; bx < offsetX + renderW; bx += bgWidth) {
+                sctx.drawImage(img, bx, offsetY, bgWidth, renderH);
+            }
+        }
+    }
+    sctx.restore();
+
+    // Draw visible tiles
     sctx.imageSmoothingEnabled = false;
+    var startCol = Math.floor(viewLeft / tileSize);
+    var endCol = Math.ceil((viewLeft + viewWidth) / tileSize);
+    var startRow = Math.floor(viewTop / tileSize);
+    var endRow = Math.ceil((viewTop + viewHeight) / tileSize);
+    var tileScreenSize = tileSize * scale;
 
-    for (let y = 0; y < level.length; y++) {
-        const row = level[y];
+    for (var y = Math.max(0, startRow); y < Math.min(level.length, endRow); y++) {
+        var row = level[y];
         if (!row) continue;
-
-        for (let x = 0; x < row.length; x++) {
-            const char = row[x];
+        for (var x = Math.max(0, startCol); x < Math.min(row.length, endCol); x++) {
+            var char = row[x];
             if (char === '.' || char === ' ') continue;
 
-            // Check regular tiles first, then custom tiles
-            const tile = tiles[char];
-            const charCode = char.charCodeAt(0);
-            const isCustom = (charCode >= 0xE000 && charCode <= 0xF8FF);
+            var tile = tiles[char];
+            var charCode = char.charCodeAt(0);
+            var isCustom = (charCode >= 0xE000 && charCode <= 0xF8FF);
 
-            if (!tile && !isCustom) {
-                // Only log once per unique character to avoid console spam
-                if (!window._screenshotUnknownChars) window._screenshotUnknownChars = new Set();
-                if (!window._screenshotUnknownChars.has(char)) {
-                    window._screenshotUnknownChars.add(char);
-                    console.warn('[SCREENSHOT] Unknown tile char:', char, '(code:', charCode, ')');
-                }
-                continue;
-            }
+            if (!tile && !isCustom) continue;
 
-            const screenX = offsetX + x * tileSize * scale;
-            const screenY = offsetY + y * tileSize * scale;
-            const tileScreenSize = tileSize * scale;
+            var screenX = offsetX + (x * tileSize - viewLeft) * scale;
+            var screenY = offsetY + (y * tileSize - viewTop) * scale;
 
-            // Draw custom tiles from cached images (data URLs, no CORS issues)
             if (isCustom) {
-                const customImg = customTileImageCache[char];
+                var customImg = customTileImageCache[char];
                 if (customImg && customImg.complete && customImg.naturalWidth > 0) {
                     sctx.drawImage(customImg, screenX, screenY, tileScreenSize, tileScreenSize);
                 } else {
-                    // Fallback: colored square for custom tiles without cached images
                     sctx.fillStyle = '#4a90d9';
                     sctx.fillRect(screenX, screenY, tileScreenSize, tileScreenSize);
                 }
@@ -143,45 +156,49 @@ function generateScreenshot() {
             }
 
             if (canUseTileset && tilesetImage) {
-                // Draw actual tileset tile
                 sctx.drawImage(
                     tilesetImage,
                     tile.x, tile.y, tileSize, tileSize,
                     screenX, screenY, tileScreenSize, tileScreenSize
                 );
             } else {
-                // Fallback: earthy/natural colored squares
-                const earthyColors = [
-                    { fill: '#8B4513', stroke: '#5D2E0C' },
-                    { fill: '#A0522D', stroke: '#6B3720' },
-                    { fill: '#CD853F', stroke: '#8B5A2B' },
-                    { fill: '#6B8E23', stroke: '#4A6317' },
-                    { fill: '#556B2F', stroke: '#3A4A20' },
-                    { fill: '#708090', stroke: '#4A5568' },
-                    { fill: '#696969', stroke: '#4A4A4A' },
-                    { fill: '#2F4F4F', stroke: '#1A2F2F' },
-                    { fill: '#B8860B', stroke: '#7D5A07' },
-                    { fill: '#D2691E', stroke: '#8B4513' },
-                ];
-                const colorIdx = charCode % earthyColors.length;
-                const colors = earthyColors[colorIdx];
-
-                sctx.fillStyle = colors.fill;
+                sctx.fillStyle = tile.solid ? '#6B5B40' : '#4A6B40';
                 sctx.fillRect(screenX, screenY, tileScreenSize, tileScreenSize);
-
-                if (tile.solid) {
-                    sctx.strokeStyle = colors.stroke;
-                    sctx.lineWidth = Math.max(1, scale);
-                    sctx.strokeRect(screenX, screenY, tileScreenSize, tileScreenSize);
-                }
             }
+        }
+    }
+
+    // Draw game objects in view
+    if (typeof gameObjects !== 'undefined') {
+        for (var i = 0; i < gameObjects.length; i++) {
+            var obj = gameObjects[i];
+            var objX = obj.x * tileSize;
+            var objY = obj.y * tileSize;
+
+            // Skip objects outside view
+            if (objX + tileSize < viewLeft || objX > viewLeft + viewWidth ||
+                objY + tileSize < viewTop || objY > viewTop + viewHeight) continue;
+
+            var sx = offsetX + (objX - viewLeft) * scale;
+            var sy = offsetY + (objY - viewTop) * scale;
+            var objSize = tileSize * scale;
+
+            var colors = {
+                enemy: '#e74c3c', collectible: '#f1c40f', hazard: '#7f8c8d',
+                powerup: '#e91e63', goal: '#2ecc71', spring: '#9b59b6',
+                checkpoint: '#3498db', npc: '#3498db', door: '#8b4513',
+                movingPlatform: '#8B4513', mysteryBlock: '#f1c40f'
+            };
+            sctx.fillStyle = colors[obj.type] || '#888';
+            sctx.globalAlpha = 0.8;
+            sctx.fillRect(sx, sy, objSize, objSize);
+            sctx.globalAlpha = 1;
         }
     }
 
     try {
         return screenshotCanvas.toDataURL('image/png');
     } catch (e) {
-        console.error('[SCREENSHOT] toDataURL failed:', e.message);
         return null;
     }
 }
