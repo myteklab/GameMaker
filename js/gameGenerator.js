@@ -8105,7 +8105,10 @@ ${includeComments ? `        // ────────────────
         drawParticles();
 
         var playerScreenX = player.x - camX;
-        var playerScreenY = player.y - camY + (player.spriteOffsetY || 0);
+        // Shift sprite rendering by collisionOffsetY so the sprite bottom aligns
+        // with the hitbox bottom. Without this, adjusting the collision offset
+        // creates a visual gap between the player sprite and game objects.
+        var playerScreenY = player.y - camY + player.collisionOffsetY + (player.spriteOffsetY || 0);
 
         // Invincibility flashing effect - flash every 100ms (includes cheat invincibility)
         var isInvincible = Date.now() < player.invincibleUntil || (CHEATS_ENABLED && isCheatInvincible());
