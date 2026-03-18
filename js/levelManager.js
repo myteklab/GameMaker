@@ -915,6 +915,10 @@ function updateLevelBgColor(value) {
     lvl.bgColor = value;
     const hex = document.getElementById('level-settings-bg-color-hex');
     if (hex) hex.textContent = value;
+    // Redraw editor if editing the current level
+    if (editingLevelIndex === currentLevelIndex && typeof draw === 'function') {
+        draw();
+    }
     markDirty();
 }
 
@@ -927,6 +931,9 @@ function clearLevelBgColor() {
     if (picker) picker.value = '#1a1a2e';
     const hex = document.getElementById('level-settings-bg-color-hex');
     if (hex) hex.textContent = 'default';
+    if (editingLevelIndex === currentLevelIndex && typeof draw === 'function') {
+        draw();
+    }
     markDirty();
 }
 

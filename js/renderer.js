@@ -596,12 +596,19 @@ function drawPlayerFallback(x, y, w, h, isManualSpawn) {
 }
 
 function drawBackground() {
-    // Draw default gradient first (fallback)
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#1a1a3e');
-    gradient.addColorStop(1, '#2d1b4e');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Use level's background color if set, otherwise default gradient
+    const currentLevel = typeof getCurrentLevel === 'function' ? getCurrentLevel() : null;
+    const bgColor = currentLevel && currentLevel.bgColor;
+    if (bgColor) {
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, '#1a1a3e');
+        gradient.addColorStop(1, '#2d1b4e');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     // Draw parallax background layers
     // Layer 0 = furthest back (slowest), higher indices = closer (faster)
