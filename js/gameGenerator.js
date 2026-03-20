@@ -2133,6 +2133,7 @@ ${includeComments ? `    // ═════════════════�
     // Run timer state (speedrun feature)
     var runTimer = 0;           // Current level elapsed time (seconds)
     var totalRunTime = 0;       // Cumulative time across all levels
+    var runTimerStarted = false; // Timer starts on first player input
 
     // Menu level state
     var isMenuLevel = false;
@@ -4027,11 +4028,12 @@ ${includeComments ? `    // ═════════════════�
         // Handle run timer on level load
         if (RUN_TIMER_ENABLED) {
             if (RUN_TIMER_MODE === 'level') {
-                runTimer = 0; // Per-level: reset each level
+                runTimer = 0;
+                runTimerStarted = false; // Wait for input on each level
             } else {
-                // Cumulative: add current to total, reset current
                 totalRunTime += runTimer;
                 runTimer = 0;
+                // Cumulative: keep running after first level
             }
         }
 
@@ -4734,11 +4736,12 @@ ${includeComments ? `    // ═════════════════�
         if (!isTyping && ['Space', 'ArrowUp', 'ArrowDown'].indexOf(e.code) >= 0) e.preventDefault();
         if (e.code === 'KeyR' && !isTyping) restartGame();
 
-        // Hide controls hint on first game input (movement or action keys)
-        if (!isTyping && !controlsHintHidden) {
+        // Hide controls hint and start run timer on first game input
+        if (!isTyping) {
             var gameKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'];
             if (gameKeys.indexOf(e.code) >= 0) {
-                hideControlsHint();
+                if (!controlsHintHidden) hideControlsHint();
+                if (!runTimerStarted) runTimerStarted = true;
             }
         }
 
@@ -5519,8 +5522,8 @@ ${includeComments ? `        // ────────────────
     function updateGameObjects() {
         if (gameOver || levelComplete) return;
 
-        // Update run timer (speedrun feature)
-        if (RUN_TIMER_ENABLED) {
+        // Update run timer (speedrun feature) - starts on first input
+        if (RUN_TIMER_ENABLED && runTimerStarted) {
             runTimer += 1/60;
         }
 
@@ -9615,6 +9618,7 @@ ${includeComments ? `    // ═════════════════�
                 }
                 console.log('Touch start:', elementId, 'setting keys[' + keyName + '] = true');
                 keys[keyName] = true;
+                if (!runTimerStarted) runTimerStarted = true;
             }, {passive: false});
 
             btn.addEventListener('touchend', function(e) {
