@@ -4735,6 +4735,7 @@ ${includeComments ? `    // ═════════════════�
         var isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
         if (!isTyping && ['Space', 'ArrowUp', 'ArrowDown'].indexOf(e.code) >= 0) e.preventDefault();
         if (e.code === 'KeyR' && !isTyping) restartGame();
+        if (gameOver && (e.code === 'Enter' || e.code === 'Space') && !isTyping) restartGame();
 
         // Hide controls hint and start run timer on first game input
         if (!isTyping) {
