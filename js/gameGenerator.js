@@ -1659,7 +1659,8 @@ ${includeComments ? `    // ═════════════════�
         if (!PARTICLE_EFFECTS_ENABLED) return;
         var now = Date.now();
 
-        for (var e = activeParticleEmitters.length - 1; e >= 0; e--) {
+        var liveEmitters = 0;
+        for (var e = 0; e < activeParticleEmitters.length; e++) {
             var emitter = activeParticleEmitters[e];
             var elapsed = now - emitter.startTime;
 
@@ -1667,7 +1668,6 @@ ${includeComments ? `    // ═════════════════�
             if (elapsed < emitter.duration) {
                 emitter.accumulator += emitter.rate * dt;
                 while (emitter.accumulator >= 1) {
-                    // Create new particle
                     var angleRad = (emitter.angle + (Math.random() - 0.5) * emitter.spread) * Math.PI / 180;
                     var speed = emitter.speed * (0.8 + Math.random() * 0.4);
                     emitter.particles.push({
@@ -1682,24 +1682,27 @@ ${includeComments ? `    // ═════════════════�
                 }
             }
 
-            // Update particles
-            for (var p = emitter.particles.length - 1; p >= 0; p--) {
+            // Update particles (compact in-place instead of splice)
+            var alive = 0;
+            for (var p = 0; p < emitter.particles.length; p++) {
                 var particle = emitter.particles[p];
                 particle.age += dt;
                 particle.vy += emitter.gravity * dt;
                 particle.x += particle.vx * dt;
                 particle.y += particle.vy * dt;
 
-                if (particle.age >= particle.lifetime) {
-                    emitter.particles.splice(p, 1);
+                if (particle.age < particle.lifetime) {
+                    emitter.particles[alive++] = particle;
                 }
             }
+            emitter.particles.length = alive;
 
-            // Remove emitter if done and no particles left
-            if (elapsed >= emitter.duration && emitter.particles.length === 0) {
-                activeParticleEmitters.splice(e, 1);
+            // Keep emitter if still active or has particles
+            if (elapsed < emitter.duration || emitter.particles.length > 0) {
+                activeParticleEmitters[liveEmitters++] = emitter;
             }
         }
+        activeParticleEmitters.length = liveEmitters;
     }
 
     // Draw all active particles
@@ -1901,23 +1904,25 @@ ${includeComments ? `    // ═════════════════�
             emitter.accumulator -= 1;
         }
 
-        // Update existing particles
-        for (var p = backgroundParticles.length - 1; p >= 0; p--) {
+        // Update existing particles (compact in-place instead of splice)
+        var bgAlive = 0;
+        for (var p = 0; p < backgroundParticles.length; p++) {
             var particle = backgroundParticles[p];
             particle.age += dt;
             particle.vy += emitter.gravity * dt;
             particle.x += particle.vx * dt;
             particle.y += particle.vy * dt;
 
-            // Remove if too old or off screen (check all edges)
-            if (particle.age >= particle.lifetime ||
-                particle.y > CANVAS_HEIGHT + 50 ||
-                particle.y < -50 ||
-                particle.x > CANVAS_WIDTH + 50 ||
-                particle.x < -50) {
-                backgroundParticles.splice(p, 1);
+            // Keep if alive and on screen
+            if (particle.age < particle.lifetime &&
+                particle.y <= CANVAS_HEIGHT + 50 &&
+                particle.y >= -50 &&
+                particle.x <= CANVAS_WIDTH + 50 &&
+                particle.x >= -50) {
+                backgroundParticles[bgAlive++] = particle;
             }
         }
+        backgroundParticles.length = bgAlive;
     }
 
     // Draw background particles (call before other game elements)
@@ -7179,9 +7184,11 @@ ${includeComments ? `        // ────────────────
         if (!PROJECTILE_ENABLED) return;
 
         var now = Date.now();
+        var liveProjectiles = 0;
 
-        for (var i = projectiles.length - 1; i >= 0; i--) {
+        for (var i = 0; i < projectiles.length; i++) {
             var p = projectiles[i];
+            var remove = false;
 
             // Move projectile
             p.x += p.speedX;
@@ -7189,81 +7196,67 @@ ${includeComments ? `        // ────────────────
 
             // Check lifetime expiration
             if (now - p.spawnTime > PROJECTILE_LIFETIME) {
-                projectiles.splice(i, 1);
-                continue;
+                remove = true;
             }
 
             // Check wall collision (center point)
-            if (isSolidAt(p.x, p.y)) {
-                projectiles.splice(i, 1);
-                continue;
+            if (!remove && isSolidAt(p.x, p.y)) {
+                remove = true;
             }
 
             // Check out of bounds
-            if (p.x < 0 || p.x > level[0].length * RENDER_SIZE || p.y < 0 || p.y > level.length * RENDER_SIZE) {
-                projectiles.splice(i, 1);
-                continue;
+            if (!remove && (p.x < 0 || p.x > level[0].length * RENDER_SIZE || p.y < 0 || p.y > level.length * RENDER_SIZE)) {
+                remove = true;
             }
 
             // Check enemy collision
-            var hitEnemy = false;
-            for (var j = 0; j < activeObjects.length; j++) {
-                var obj = activeObjects[j];
-                if (!obj.active || obj.type !== 'enemy') continue;
+            if (!remove) {
+                for (var j = 0; j < activeObjects.length; j++) {
+                    var obj = activeObjects[j];
+                    if (!obj.active || obj.type !== 'enemy') continue;
 
-                // Circle collision for enemies
-                var dx = p.x - obj.x;
-                var dy = p.y - obj.y;
-                var dist = Math.sqrt(dx * dx + dy * dy);
-                var enemyRadius = (obj.width || RENDER_SIZE) / 2;
+                    var dx = p.x - obj.x;
+                    var dy = p.y - obj.y;
+                    var dist = Math.sqrt(dx * dx + dy * dy);
+                    var enemyRadius = (obj.width || RENDER_SIZE) / 2;
 
-                if (dist < enemyRadius + Math.max(p.width, p.height) / 2) {
-                    // Hit enemy!
-                    obj.active = false;
-                    sendEnemyKilled(obj); // Sync enemy death to other players
-                    score += 25;
-                    if (SOUND_PROJECTILE_HIT) playSound(SOUND_PROJECTILE_HIT);
-                    // Particle effect on enemy death (per-template)
-                    var hitEnemyTemplate = enemyTemplates.find(function(t) { return t.id === obj.templateId; });
-                    if (hitEnemyTemplate && hitEnemyTemplate.particleEffect) {
-                        spawnParticleEffectFromURL(hitEnemyTemplate.particleEffect, obj.x + obj.width/2, obj.y + obj.height/2, 300);
+                    if (dist < enemyRadius + Math.max(p.width, p.height) / 2) {
+                        obj.active = false;
+                        sendEnemyKilled(obj);
+                        score += 25;
+                        if (SOUND_PROJECTILE_HIT) playSound(SOUND_PROJECTILE_HIT);
+                        var hitEnemyTemplate = enemyTemplates.find(function(t) { return t.id === obj.templateId; });
+                        if (hitEnemyTemplate && hitEnemyTemplate.particleEffect) {
+                            spawnParticleEffectFromURL(hitEnemyTemplate.particleEffect, obj.x + obj.width/2, obj.y + obj.height/2, 300);
+                        }
+                        if (goalCondition === 'score' && checkGoalCondition()) {
+                            handleLevelComplete();
+                        }
+                        remove = true;
+                        break;
                     }
-                    // Check if score goal is met
-                    if (goalCondition === 'score' && checkGoalCondition()) {
-                        handleLevelComplete();
-                    }
-                    projectiles.splice(i, 1);
-                    hitEnemy = true;
-                    break;
                 }
             }
 
             // Check PvP collision with remote players
-            if (!hitEnemy && PVP_ENABLED && MULTIPLAYER_ENABLED && socket && socket.connected) {
-                var hitPlayer = false;
+            if (!remove && PVP_ENABLED && MULTIPLAYER_ENABLED && socket && socket.connected) {
                 for (var playerId in remotePlayers) {
                     if (!remotePlayers.hasOwnProperty(playerId)) continue;
                     var rp = remotePlayers[playerId];
 
-                    // Circle collision for players
                     var pdx = p.x - rp.x;
                     var pdy = p.y - rp.y;
                     var pdist = Math.sqrt(pdx * pdx + pdy * pdy);
-                    var playerRadius = RENDER_SIZE * 0.6; // Approximate player hitbox
+                    var playerRadius = RENDER_SIZE * 0.6;
 
                     if (pdist < playerRadius + Math.max(p.width, p.height) / 2) {
-                        // Hit a remote player! Send PvP hit event
                         socket.emit('gm_pvp_hit', {
                             targetId: playerId,
                             damage: PVP_DAMAGE,
                             projectileId: i
                         });
-
-                        // Visual/audio feedback for shooter
                         if (SOUND_PROJECTILE_HIT) playSound(SOUND_PROJECTILE_HIT);
-
-                        projectiles.splice(i, 1);
-                        hitPlayer = true;
+                        remove = true;
                         break;
                     }
                 }
@@ -7324,14 +7317,20 @@ ${includeComments ? `        // ────────────────
             }
 
             // Update animation
-            if (!hitEnemy && PROJECTILE_SPRITESHEET_COLS > 1) {
+            if (!remove && PROJECTILE_SPRITESHEET_COLS > 1) {
                 p.animTimer++;
                 if (p.animTimer >= 5) {
                     p.animTimer = 0;
                     p.animFrame = (p.animFrame + 1) % PROJECTILE_SPRITESHEET_COLS;
                 }
             }
+
+            // Keep alive projectiles
+            if (!remove) {
+                projectiles[liveProjectiles++] = p;
+            }
         }
+        projectiles.length = liveProjectiles;
     }
 
     // Update remote projectiles (from other players)
