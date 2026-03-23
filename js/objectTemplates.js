@@ -1,4 +1,3 @@
-console.log('[objectTemplates.js] LOADED v8');
 // ============================================
 // OBJECT TEMPLATES - Template Management
 // ============================================
@@ -371,8 +370,7 @@ function editEnemyTemplate(id) {
 
     updateEnemyBehaviorOptions();
     toggleStompOptions();
-    console.log('[DEBUG] about to call updateEnemyHitboxPreview');
-    try { updateEnemyHitboxPreview(); } catch(e) { console.error('[HitboxPreview ERROR]', e); }
+    updateEnemyHitboxPreview();
     document.getElementById('enemy-template-editor').classList.add('visible');
 }
 
@@ -390,14 +388,10 @@ function updateEnemyBehaviorOptions() {
 // Enemy hitbox preview (visual sprite + collision box overlay)
 // Generic hitbox preview for any object type
 // prefix: e.g. 'enemy-template', 'collectible-template', etc.
-function updateHitboxPreview(prefix) {
+function updateObjectHitboxPreview(prefix) {
     var canvas = document.getElementById(prefix + '-hitbox-preview');
-    if (!canvas) { console.log('[HitboxPreview] canvas NOT FOUND for', prefix); return; }
+    if (!canvas) return;
     var ctx = canvas.getContext('2d');
-    // Debug: draw red fill to test canvas rendering
-    ctx.fillStyle = 'red';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    console.log('[HitboxPreview] drew red rect to', prefix, canvas.width, canvas.height);
     var canvasSize = 80;
 
     var spriteW = parseInt(document.getElementById(prefix + '-width')?.value) || 32;
@@ -481,7 +475,7 @@ function updateHitboxPreview(prefix) {
 // Backward compat alias
 function updateEnemyHitboxPreview() {
     console.log('[DEBUG] updateEnemyHitboxPreview -> calling updateHitboxPreview, typeof:', typeof updateHitboxPreview);
-    updateHitboxPreview('enemy-template');
+    updateObjectHitboxPreview('enemy-template');
     console.log('[DEBUG] updateEnemyHitboxPreview done');
 }
 
@@ -698,7 +692,7 @@ function showAddCollectibleTemplate() {
     if (collectParticleEl) collectParticleEl.value = '';
 
     document.getElementById('collectible-template-editor').classList.add('visible');
-    setTimeout(function() { updateHitboxPreview('collectible-template'); }, 50);
+    setTimeout(function() { updateObjectHitboxPreview('collectible-template'); }, 50);
 }
 
 function editCollectibleTemplate(id) {
@@ -739,7 +733,7 @@ function editCollectibleTemplate(id) {
     }
 
     document.getElementById('collectible-template-editor').classList.add('visible');
-    setTimeout(function() { updateHitboxPreview('collectible-template'); }, 50);
+    setTimeout(function() { updateObjectHitboxPreview('collectible-template'); }, 50);
 }
 
 function saveCollectibleTemplate() {
@@ -1110,7 +1104,7 @@ function showAddPowerupTemplate() {
 
     updatePowerupEffectOptions();
     document.getElementById('powerup-template-editor').classList.add('visible');
-    setTimeout(function() { updateHitboxPreview('powerup-template'); }, 50);
+    setTimeout(function() { updateObjectHitboxPreview('powerup-template'); }, 50);
 }
 
 function editPowerupTemplate(id) {
@@ -1153,7 +1147,7 @@ function editPowerupTemplate(id) {
 
     updatePowerupEffectOptions();
     document.getElementById('powerup-template-editor').classList.add('visible');
-    setTimeout(function() { updateHitboxPreview('powerup-template'); }, 50);
+    setTimeout(function() { updateObjectHitboxPreview('powerup-template'); }, 50);
 }
 
 function updatePowerupEffectOptions() {
@@ -1332,7 +1326,7 @@ function showAddSpringTemplate() {
     if (springParticleEl) springParticleEl.value = '';
 
     document.getElementById('spring-template-editor').classList.add('visible');
-    setTimeout(function() { updateHitboxPreview('spring-template'); }, 50);
+    setTimeout(function() { updateObjectHitboxPreview('spring-template'); }, 50);
 }
 
 function editSpringTemplate(id) {
@@ -1369,7 +1363,7 @@ function editSpringTemplate(id) {
     }
 
     document.getElementById('spring-template-editor').classList.add('visible');
-    setTimeout(function() { updateHitboxPreview('spring-template'); }, 50);
+    setTimeout(function() { updateObjectHitboxPreview('spring-template'); }, 50);
 }
 
 function saveSpringTemplate() {
