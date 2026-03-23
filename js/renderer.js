@@ -467,20 +467,187 @@ function drawGameObjects() {
             continue;
         }
 
-        // Option 3: Draw object background circle (fallback)
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.globalAlpha = 0.8;
-        ctx.fill();
+        // Option 3: Draw procedural icon (no background circle)
+        var s = Math.min(objWidth, objHeight) * 0.35;
+        var effect = template?.effect || '';
 
-        // Draw symbol/emoji
-        ctx.globalAlpha = 1;
-        ctx.font = `${Math.max(12, Math.min(objWidth, objHeight) * 0.5)}px 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(symbol, centerX, centerY);
+        if (obj.type === 'enemy') {
+            // Enemy face
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(centerX - s * 0.35, centerY - s * 0.2, s * 0.22, 0, Math.PI * 2);
+            ctx.arc(centerX + s * 0.35, centerY - s * 0.2, s * 0.22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(centerX - s * 0.3, centerY - s * 0.15, s * 0.1, 0, Math.PI * 2);
+            ctx.arc(centerX + s * 0.3, centerY - s * 0.15, s * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = Math.max(1, s * 0.1);
+            ctx.beginPath();
+            ctx.moveTo(centerX - s * 0.3, centerY + s * 0.35);
+            ctx.lineTo(centerX - s * 0.1, centerY + s * 0.2);
+            ctx.lineTo(centerX + s * 0.1, centerY + s * 0.35);
+            ctx.lineTo(centerX + s * 0.3, centerY + s * 0.2);
+            ctx.stroke();
+        } else if (obj.type === 'collectible') {
+            // Coin
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = Math.max(1, s * 0.12);
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, s * 0.65, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.beginPath();
+            ctx.arc(centerX - s * 0.25, centerY - s * 0.25, s * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (obj.type === 'hazard') {
+            // Spikes
+            ctx.fillStyle = color;
+            for (var si = -1; si <= 1; si++) {
+                ctx.beginPath();
+                ctx.moveTo(centerX + si * s * 0.65 - s * 0.28, centerY + s * 0.5);
+                ctx.lineTo(centerX + si * s * 0.65, centerY - s * 0.5);
+                ctx.lineTo(centerX + si * s * 0.65 + s * 0.28, centerY + s * 0.5);
+                ctx.closePath();
+                ctx.fill();
+            }
+        } else if (obj.type === 'powerup') {
+            if (effect === 'ammo') {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.roundRect(centerX - s * 0.65, centerY - s * 0.3, s * 1.3, s * 0.6, s * 0.2);
+                ctx.fill();
+                ctx.fillStyle = '#f1c40f';
+                ctx.beginPath();
+                ctx.roundRect(centerX - s * 0.65, centerY - s * 0.2, s * 0.4, s * 0.4, s * 0.08);
+                ctx.fill();
+            } else if (effect === 'speed') {
+                ctx.fillStyle = color || '#f39c12';
+                ctx.beginPath();
+                ctx.moveTo(centerX + s * 0.1, centerY - s * 0.7);
+                ctx.lineTo(centerX - s * 0.35, centerY + s * 0.05);
+                ctx.lineTo(centerX + s * 0.05, centerY + s * 0.05);
+                ctx.lineTo(centerX - s * 0.1, centerY + s * 0.7);
+                ctx.lineTo(centerX + s * 0.35, centerY - s * 0.05);
+                ctx.lineTo(centerX - s * 0.05, centerY - s * 0.05);
+                ctx.closePath();
+                ctx.fill();
+            } else if (effect === 'jump') {
+                ctx.fillStyle = color || '#9b59b6';
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY - s * 0.6);
+                ctx.lineTo(centerX + s * 0.45, centerY);
+                ctx.lineTo(centerX + s * 0.18, centerY);
+                ctx.lineTo(centerX + s * 0.18, centerY + s * 0.6);
+                ctx.lineTo(centerX - s * 0.18, centerY + s * 0.6);
+                ctx.lineTo(centerX - s * 0.18, centerY);
+                ctx.lineTo(centerX - s * 0.45, centerY);
+                ctx.closePath();
+                ctx.fill();
+            } else if (effect === 'shield') {
+                ctx.fillStyle = color || '#3498db';
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY - s * 0.7);
+                ctx.lineTo(centerX + s * 0.6, centerY - s * 0.3);
+                ctx.lineTo(centerX + s * 0.5, centerY + s * 0.25);
+                ctx.lineTo(centerX, centerY + s * 0.7);
+                ctx.lineTo(centerX - s * 0.5, centerY + s * 0.25);
+                ctx.lineTo(centerX - s * 0.6, centerY - s * 0.3);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                // Heart (heal/extra life)
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY + s * 0.6);
+                ctx.bezierCurveTo(centerX - s * 1.2, centerY - s * 0.15, centerX - s * 0.6, centerY - s * 0.95, centerX, centerY - s * 0.35);
+                ctx.bezierCurveTo(centerX + s * 0.6, centerY - s * 0.95, centerX + s * 1.2, centerY - s * 0.15, centerX, centerY + s * 0.6);
+                ctx.fill();
+            }
+        } else if (obj.type === 'goal') {
+            // Flag
+            var fx = centerX - s * 0.3;
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = Math.max(2, s * 0.08);
+            ctx.beginPath();
+            ctx.moveTo(fx, centerY - s * 0.7);
+            ctx.lineTo(fx, centerY + s * 0.7);
+            ctx.stroke();
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(fx, centerY - s * 0.7);
+            ctx.lineTo(fx + s * 0.9, centerY - s * 0.4);
+            ctx.lineTo(fx, centerY - s * 0.1);
+            ctx.closePath();
+            ctx.fill();
+        } else if (obj.type === 'checkpoint') {
+            // Pennant
+            var fx = centerX - s * 0.3;
+            ctx.strokeStyle = '#aaa';
+            ctx.lineWidth = Math.max(1, s * 0.06);
+            ctx.beginPath();
+            ctx.moveTo(fx, centerY - s * 0.7);
+            ctx.lineTo(fx, centerY + s * 0.7);
+            ctx.stroke();
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(fx, centerY - s * 0.7);
+            ctx.lineTo(fx + s * 0.7, centerY - s * 0.45);
+            ctx.lineTo(fx, centerY - s * 0.2);
+            ctx.closePath();
+            ctx.fill();
+        } else if (obj.type === 'npc') {
+            // Friendly face
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(centerX - s * 0.3, centerY - s * 0.2, s * 0.18, 0, Math.PI * 2);
+            ctx.arc(centerX + s * 0.3, centerY - s * 0.2, s * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = Math.max(1, s * 0.08);
+            ctx.beginPath();
+            ctx.arc(centerX, centerY + s * 0.1, s * 0.25, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
+        } else if (obj.type === 'door') {
+            // Door
+            var dw = objWidth * 0.65;
+            var dh = objHeight * 0.8;
+            var dx = centerX - dw / 2;
+            var dy = centerY - dh / 2 + objHeight * 0.05;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(dx, dy, dw, dh, [dw * 0.12, dw * 0.12, 0, 0]);
+            ctx.fill();
+            ctx.fillStyle = '#f1c40f';
+            ctx.beginPath();
+            ctx.arc(dx + dw * 0.75, dy + dh * 0.52, Math.max(2, dw * 0.07), 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // Generic fallback: small colored circle with symbol
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, s, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.font = `${Math.max(10, s)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff';
+            ctx.fillText(symbol, centerX, centerY);
+        }
 
         ctx.restore();
     }
