@@ -848,10 +848,10 @@ function drawSelection() {
 
     // Hint text
     if (!selectionDragging) {
-        ctx.font = '10px sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
         ctx.textAlign = 'center';
-        ctx.fillText('Del=clear  Enter=fill  Esc=cancel', x1 + w / 2, y1 + h + 14);
+        ctx.fillText('Del = Clear    Enter = Fill    Esc = Cancel', x1 + w / 2, y1 + h + 18);
     }
 }
 
