@@ -155,6 +155,12 @@ let dragStartCamY = 0;
 let hoverX = -1;
 let hoverY = -1;
 
+// Rectangle selection (Shift+drag)
+let selection = null; // { x1, y1, x2, y2 } tile coordinates (normalized so x1<=x2, y1<=y2)
+let selectionDragging = false;
+let selectionStartX = -1;
+let selectionStartY = -1;
+
 // Background layers
 let backgroundLayers = [];
 

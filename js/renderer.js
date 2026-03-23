@@ -51,6 +51,9 @@ function draw() {
     // Draw terrain zone preview (when drawing new zone)
     drawTerrainZonePreview();
 
+    // Draw rectangle selection highlight
+    drawSelection();
+
     // Draw spawn point indicator
     drawSpawnPoint();
 
@@ -812,6 +815,43 @@ function drawGrid() {
         ctx.moveTo(Math.max(0, levelLeft), screenY);
         ctx.lineTo(Math.min(canvas.width, levelRight), screenY);
         ctx.stroke();
+    }
+}
+
+function drawSelection() {
+    if (!selection) return;
+
+    const scaledTileSize = tileSize * zoom;
+    const x1 = (selection.x1 * tileSize - cameraX) * zoom;
+    const y1 = (selection.y1 * tileSize - cameraY) * zoom;
+    const w = (selection.x2 - selection.x1 + 1) * scaledTileSize;
+    const h = (selection.y2 - selection.y1 + 1) * scaledTileSize;
+
+    // Semi-transparent fill
+    ctx.fillStyle = 'rgba(102, 126, 234, 0.15)';
+    ctx.fillRect(x1, y1, w, h);
+
+    // Dashed border
+    ctx.strokeStyle = '#667eea';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(x1, y1, w, h);
+    ctx.setLineDash([]);
+
+    // Selection info label
+    const cols = selection.x2 - selection.x1 + 1;
+    const rows = selection.y2 - selection.y1 + 1;
+    ctx.fillStyle = '#667eea';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(cols + 'x' + rows, x1 + 4, y1 - 4);
+
+    // Hint text
+    if (!selectionDragging) {
+        ctx.font = '10px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.textAlign = 'center';
+        ctx.fillText('Del=clear  Enter=fill  Esc=cancel', x1 + w / 2, y1 + h + 14);
     }
 }
 

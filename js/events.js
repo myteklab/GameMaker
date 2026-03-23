@@ -41,6 +41,17 @@ function onCanvasMouseMove(e) {
 
     document.getElementById('coordinates').textContent = `X: ${tile.x}, Y: ${tile.y}`;
 
+    // Update rectangle selection drag
+    if (selectionDragging) {
+        var sx1 = Math.min(selectionStartX, tile.x);
+        var sy1 = Math.min(selectionStartY, tile.y);
+        var sx2 = Math.max(selectionStartX, tile.x);
+        var sy2 = Math.max(selectionStartY, tile.y);
+        selection = { x1: sx1, y1: sy1, x2: sx2, y2: sy2 };
+        draw();
+        return;
+    }
+
     // Update cursor inspector
     updateCursorInspector(tile.x, tile.y);
 
@@ -223,6 +234,22 @@ function onCanvasMouseDown(e) {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const tile = screenToTile(x, y);
+
+    // Shift+left-click: start rectangle selection
+    if (e.button === 0 && e.shiftKey && !isDraggingObject) {
+        selectionDragging = true;
+        selectionStartX = tile.x;
+        selectionStartY = tile.y;
+        selection = { x1: tile.x, y1: tile.y, x2: tile.x, y2: tile.y };
+        draw();
+        return;
+    }
+
+    // Click without shift clears any existing selection
+    if (e.button === 0 && selection && !e.shiftKey) {
+        selection = null;
+        draw();
+    }
 
     // Universal object dragging: Check if clicking directly on an object/player
     // Works regardless of current tool, EXCEPT when using erase tool (erase should delete, not drag)
@@ -712,6 +739,17 @@ function updateLevelSpawnUI() {
 }
 
 function onCanvasMouseUp(e) {
+    // Finish rectangle selection
+    if (selectionDragging) {
+        selectionDragging = false;
+        // If selection is just a single tile (click without drag), clear it
+        if (selection && selection.x1 === selection.x2 && selection.y1 === selection.y2) {
+            selection = null;
+        }
+        draw();
+        return;
+    }
+
     // Finish terrain zone drawing
     if (e.button === 0 && isDrawingTerrainZone && terrainZonePreview) {
         isDrawingTerrainZone = false;
@@ -963,16 +1001,57 @@ function onKeyDown(e) {
     const tag = document.activeElement.tagName.toLowerCase();
     const isTyping = tag === 'input' || tag === 'textarea';
 
-    // Escape key - deselect object placement mode and return to tile editing
+    // Escape key - clear selection, deselect object placement, etc.
     if (!isTyping && e.key === 'Escape') {
+        if (selection) {
+            selection = null;
+            draw();
+            e.preventDefault();
+            return;
+        }
         if (selectedObjectType) {
             clearObjectSelection();
             e.preventDefault();
             return;
         }
-        // Also deselect any selected terrain zone
         if (selectedTerrainZone !== null) {
             selectedTerrainZone = null;
+            draw();
+            e.preventDefault();
+            return;
+        }
+    }
+
+    // Delete/Backspace - clear tiles in selection
+    if (!isTyping && selection && (e.key === 'Delete' || e.key === 'Backspace')) {
+        saveUndoState('Clear Selection');
+        for (var sy = selection.y1; sy <= selection.y2; sy++) {
+            for (var sx = selection.x1; sx <= selection.x2; sx++) {
+                setTileAt(sx, sy, '.');
+            }
+        }
+        var count = (selection.x2 - selection.x1 + 1) * (selection.y2 - selection.y1 + 1);
+        showToast('Cleared ' + count + ' tiles');
+        selection = null;
+        markDirty();
+        draw();
+        e.preventDefault();
+        return;
+    }
+
+    // Fill selection with current tile (when selection active and a tile key is pressed)
+    if (!isTyping && selection && selectedTileKey && selectedTileKey !== '.' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.key === 'Enter') {
+            saveUndoState('Fill Selection');
+            for (var sy = selection.y1; sy <= selection.y2; sy++) {
+                for (var sx = selection.x1; sx <= selection.x2; sx++) {
+                    setTileAt(sx, sy, selectedTileKey);
+                }
+            }
+            var count = (selection.x2 - selection.x1 + 1) * (selection.y2 - selection.y1 + 1);
+            showToast('Filled ' + count + ' tiles');
+            selection = null;
+            markDirty();
             draw();
             e.preventDefault();
             return;
