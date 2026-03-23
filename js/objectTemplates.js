@@ -429,13 +429,22 @@ function updateHitboxPreview(prefix) {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw sprite image or color fallback
-    var spriteUrl = document.getElementById(prefix + '-sprite')?.value;
-    var drawn = false;
+    // Always draw color fallback first
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.6;
+    ctx.fillRect(spriteX, spriteY, scaledSpriteW, scaledSpriteH);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(spriteX, spriteY, scaledSpriteW, scaledSpriteH);
+
+    // If sprite URL exists, load and overdraw
+    var spriteUrl = (document.getElementById(prefix + '-sprite')?.value || '').trim();
     if (spriteUrl) {
         var img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = function() {
+            // Redraw everything with sprite
             ctx.clearRect(0, 0, canvasSize, canvasSize);
             ctx.strokeStyle = 'rgba(255,255,255,0.2)';
             ctx.setLineDash([3, 3]);
@@ -454,16 +463,6 @@ function updateHitboxPreview(prefix) {
             ctx.fillRect(hitboxX, hitboxY, scaledColW, scaledColH);
         };
         img.src = spriteUrl;
-        drawn = true;
-    }
-    if (!drawn) {
-        ctx.fillStyle = color;
-        ctx.globalAlpha = 0.6;
-        ctx.fillRect(spriteX, spriteY, scaledSpriteW, scaledSpriteH);
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(spriteX, spriteY, scaledSpriteW, scaledSpriteH);
     }
 
     ctx.strokeStyle = '#00ff00';
@@ -688,8 +687,8 @@ function showAddCollectibleTemplate() {
     const collectParticleEl = document.getElementById('collectible-template-collect-particle');
     if (collectParticleEl) collectParticleEl.value = '';
 
-    updateHitboxPreview('collectible-template');
     document.getElementById('collectible-template-editor').classList.add('visible');
+    updateHitboxPreview('collectible-template');
 }
 
 function editCollectibleTemplate(id) {
@@ -729,8 +728,8 @@ function editCollectibleTemplate(id) {
         }
     }
 
-    updateHitboxPreview('collectible-template');
     document.getElementById('collectible-template-editor').classList.add('visible');
+    updateHitboxPreview('collectible-template');
 }
 
 function saveCollectibleTemplate() {
@@ -1100,8 +1099,8 @@ function showAddPowerupTemplate() {
     if (powerupParticleEl) powerupParticleEl.value = '';
 
     updatePowerupEffectOptions();
-    updateHitboxPreview('powerup-template');
     document.getElementById('powerup-template-editor').classList.add('visible');
+    updateHitboxPreview('powerup-template');
 }
 
 function editPowerupTemplate(id) {
@@ -1143,8 +1142,8 @@ function editPowerupTemplate(id) {
     }
 
     updatePowerupEffectOptions();
-    updateHitboxPreview('powerup-template');
     document.getElementById('powerup-template-editor').classList.add('visible');
+    updateHitboxPreview('powerup-template');
 }
 
 function updatePowerupEffectOptions() {
@@ -1322,8 +1321,8 @@ function showAddSpringTemplate() {
     const springParticleEl = document.getElementById('spring-template-particle');
     if (springParticleEl) springParticleEl.value = '';
 
-    updateHitboxPreview('spring-template');
     document.getElementById('spring-template-editor').classList.add('visible');
+    updateHitboxPreview('spring-template');
 }
 
 function editSpringTemplate(id) {
@@ -1359,8 +1358,8 @@ function editSpringTemplate(id) {
         }
     }
 
-    updateHitboxPreview('spring-template');
     document.getElementById('spring-template-editor').classList.add('visible');
+    updateHitboxPreview('spring-template');
 }
 
 function saveSpringTemplate() {
