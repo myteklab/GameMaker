@@ -887,8 +887,8 @@
         .editor-scrollbar.horizontal {
             left: 0;
             bottom: 0;
-            right: 10px;
-            height: 10px;
+            right: 14px;
+            height: 14px;
         }
 
         .editor-scrollbar.vertical {
@@ -903,7 +903,7 @@
             right: 0;
             bottom: 0;
             width: 10px;
-            height: 10px;
+            height: 14px;
             background: rgba(15, 52, 96, 0.8);
             z-index: 11;
         }
@@ -928,7 +928,7 @@
 
         .editor-scrollbar.horizontal .scrollbar-thumb {
             top: 2px;
-            height: 6px;
+            height: 10px;
             width: 50px; /* Initial width, JS will adjust */
             left: 0;
         }
