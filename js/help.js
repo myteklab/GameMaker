@@ -419,9 +419,18 @@ const helpContent = {
             <ul>
                 <li><strong>Left-click</strong> - Use current tool</li>
                 <li><strong>Right-click</strong> - Erase (or fill with empty in Fill mode)</li>
+                <li><strong>Shift+drag</strong> - Select a rectangle of tiles</li>
                 <li><strong>Middle-drag</strong> - Pan around the level</li>
                 <li><strong>Scroll wheel</strong> - Pan vertically</li>
                 <li><strong>Shift+Scroll</strong> - Pan horizontally</li>
+            </ul>
+
+            <h4>Selection</h4>
+            <p><strong>Shift+drag</strong> to select a rectangle of tiles, then:</p>
+            <ul>
+                <li><strong>Delete / Backspace</strong> - Clear all tiles in selection</li>
+                <li><strong>Enter</strong> - Fill selection with the current tile</li>
+                <li><strong>Click</strong> - Cancel selection</li>
             </ul>
 
             <h4>Move Tool Tips</h4>
