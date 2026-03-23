@@ -161,6 +161,12 @@ let selectionDragging = false;
 let selectionStartX = -1;
 let selectionStartY = -1;
 
+// Selection move (drag selected tiles)
+let selectionMoving = false;
+let selectionTileData = null; // 2D array of tile keys from the selection
+let selectionMoveOrigin = null; // { x, y } tile where drag started
+let selectionMoveOffset = null; // { dx, dy } current drag offset in tiles
+
 // Background layers
 let backgroundLayers = [];
 

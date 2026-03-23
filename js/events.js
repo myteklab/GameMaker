@@ -52,8 +52,26 @@ function onCanvasMouseMove(e) {
         return;
     }
 
+    // Update selection move
+    if (selectionMoving && selectionMoveOrigin) {
+        selectionMoveOffset = {
+            dx: tile.x - selectionMoveOrigin.x,
+            dy: tile.y - selectionMoveOrigin.y
+        };
+        draw();
+        return;
+    }
+
     // Update cursor inspector
     updateCursorInspector(tile.x, tile.y);
+
+    // Show grab cursor when hovering inside a selection
+    if (!isDragging && !isDraggingObject && selection && !selectionDragging) {
+        if (tile.x >= selection.x1 && tile.x <= selection.x2 &&
+            tile.y >= selection.y1 && tile.y <= selection.y2) {
+            canvas.style.cursor = 'grab';
+        }
+    }
 
     // Update cursor based on what's under it (unless dragging)
     // Show grab cursor over objects even if selectedObjectType is set (to indicate you can drag them)
@@ -245,8 +263,29 @@ function onCanvasMouseDown(e) {
         return;
     }
 
-    // Click without shift clears any existing selection
+    // Click inside selection without shift: start moving the selection
     if (e.button === 0 && selection && !e.shiftKey) {
+        if (tile.x >= selection.x1 && tile.x <= selection.x2 &&
+            tile.y >= selection.y1 && tile.y <= selection.y2) {
+            // Grab the tile data from the selection
+            saveUndoState('Move Selection');
+            selectionTileData = [];
+            for (var sy = selection.y1; sy <= selection.y2; sy++) {
+                var row = [];
+                for (var sx = selection.x1; sx <= selection.x2; sx++) {
+                    row.push(getTileAt(sx, sy));
+                    setTileAt(sx, sy, '.'); // Clear original
+                }
+                selectionTileData.push(row);
+            }
+            selectionMoving = true;
+            selectionMoveOrigin = { x: tile.x, y: tile.y };
+            selectionMoveOffset = { dx: 0, dy: 0 };
+            canvas.style.cursor = 'grabbing';
+            draw();
+            return;
+        }
+        // Clicked outside selection - cancel it
         selection = null;
         draw();
     }
@@ -739,6 +778,42 @@ function updateLevelSpawnUI() {
 }
 
 function onCanvasMouseUp(e) {
+    // Finish selection move - place tiles at new position
+    if (selectionMoving && selectionTileData && selectionMoveOffset) {
+        var dx = selectionMoveOffset.dx;
+        var dy = selectionMoveOffset.dy;
+        var newX1 = selection.x1 + dx;
+        var newY1 = selection.y1 + dy;
+
+        // Place tiles at new position (clamped to level bounds)
+        for (var ry = 0; ry < selectionTileData.length; ry++) {
+            for (var rx = 0; rx < selectionTileData[ry].length; rx++) {
+                var tx = newX1 + rx;
+                var ty = newY1 + ry;
+                if (tx >= 0 && tx < levelWidth && ty >= 0 && ty < levelHeight) {
+                    var tileKey = selectionTileData[ry][rx];
+                    if (tileKey !== '.') {
+                        setTileAt(tx, ty, tileKey);
+                    }
+                }
+            }
+        }
+
+        // Update selection to new position
+        var cols = selection.x2 - selection.x1;
+        var rows = selection.y2 - selection.y1;
+        selection = { x1: newX1, y1: newY1, x2: newX1 + cols, y2: newY1 + rows };
+
+        selectionMoving = false;
+        selectionTileData = null;
+        selectionMoveOrigin = null;
+        selectionMoveOffset = null;
+        canvas.style.cursor = 'crosshair';
+        markDirty();
+        draw();
+        return;
+    }
+
     // Finish rectangle selection
     if (selectionDragging) {
         selectionDragging = false;

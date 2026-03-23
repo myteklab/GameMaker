@@ -822,17 +822,54 @@ function drawSelection() {
     if (!selection) return;
 
     const scaledTileSize = tileSize * zoom;
-    const x1 = (selection.x1 * tileSize - cameraX) * zoom;
-    const y1 = (selection.y1 * tileSize - cameraY) * zoom;
+    var dx = selectionMoving && selectionMoveOffset ? selectionMoveOffset.dx : 0;
+    var dy = selectionMoving && selectionMoveOffset ? selectionMoveOffset.dy : 0;
+
+    const x1 = ((selection.x1 + dx) * tileSize - cameraX) * zoom;
+    const y1 = ((selection.y1 + dy) * tileSize - cameraY) * zoom;
     const w = (selection.x2 - selection.x1 + 1) * scaledTileSize;
     const h = (selection.y2 - selection.y1 + 1) * scaledTileSize;
 
+    // Draw floating tiles during move
+    if (selectionMoving && selectionTileData) {
+        ctx.globalAlpha = 0.8;
+        ctx.imageSmoothingEnabled = false;
+        for (var ry = 0; ry < selectionTileData.length; ry++) {
+            for (var rx = 0; rx < selectionTileData[ry].length; rx++) {
+                var tKey = selectionTileData[ry][rx];
+                if (tKey === '.' || tKey === ' ') continue;
+
+                var screenX = x1 + rx * scaledTileSize;
+                var screenY = y1 + ry * scaledTileSize;
+
+                var tileInfo = tiles[tKey];
+                var charCode = tKey.charCodeAt(0);
+                var isCustom = (charCode >= 0xE000 && charCode <= 0xF8FF);
+
+                if (isCustom && customTileImageCache[tKey]) {
+                    var ctImg = customTileImageCache[tKey];
+                    if (ctImg.complete && ctImg.naturalWidth > 0) {
+                        ctx.drawImage(ctImg, screenX, screenY, scaledTileSize, scaledTileSize);
+                    }
+                } else if (tileInfo && tilesetImage && tilesetImage.complete) {
+                    ctx.drawImage(tilesetImage,
+                        tileInfo.x, tileInfo.y, tileSize, tileSize,
+                        screenX, screenY, scaledTileSize, scaledTileSize);
+                } else {
+                    ctx.fillStyle = '#667eea';
+                    ctx.fillRect(screenX, screenY, scaledTileSize, scaledTileSize);
+                }
+            }
+        }
+        ctx.globalAlpha = 1;
+    }
+
     // Semi-transparent fill
-    ctx.fillStyle = 'rgba(102, 126, 234, 0.15)';
+    ctx.fillStyle = selectionMoving ? 'rgba(102, 126, 234, 0.05)' : 'rgba(102, 126, 234, 0.15)';
     ctx.fillRect(x1, y1, w, h);
 
     // Dashed border
-    ctx.strokeStyle = '#667eea';
+    ctx.strokeStyle = selectionMoving ? '#4ade80' : '#667eea';
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 4]);
     ctx.strokeRect(x1, y1, w, h);
@@ -847,11 +884,11 @@ function drawSelection() {
     ctx.fillText(cols + 'x' + rows, x1 + 4, y1 - 4);
 
     // Hint text
-    if (!selectionDragging) {
+    if (!selectionDragging && !selectionMoving) {
         ctx.font = 'bold 13px sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
         ctx.textAlign = 'center';
-        ctx.fillText('Del = Clear    Enter = Fill    Esc = Cancel', x1 + w / 2, y1 + h + 18);
+        ctx.fillText('Del = Clear    Enter = Fill    Drag = Move    Esc = Cancel', x1 + w / 2, y1 + h + 18);
     }
 }
 
