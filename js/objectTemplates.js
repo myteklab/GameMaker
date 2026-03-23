@@ -386,57 +386,57 @@ function updateEnemyBehaviorOptions() {
 }
 
 // Enemy hitbox preview (visual sprite + collision box overlay)
-function updateEnemyHitboxPreview() {
-    const canvas = document.getElementById('enemy-hitbox-preview-canvas');
+// Generic hitbox preview for any object type
+// prefix: e.g. 'enemy-template', 'collectible-template', etc.
+function updateHitboxPreview(prefix) {
+    var canvas = document.getElementById(prefix + '-hitbox-preview');
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const canvasSize = 80;
+    var ctx = canvas.getContext('2d');
+    var canvasSize = 80;
 
-    const spriteW = parseInt(document.getElementById('enemy-template-width').value) || 32;
-    const spriteH = parseInt(document.getElementById('enemy-template-height').value) || 32;
-    const colW = parseInt(document.getElementById('enemy-template-collision-width').value) || spriteW;
-    const colH = parseInt(document.getElementById('enemy-template-collision-height').value) || spriteH;
-    const colOfsY = parseInt(document.getElementById('enemy-template-collision-offset-y').value) || 0;
-    const sprOfsY = parseInt(document.getElementById('enemy-template-sprite-offset-y').value) || 0;
-    const color = document.getElementById('enemy-template-color').value || '#ff4444';
+    var spriteW = parseInt(document.getElementById(prefix + '-width')?.value) || 32;
+    var spriteH = parseInt(document.getElementById(prefix + '-height')?.value) || 32;
+    var colW = parseInt(document.getElementById(prefix + '-collision-width')?.value) || spriteW;
+    var colH = parseInt(document.getElementById(prefix + '-collision-height')?.value) || spriteH;
+    var colOfsY = parseInt(document.getElementById(prefix + '-collision-offset-y')?.value) || 0;
+    var sprOfsY = parseInt(document.getElementById(prefix + '-sprite-offset-y')?.value) || 0;
+    var color = document.getElementById(prefix + '-color')?.value || '#888';
 
-    const padding = 6;
-    const maxDim = Math.max(spriteW, spriteH);
-    const scale = Math.min((canvasSize - padding * 2) / maxDim, 2.5);
+    var padding = 6;
+    var maxDim = Math.max(spriteW, spriteH);
+    var scale = Math.min((canvasSize - padding * 2) / maxDim, 2.5);
 
-    const scaledSpriteW = spriteW * scale;
-    const scaledSpriteH = spriteH * scale;
-    const spriteX = (canvasSize - scaledSpriteW) / 2;
-    const spriteY = (canvasSize - scaledSpriteH) / 2 + sprOfsY * scale;
+    var scaledSpriteW = spriteW * scale;
+    var scaledSpriteH = spriteH * scale;
+    var spriteX = (canvasSize - scaledSpriteW) / 2;
+    var spriteY = (canvasSize - scaledSpriteH) / 2 + sprOfsY * scale;
 
-    // Hitbox: centered horizontally, bottom-aligned, with offset
-    const hitboxX = (canvasSize - colW * scale) / 2;
-    const hitboxY = (canvasSize - scaledSpriteH) / 2 + (spriteH - colH + colOfsY) * scale;
-    const scaledColW = colW * scale;
-    const scaledColH = colH * scale;
+    var hitboxX = (canvasSize - colW * scale) / 2;
+    var hitboxY = (canvasSize - scaledSpriteH) / 2 + (spriteH - colH + colOfsY) * scale;
+    var scaledColW = colW * scale;
+    var scaledColH = colH * scale;
 
     ctx.clearRect(0, 0, canvasSize, canvasSize);
 
     // Ground line
+    var groundY = (canvasSize - scaledSpriteH) / 2 + scaledSpriteH;
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
-    const groundY = (canvasSize - scaledSpriteH) / 2 + scaledSpriteH;
     ctx.moveTo(0, groundY);
     ctx.lineTo(canvasSize, groundY);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw sprite (image or color)
-    const spriteUrl = document.getElementById('enemy-template-sprite').value;
-    let drawn = false;
+    // Draw sprite image or color fallback
+    var spriteUrl = document.getElementById(prefix + '-sprite')?.value;
+    var drawn = false;
     if (spriteUrl) {
-        const img = new Image();
+        var img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = function() {
             ctx.clearRect(0, 0, canvasSize, canvasSize);
-            // Redraw ground
             ctx.strokeStyle = 'rgba(255,255,255,0.2)';
             ctx.setLineDash([3, 3]);
             ctx.beginPath();
@@ -444,12 +444,9 @@ function updateEnemyHitboxPreview() {
             ctx.lineTo(canvasSize, groundY);
             ctx.stroke();
             ctx.setLineDash([]);
-            // Draw sprite image
-            const cols = parseInt(document.getElementById('enemy-template-cols').value) || 1;
-            const frameW = img.naturalWidth / cols;
+            var cols = parseInt(document.getElementById(prefix + '-cols')?.value) || 1;
             ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(img, 0, 0, frameW, img.naturalHeight, spriteX, spriteY, scaledSpriteW, scaledSpriteH);
-            // Draw hitbox overlay
+            ctx.drawImage(img, 0, 0, img.naturalWidth / cols, img.naturalHeight, spriteX, spriteY, scaledSpriteW, scaledSpriteH);
             ctx.strokeStyle = '#00ff00';
             ctx.lineWidth = 2;
             ctx.strokeRect(hitboxX, hitboxY, scaledColW, scaledColH);
@@ -460,7 +457,6 @@ function updateEnemyHitboxPreview() {
         drawn = true;
     }
     if (!drawn) {
-        // Color fallback
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.6;
         ctx.fillRect(spriteX, spriteY, scaledSpriteW, scaledSpriteH);
@@ -470,13 +466,15 @@ function updateEnemyHitboxPreview() {
         ctx.strokeRect(spriteX, spriteY, scaledSpriteW, scaledSpriteH);
     }
 
-    // Draw hitbox overlay
     ctx.strokeStyle = '#00ff00';
     ctx.lineWidth = 2;
     ctx.strokeRect(hitboxX, hitboxY, scaledColW, scaledColH);
     ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
     ctx.fillRect(hitboxX, hitboxY, scaledColW, scaledColH);
 }
+
+// Backward compat alias
+function updateEnemyHitboxPreview() { updateHitboxPreview('enemy-template'); }
 
 // Helper: load hitbox fields from template (works for any object type prefix)
 function loadHitboxFields(prefix, template) {
@@ -690,6 +688,7 @@ function showAddCollectibleTemplate() {
     const collectParticleEl = document.getElementById('collectible-template-collect-particle');
     if (collectParticleEl) collectParticleEl.value = '';
 
+    updateHitboxPreview('collectible-template');
     document.getElementById('collectible-template-editor').classList.add('visible');
 }
 
@@ -730,6 +729,7 @@ function editCollectibleTemplate(id) {
         }
     }
 
+    updateHitboxPreview('collectible-template');
     document.getElementById('collectible-template-editor').classList.add('visible');
 }
 
@@ -1100,6 +1100,7 @@ function showAddPowerupTemplate() {
     if (powerupParticleEl) powerupParticleEl.value = '';
 
     updatePowerupEffectOptions();
+    updateHitboxPreview('powerup-template');
     document.getElementById('powerup-template-editor').classList.add('visible');
 }
 
@@ -1142,6 +1143,7 @@ function editPowerupTemplate(id) {
     }
 
     updatePowerupEffectOptions();
+    updateHitboxPreview('powerup-template');
     document.getElementById('powerup-template-editor').classList.add('visible');
 }
 
@@ -1320,6 +1322,7 @@ function showAddSpringTemplate() {
     const springParticleEl = document.getElementById('spring-template-particle');
     if (springParticleEl) springParticleEl.value = '';
 
+    updateHitboxPreview('spring-template');
     document.getElementById('spring-template-editor').classList.add('visible');
 }
 
@@ -1356,6 +1359,7 @@ function editSpringTemplate(id) {
         }
     }
 
+    updateHitboxPreview('spring-template');
     document.getElementById('spring-template-editor').classList.add('visible');
 }
 
