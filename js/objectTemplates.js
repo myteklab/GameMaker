@@ -391,9 +391,12 @@ function updateEnemyBehaviorOptions() {
 // prefix: e.g. 'enemy-template', 'collectible-template', etc.
 function updateHitboxPreview(prefix) {
     var canvas = document.getElementById(prefix + '-hitbox-preview');
-    console.log('[HitboxPreview]', prefix, 'canvas:', canvas, 'size:', canvas ? canvas.width + 'x' + canvas.height : 'null', 'visible:', canvas ? canvas.offsetParent !== null : false);
-    if (!canvas) return;
+    if (!canvas) { console.log('[HitboxPreview] canvas NOT FOUND for', prefix); return; }
     var ctx = canvas.getContext('2d');
+    // Debug: draw red fill to test canvas rendering
+    ctx.fillStyle = 'red';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    console.log('[HitboxPreview] drew red rect to', prefix, canvas.width, canvas.height);
     var canvasSize = 80;
 
     var spriteW = parseInt(document.getElementById(prefix + '-width')?.value) || 32;
