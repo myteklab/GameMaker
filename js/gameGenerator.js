@@ -8690,11 +8690,14 @@ ${includeComments ? `        // ────────────────
                 }
 
                 // Draw procedural icons for object types (no background shapes)
+                // Cap icon size to RENDER_SIZE so objects don't appear oversized
+                var iconSize = Math.min(objW, objH, RENDER_SIZE);
+
                 if (!IS_TOPDOWN && obj.type === 'enemy') {
                     // Enemy: draw a simple skull/face
                     var cx = screenX + objW/2;
                     var cy = screenY + objH/2;
-                    var r = Math.min(objW, objH) * 0.35;
+                    var r = iconSize * 0.35;
                     // Head
                     ctx.fillStyle = color;
                     ctx.beginPath();
@@ -8726,7 +8729,7 @@ ${includeComments ? `        // ────────────────
                     // Collectible: draw a shiny coin
                     var cx = screenX + objW/2;
                     var cy = screenY + objH/2;
-                    var r = Math.min(objW, objH) * 0.33;
+                    var r = iconSize * 0.33;
                     // Outer coin
                     ctx.fillStyle = color || '#f1c40f';
                     ctx.beginPath();
@@ -8747,7 +8750,7 @@ ${includeComments ? `        // ────────────────
                     // Hazard: draw spikes/danger triangle
                     var cx = screenX + objW/2;
                     var cy = screenY + objH/2;
-                    var s = Math.min(objW, objH) * 0.38;
+                    var s = iconSize * 0.38;
                     ctx.fillStyle = color || '#7f8c8d';
                     // Draw 3 spikes
                     for (var si = -1; si <= 1; si++) {
@@ -8770,7 +8773,7 @@ ${includeComments ? `        // ────────────────
                     // Powerup: draw icon based on effect type
                     var cx = screenX + objW/2;
                     var cy = screenY + objH/2;
-                    var s = Math.min(objW, objH) * 0.32;
+                    var s = iconSize * 0.32;
                     var effect = obj.effect || 'heal';
 
                     if (effect === 'ammo') {
@@ -8894,7 +8897,7 @@ ${includeComments ? `        // ────────────────
                     // NPC: draw a friendly face
                     var cx = screenX + objW/2;
                     var cy = screenY + objH/2;
-                    var r = Math.min(objW, objH) * 0.35;
+                    var r = iconSize * 0.35;
                     ctx.fillStyle = color || '#3498db';
                     ctx.beginPath();
                     ctx.arc(cx, cy - r * 0.1, r, 0, Math.PI * 2);
@@ -9001,7 +9004,7 @@ ${includeComments ? `        // ────────────────
                     ctx.beginPath();
                     var arrowCx = sx + objW / 2;
                     var arrowCy = sy + pad + objH * 0.1;
-                    var arrowSize = Math.min(objW, objH) * 0.12;
+                    var arrowSize = iconSize * 0.12;
                     ctx.moveTo(arrowCx, arrowCy - arrowSize);
                     ctx.lineTo(arrowCx - arrowSize, arrowCy + arrowSize * 0.5);
                     ctx.lineTo(arrowCx + arrowSize, arrowCy + arrowSize * 0.5);
