@@ -829,8 +829,10 @@
             <div class="url-divider"><span>or load from URL</span></div>
             <div class="url-input-row">
                 <input type="text" id="tileset-url-input" placeholder="https://example.com/tileset.png" onkeydown="if(event.key==='Enter')loadTilesetFromURLInput()">
-                <button onclick="loadTilesetFromURLInput()">Load</button>
-                <button type="button" class="browse-library-btn" onclick="openAssetPicker('tileset-url-input', 'tilesets')" title="Browse Tilesets">Browse</button>
+            </div>
+            <div class="url-input-row" style="margin-top: 6px;">
+                <button onclick="loadTilesetFromURLInput()" style="flex: 1;">Load URL</button>
+                <button type="button" class="browse-library-btn" onclick="openAssetPicker('tileset-url-input', 'tilesets')" title="Browse Tilesets" style="flex: 1;">Browse Library</button>
             </div>
         </div>
 

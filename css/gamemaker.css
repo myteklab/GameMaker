@@ -439,6 +439,7 @@
         .url-input-row {
             display: flex;
             gap: 6px;
+            flex-wrap: wrap;
         }
 
         .url-input-row input {
