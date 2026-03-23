@@ -179,12 +179,16 @@ function drawGameObjects() {
         const obj = gameObjects[i];
         // Get template for this object to get custom size
         const template = getTemplate(obj.type, obj.templateId);
-        const objWidth = (template?.width || tileSize) * zoom;
-        const objHeight = (template?.height || tileSize) * zoom;
 
-        // Position: center X in tile, bottom-aligned with tile bottom
+        // In the editor, cap object display to tile size so they fit in grid cells
+        // Moving platforms keep their actual size since they span multiple tiles
+        const isMultiTile = (obj.type === 'movingPlatform');
+        const objWidth = isMultiTile ? (template?.width || tileSize) * zoom : scaledTileSize;
+        const objHeight = isMultiTile ? (template?.height || tileSize) * zoom : scaledTileSize;
+
+        // Position: centered in the tile cell
         const screenX = (obj.x * tileSize - cameraX) * zoom + (scaledTileSize - objWidth) / 2;
-        const screenY = (obj.y * tileSize - cameraY) * zoom + (scaledTileSize - objHeight);
+        const screenY = (obj.y * tileSize - cameraY) * zoom + (scaledTileSize - objHeight) / 2;
 
         // Skip if off-screen
         if (screenX + objWidth < 0 || screenX > canvas.width ||
