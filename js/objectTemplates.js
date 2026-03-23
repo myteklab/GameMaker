@@ -688,7 +688,7 @@ function showAddCollectibleTemplate() {
     if (collectParticleEl) collectParticleEl.value = '';
 
     document.getElementById('collectible-template-editor').classList.add('visible');
-    updateHitboxPreview('collectible-template');
+    setTimeout(function() { updateHitboxPreview('collectible-template'); }, 50);
 }
 
 function editCollectibleTemplate(id) {
@@ -729,7 +729,7 @@ function editCollectibleTemplate(id) {
     }
 
     document.getElementById('collectible-template-editor').classList.add('visible');
-    updateHitboxPreview('collectible-template');
+    setTimeout(function() { updateHitboxPreview('collectible-template'); }, 50);
 }
 
 function saveCollectibleTemplate() {
@@ -1100,7 +1100,7 @@ function showAddPowerupTemplate() {
 
     updatePowerupEffectOptions();
     document.getElementById('powerup-template-editor').classList.add('visible');
-    updateHitboxPreview('powerup-template');
+    setTimeout(function() { updateHitboxPreview('powerup-template'); }, 50);
 }
 
 function editPowerupTemplate(id) {
@@ -1143,7 +1143,7 @@ function editPowerupTemplate(id) {
 
     updatePowerupEffectOptions();
     document.getElementById('powerup-template-editor').classList.add('visible');
-    updateHitboxPreview('powerup-template');
+    setTimeout(function() { updateHitboxPreview('powerup-template'); }, 50);
 }
 
 function updatePowerupEffectOptions() {
@@ -1322,7 +1322,7 @@ function showAddSpringTemplate() {
     if (springParticleEl) springParticleEl.value = '';
 
     document.getElementById('spring-template-editor').classList.add('visible');
-    updateHitboxPreview('spring-template');
+    setTimeout(function() { updateHitboxPreview('spring-template'); }, 50);
 }
 
 function editSpringTemplate(id) {
@@ -1359,7 +1359,7 @@ function editSpringTemplate(id) {
     }
 
     document.getElementById('spring-template-editor').classList.add('visible');
-    updateHitboxPreview('spring-template');
+    setTimeout(function() { updateHitboxPreview('spring-template'); }, 50);
 }
 
 function saveSpringTemplate() {
