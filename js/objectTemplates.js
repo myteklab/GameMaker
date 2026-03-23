@@ -1,3 +1,4 @@
+console.log('[objectTemplates.js] LOADED v8');
 // ============================================
 // OBJECT TEMPLATES - Template Management
 // ============================================
