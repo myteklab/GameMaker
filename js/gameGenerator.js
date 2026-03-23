@@ -4366,6 +4366,12 @@ ${includeComments ? `    // ═════════════════�
                 gameObj.spritesheetRows = template.spritesheetRows || 1;
                 gameObj.animSpeed = template.animSpeed || 8;
 
+                // Universal collision properties (all object types)
+                gameObj.spriteOffsetY = (template.spriteOffsetY || 0);
+                gameObj.collisionWidth = template.collisionWidth || 0;
+                gameObj.collisionHeight = template.collisionHeight || 0;
+                gameObj.collisionOffsetY = (template.collisionOffsetY || 0);
+
                 // Enemy-specific properties
                 if (obj.type === 'enemy') {
                     gameObj.enemyId = 'enemy_' + (enemyIdCounter++); // Unique ID for multiplayer sync
@@ -4378,10 +4384,6 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.jumpPower = template.jumpPower || 8;
                     gameObj.stompable = template.stompable || false;
                     gameObj.stompScore = template.stompScore || 50;
-                    gameObj.spriteOffsetY = (template.spriteOffsetY || 0) * TILE_SCALE;
-                    gameObj.collisionWidth = template.collisionWidth ? template.collisionWidth * TILE_SCALE : 0;
-                    gameObj.collisionHeight = template.collisionHeight ? template.collisionHeight * TILE_SCALE : 0;
-                    gameObj.collisionOffsetY = (template.collisionOffsetY || 0) * TILE_SCALE;
                     gameObj.respawnTime = (template.respawnTime || 0) * 1000; // Convert seconds to ms
                     gameObj.deathTime = 0; // Timestamp when enemy was killed (for respawn)
                     gameObj.velocityY = 0;

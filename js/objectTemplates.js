@@ -478,6 +478,25 @@ function updateEnemyHitboxPreview() {
     ctx.fillRect(hitboxX, hitboxY, scaledColW, scaledColH);
 }
 
+// Helper: load hitbox fields from template (works for any object type prefix)
+function loadHitboxFields(prefix, template) {
+    var w = document.getElementById(prefix + '-collision-width');
+    var h = document.getElementById(prefix + '-collision-height');
+    var y = document.getElementById(prefix + '-collision-offset-y');
+    if (w) w.value = template.collisionWidth || '';
+    if (h) h.value = template.collisionHeight || '';
+    if (y) y.value = template.collisionOffsetY || 0;
+}
+
+// Helper: save hitbox fields to template data
+function saveHitboxFields(prefix) {
+    return {
+        collisionWidth: parseInt(document.getElementById(prefix + '-collision-width')?.value) || 0,
+        collisionHeight: parseInt(document.getElementById(prefix + '-collision-height')?.value) || 0,
+        collisionOffsetY: parseInt(document.getElementById(prefix + '-collision-offset-y')?.value) || 0
+    };
+}
+
 function toggleStompOptions() {
     const checkbox = document.getElementById('enemy-template-stompable');
     const stompOptions = document.getElementById('stomp-options');
@@ -660,6 +679,7 @@ function showAddCollectibleTemplate() {
     document.getElementById('collectible-template-animspeed').value = '8';
     document.getElementById('collectible-template-width').value = '32';
     document.getElementById('collectible-template-height').value = '32';
+    loadHitboxFields('collectible-template', {});
     document.getElementById('collectible-template-value').value = '10';
     document.getElementById('collectible-template-symbol').value = '★';
     document.getElementById('collectible-template-color').value = '#ffd700';
@@ -689,6 +709,7 @@ function editCollectibleTemplate(id) {
     document.getElementById('collectible-template-animspeed').value = template.animSpeed || 8;
     document.getElementById('collectible-template-width').value = template.width || 32;
     document.getElementById('collectible-template-height').value = template.height || 32;
+    loadHitboxFields('collectible-template', template);
     document.getElementById('collectible-template-value').value = template.value;
     document.getElementById('collectible-template-symbol').value = template.symbol || '●';
     document.getElementById('collectible-template-color').value = template.color || '#ffd700';
@@ -729,6 +750,7 @@ function saveCollectibleTemplate() {
         animSpeed: parseInt(document.getElementById('collectible-template-animspeed').value) || 8,
         width: parseInt(document.getElementById('collectible-template-width').value) || 32,
         height: parseInt(document.getElementById('collectible-template-height').value) || 32,
+        ...saveHitboxFields('collectible-template'),
         value: parseInt(document.getElementById('collectible-template-value').value) || 10,
         symbol: document.getElementById('collectible-template-symbol').value || '●',
         color: document.getElementById('collectible-template-color').value || '#ffd700',
@@ -1065,6 +1087,7 @@ function showAddPowerupTemplate() {
     document.getElementById('powerup-template-animspeed').value = '8';
     document.getElementById('powerup-template-width').value = '32';
     document.getElementById('powerup-template-height').value = '32';
+    loadHitboxFields('powerup-template', {});
     document.getElementById('powerup-template-effect').value = 'heal';
     document.getElementById('powerup-template-amount').value = '1';
     document.getElementById('powerup-template-duration').value = '0';
@@ -1096,6 +1119,7 @@ function editPowerupTemplate(id) {
     document.getElementById('powerup-template-animspeed').value = template.animSpeed || 8;
     document.getElementById('powerup-template-width').value = template.width || 32;
     document.getElementById('powerup-template-height').value = template.height || 32;
+    loadHitboxFields('powerup-template', template);
     document.getElementById('powerup-template-effect').value = template.effect;
     document.getElementById('powerup-template-amount').value = template.amount;
     document.getElementById('powerup-template-duration').value = template.duration || 0;
@@ -1155,6 +1179,7 @@ function savePowerupTemplate() {
         animSpeed: parseInt(document.getElementById('powerup-template-animspeed').value) || 8,
         width: parseInt(document.getElementById('powerup-template-width').value) || 32,
         height: parseInt(document.getElementById('powerup-template-height').value) || 32,
+        ...saveHitboxFields('powerup-template'),
         effect: document.getElementById('powerup-template-effect').value,
         amount: parseFloat(document.getElementById('powerup-template-amount').value) || 1,
         duration: parseFloat(document.getElementById('powerup-template-duration').value) || 0,
@@ -1285,6 +1310,7 @@ function showAddSpringTemplate() {
     document.getElementById('spring-template-animspeed').value = '8';
     document.getElementById('spring-template-width').value = '32';
     document.getElementById('spring-template-height').value = '16';
+    loadHitboxFields('spring-template', {});
     document.getElementById('spring-template-bouncepower').value = '1.5';
     document.getElementById('spring-template-symbol').value = '🔼';
     document.getElementById('spring-template-color').value = '#9b59b6';
@@ -1310,6 +1336,7 @@ function editSpringTemplate(id) {
     document.getElementById('spring-template-animspeed').value = template.animSpeed || 8;
     document.getElementById('spring-template-width').value = template.width || 32;
     document.getElementById('spring-template-height').value = template.height || 16;
+    loadHitboxFields('spring-template', template);
     document.getElementById('spring-template-bouncepower').value = template.bouncePower || 1.5;
     document.getElementById('spring-template-symbol').value = template.symbol || '🔼';
     document.getElementById('spring-template-color').value = template.color || '#9b59b6';
@@ -1348,6 +1375,7 @@ function saveSpringTemplate() {
         animSpeed: parseInt(document.getElementById('spring-template-animspeed').value) || 8,
         width: parseInt(document.getElementById('spring-template-width').value) || 32,
         height: parseInt(document.getElementById('spring-template-height').value) || 16,
+        ...saveHitboxFields('spring-template'),
         bouncePower: parseFloat(document.getElementById('spring-template-bouncepower').value) || 1.5,
         symbol: document.getElementById('spring-template-symbol').value || '🔼',
         color: document.getElementById('spring-template-color').value || '#9b59b6',
