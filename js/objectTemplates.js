@@ -479,7 +479,11 @@ function updateHitboxPreview(prefix) {
 }
 
 // Backward compat alias
-function updateEnemyHitboxPreview() { updateHitboxPreview('enemy-template'); }
+function updateEnemyHitboxPreview() {
+    console.log('[DEBUG] updateEnemyHitboxPreview -> calling updateHitboxPreview, typeof:', typeof updateHitboxPreview);
+    updateHitboxPreview('enemy-template');
+    console.log('[DEBUG] updateEnemyHitboxPreview done');
+}
 
 // Helper: load hitbox fields from template (works for any object type prefix)
 function loadHitboxFields(prefix, template) {
