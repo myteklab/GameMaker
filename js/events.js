@@ -1003,10 +1003,12 @@ function onKeyDown(e) {
 
     // Escape key - deselect object placement, etc.
     if (!isTyping && e.key === 'Escape') {
-        // Clear selection too if active
+        // Clear selection if active (don't fall through to play test)
         if (selection) {
             selection = null;
             draw();
+            e.preventDefault();
+            return;
         }
         if (selectedObjectType) {
             clearObjectSelection();
