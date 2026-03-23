@@ -116,8 +116,11 @@ function scrollToLevelBottom() {
 }
 
 function resizeCanvas() {
+    // Account for horizontal scrollbar height (20px) so bottom row isn't hidden
+    var hScrollbar = document.getElementById('scrollbar-horizontal');
+    var scrollbarHeight = hScrollbar ? hScrollbar.offsetHeight : 0;
     canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    canvas.height = container.clientHeight - scrollbarHeight;
     draw();
     if (typeof updateScrollbars === 'function') {
         updateScrollbars();
