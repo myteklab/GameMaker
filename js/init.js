@@ -16,6 +16,7 @@ function init() {
     resizeCanvas();
     setupEventListeners();
     initScrollbars();
+    scrollToLevelBottom();
     draw();
     updateLiveDataPreview();
 
@@ -24,6 +25,7 @@ function init() {
         try {
             const data = JSON.parse(INITIAL_DATA);
             loadProjectData(data);
+            scrollToLevelBottom();
         } catch (e) {
             console.error('Failed to load project:', e);
         }
@@ -102,6 +104,15 @@ function initLevel() {
         level.push('.'.repeat(levelWidth));
     }
     updateLevelSizeDisplay();
+}
+
+// Scroll camera so the bottom of the level is visible
+function scrollToLevelBottom() {
+    if (!canvas) return;
+    var levelPixelHeight = levelHeight * tileSize;
+    var viewportHeight = canvas.height / zoom;
+    cameraY = Math.max(0, levelPixelHeight - viewportHeight);
+    if (typeof updateScrollbars === 'function') updateScrollbars();
 }
 
 function resizeCanvas() {
