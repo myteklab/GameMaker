@@ -629,8 +629,9 @@ function getSpawnPosition() {
         }
     }
 
-    // Default to top-left if nothing found
-    return { x: 0, y: Math.max(0, levelHeight - 2) };
+    // Default position: offset from left edge to keep player fully visible
+    var playerTileWidth = Math.ceil((gameSettings.playerWidth || 32) / tileSize);
+    return { x: Math.max(1, Math.ceil(playerTileWidth / 2)), y: Math.max(0, levelHeight - 2) };
 }
 
 function setSpawnPoint(tileX, tileY) {
