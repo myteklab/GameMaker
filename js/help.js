@@ -409,10 +409,10 @@ const helpContent = {
         content: `
             <h4>Drawing Tools</h4>
             <ul>
-                <li><strong>✏️ Draw</strong> - Click or drag to place tiles one at a time</li>
-                <li><strong>🪣 Fill</strong> - Flood-fill an area with the selected tile</li>
-                <li><strong>🧹 Erase</strong> - Click or drag to remove tiles and objects</li>
-                <li><strong>🔄 Move</strong> - Drag objects, tiles, or the player to new positions</li>
+                <li><strong>Draw (D)</strong> - Click or drag to place tiles one at a time</li>
+                <li><strong>Fill (F)</strong> - Flood-fill an area with the selected tile</li>
+                <li><strong>Erase (E)</strong> - Click or drag to remove tiles and objects</li>
+                <li><strong>Move (M)</strong> - Drag objects, tiles, or the player to new positions</li>
             </ul>
 
             <h4>Mouse Controls</h4>
@@ -430,7 +430,7 @@ const helpContent = {
             <ul>
                 <li><strong>Delete / Backspace</strong> - Clear all tiles in selection</li>
                 <li><strong>Enter</strong> - Fill selection with the current tile</li>
-                <li><strong>Click</strong> - Cancel selection</li>
+                <li><strong>Esc / Click</strong> - Cancel selection</li>
             </ul>
 
             <h4>Move Tool Tips</h4>

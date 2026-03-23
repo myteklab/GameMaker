@@ -27,6 +27,11 @@ document.addEventListener('keydown', function(e) {
     const tag = document.activeElement.tagName.toLowerCase();
     const isTyping = tag === 'input' || tag === 'textarea';
 
+    // If there's an active tile selection, let events.js handle Esc to cancel it
+    if (typeof selection !== 'undefined' && selection) {
+        return;
+    }
+
     // Check if any other modal is open (not play test)
     const otherModals = document.querySelectorAll('.modal-overlay.visible:not(#playtest-modal)');
     if (otherModals.length > 0) {
