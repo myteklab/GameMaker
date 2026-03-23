@@ -390,6 +390,7 @@ function updateEnemyBehaviorOptions() {
 // prefix: e.g. 'enemy-template', 'collectible-template', etc.
 function updateHitboxPreview(prefix) {
     var canvas = document.getElementById(prefix + '-hitbox-preview');
+    console.log('[HitboxPreview]', prefix, 'canvas:', canvas, 'size:', canvas ? canvas.width + 'x' + canvas.height : 'null', 'visible:', canvas ? canvas.offsetParent !== null : false);
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
     var canvasSize = 80;
