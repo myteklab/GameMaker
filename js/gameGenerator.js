@@ -895,7 +895,7 @@ ${includeComments ? `    // ═════════════════�
     //   - Try 640x480 for a classic retro feel
     // ═══════════════════════════════════════════════════════════════════════════
 ` : ''}    var TILE_SIZE = ${tileSize};
-    var TILE_SCALE = ${gameSettings.tileRenderScale || 1};
+    var TILE_SCALE = ${gameSettings.tileRenderScale || 2};
     var RENDER_SIZE = TILE_SIZE * TILE_SCALE;
     // Use wider aspect ratio for better landscape mobile fit when scaled
     var baseWidth = ${pixelScale > 1 ? 960 : 800};

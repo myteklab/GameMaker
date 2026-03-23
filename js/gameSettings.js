@@ -312,7 +312,7 @@ function updateVolumeDisplay(type, value) {
 function updateTileScalePreview() {
     const previewEl = document.getElementById('tile-scale-preview');
     if (previewEl) {
-        const scale = gameSettings.tileRenderScale || 1;
+        const scale = gameSettings.tileRenderScale || 2;
         const renderSize = tileSize * scale;
         previewEl.textContent = `${renderSize}×${renderSize}`;
     }
@@ -369,7 +369,7 @@ function updateGameSettingsUI() {
     // Tile render scale dropdown
     const tileRenderScaleSelect = document.getElementById('setting-tile-render-scale');
     if (tileRenderScaleSelect) {
-        tileRenderScaleSelect.value = gameSettings.tileRenderScale || 1;
+        tileRenderScaleSelect.value = gameSettings.tileRenderScale || 2;
         updateTileScalePreview();
     }
 
