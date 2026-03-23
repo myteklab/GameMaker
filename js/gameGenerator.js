@@ -8767,21 +8767,80 @@ ${includeComments ? `        // ────────────────
                     ctx.closePath();
                     ctx.fill();
                 } else if (obj.type === 'powerup') {
-                    // Powerup: draw a heart
+                    // Powerup: draw icon based on effect type
                     var cx = screenX + objW/2;
                     var cy = screenY + objH/2;
                     var s = Math.min(objW, objH) * 0.32;
-                    ctx.fillStyle = color || '#e91e63';
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy + s * 0.7);
-                    ctx.bezierCurveTo(cx - s * 1.3, cy - s * 0.2, cx - s * 0.7, cy - s * 1.1, cx, cy - s * 0.4);
-                    ctx.bezierCurveTo(cx + s * 0.7, cy - s * 1.1, cx + s * 1.3, cy - s * 0.2, cx, cy + s * 0.7);
-                    ctx.fill();
-                    // Shine
-                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                    ctx.beginPath();
-                    ctx.arc(cx - s * 0.3, cy - s * 0.3, s * 0.18, 0, Math.PI * 2);
-                    ctx.fill();
+                    var effect = obj.effect || 'heal';
+
+                    if (effect === 'ammo') {
+                        // Ammo: draw a bullet/projectile
+                        ctx.fillStyle = color || '#e91e63';
+                        ctx.beginPath();
+                        ctx.roundRect(cx - s * 0.7, cy - s * 0.35, s * 1.4, s * 0.7, [s * 0.3, s * 0.3, s * 0.1, s * 0.1]);
+                        ctx.fill();
+                        ctx.fillStyle = '#f1c40f';
+                        ctx.beginPath();
+                        ctx.roundRect(cx - s * 0.7, cy - s * 0.25, s * 0.5, s * 0.5, s * 0.1);
+                        ctx.fill();
+                    } else if (effect === 'speed') {
+                        // Speed: draw a lightning bolt
+                        ctx.fillStyle = color || '#f39c12';
+                        ctx.beginPath();
+                        ctx.moveTo(cx + s * 0.1, cy - s * 0.8);
+                        ctx.lineTo(cx - s * 0.4, cy + s * 0.05);
+                        ctx.lineTo(cx + s * 0.05, cy + s * 0.05);
+                        ctx.lineTo(cx - s * 0.1, cy + s * 0.8);
+                        ctx.lineTo(cx + s * 0.4, cy - s * 0.05);
+                        ctx.lineTo(cx - s * 0.05, cy - s * 0.05);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (effect === 'jump') {
+                        // Jump: draw an up arrow
+                        ctx.fillStyle = color || '#9b59b6';
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy - s * 0.7);
+                        ctx.lineTo(cx + s * 0.5, cy);
+                        ctx.lineTo(cx + s * 0.2, cy);
+                        ctx.lineTo(cx + s * 0.2, cy + s * 0.7);
+                        ctx.lineTo(cx - s * 0.2, cy + s * 0.7);
+                        ctx.lineTo(cx - s * 0.2, cy);
+                        ctx.lineTo(cx - s * 0.5, cy);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (effect === 'shield') {
+                        // Shield: draw a shield shape
+                        ctx.fillStyle = color || '#3498db';
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy - s * 0.8);
+                        ctx.lineTo(cx + s * 0.7, cy - s * 0.4);
+                        ctx.lineTo(cx + s * 0.6, cy + s * 0.3);
+                        ctx.lineTo(cx, cy + s * 0.8);
+                        ctx.lineTo(cx - s * 0.6, cy + s * 0.3);
+                        ctx.lineTo(cx - s * 0.7, cy - s * 0.4);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy - s * 0.5);
+                        ctx.lineTo(cx + s * 0.4, cy - s * 0.2);
+                        ctx.lineTo(cx, cy + s * 0.3);
+                        ctx.lineTo(cx - s * 0.1, cy - s * 0.2);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else {
+                        // Default (heal/extra life): draw a heart
+                        ctx.fillStyle = color || '#e91e63';
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy + s * 0.7);
+                        ctx.bezierCurveTo(cx - s * 1.3, cy - s * 0.2, cx - s * 0.7, cy - s * 1.1, cx, cy - s * 0.4);
+                        ctx.bezierCurveTo(cx + s * 0.7, cy - s * 1.1, cx + s * 1.3, cy - s * 0.2, cx, cy + s * 0.7);
+                        ctx.fill();
+                        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                        ctx.beginPath();
+                        ctx.arc(cx - s * 0.3, cy - s * 0.3, s * 0.18, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                 } else if (obj.type === 'goal') {
                     // Goal: draw a flag on a pole
                     var fx = screenX + objW * 0.35;
@@ -9185,9 +9244,11 @@ ${includeComments ? `        // ────────────────
                     }
                 }
 
-                // Only draw emoji for terrain zones and unknown types
-                // All standard types now have procedural icons drawn above
-                if (obj.type === 'terrainZone') {
+                // Draw custom symbol text for types that have user-set symbols
+                // (procedural icons above handle the defaults, this catches custom overrides)
+                var defaultSymbols = {'enemy':'','collectible':'','hazard':'','powerup':'','spring':'','goal':'','checkpoint':'','npc':'','door':'','movingPlatform':'','mysteryBlock':''};
+                if (!(obj.type in defaultSymbols)) {
+                    // Unknown type or terrain zone - draw the emoji
                     ctx.fillStyle = color;
                     ctx.font = (Math.min(objW, objH) * 0.7) + 'px sans-serif';
                     ctx.textAlign = 'center';
