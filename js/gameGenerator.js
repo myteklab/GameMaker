@@ -8689,15 +8689,195 @@ ${includeComments ? `        // ────────────────
                     }
                 }
 
-                // Draw background shapes for certain object types (not in top-down RPG mode)
-                if (!IS_TOPDOWN && (obj.type === 'enemy' || obj.type === 'collectible')) {
-                    // Circle background for enemies and collectibles (platformer only)
-                    ctx.beginPath();
-                    ctx.arc(screenX + objW/2, screenY + objH/2, Math.min(objW, objH)/2 * 0.8, 0, Math.PI * 2);
+                // Draw procedural icons for object types (no background shapes)
+                if (!IS_TOPDOWN && obj.type === 'enemy') {
+                    // Enemy: draw a simple skull/face
+                    var cx = screenX + objW/2;
+                    var cy = screenY + objH/2;
+                    var r = Math.min(objW, objH) * 0.35;
+                    // Head
                     ctx.fillStyle = color;
-                    ctx.globalAlpha = 0.8;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy - r * 0.1, r, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.globalAlpha = 1;
+                    // Eyes
+                    ctx.fillStyle = '#fff';
+                    var eyeR = r * 0.25;
+                    ctx.beginPath();
+                    ctx.arc(cx - r * 0.35, cy - r * 0.25, eyeR, 0, Math.PI * 2);
+                    ctx.arc(cx + r * 0.35, cy - r * 0.25, eyeR, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Pupils
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.arc(cx - r * 0.3, cy - r * 0.2, eyeR * 0.5, 0, Math.PI * 2);
+                    ctx.arc(cx + r * 0.3, cy - r * 0.2, eyeR * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Mouth (angry)
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = Math.max(1, r * 0.12);
+                    ctx.beginPath();
+                    ctx.moveTo(cx - r * 0.3, cy + r * 0.35);
+                    ctx.lineTo(cx - r * 0.1, cy + r * 0.2);
+                    ctx.lineTo(cx + r * 0.1, cy + r * 0.35);
+                    ctx.lineTo(cx + r * 0.3, cy + r * 0.2);
+                    ctx.stroke();
+                } else if (!IS_TOPDOWN && obj.type === 'collectible') {
+                    // Collectible: draw a shiny coin
+                    var cx = screenX + objW/2;
+                    var cy = screenY + objH/2;
+                    var r = Math.min(objW, objH) * 0.33;
+                    // Outer coin
+                    ctx.fillStyle = color || '#f1c40f';
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Inner highlight ring
+                    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                    ctx.lineWidth = Math.max(1, r * 0.15);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r * 0.65, 0, Math.PI * 2);
+                    ctx.stroke();
+                    // Shine
+                    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                    ctx.beginPath();
+                    ctx.arc(cx - r * 0.25, cy - r * 0.25, r * 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (obj.type === 'hazard') {
+                    // Hazard: draw spikes/danger triangle
+                    var cx = screenX + objW/2;
+                    var cy = screenY + objH/2;
+                    var s = Math.min(objW, objH) * 0.38;
+                    ctx.fillStyle = color || '#7f8c8d';
+                    // Draw 3 spikes
+                    for (var si = -1; si <= 1; si++) {
+                        ctx.beginPath();
+                        ctx.moveTo(cx + si * s * 0.7 - s * 0.3, cy + s * 0.5);
+                        ctx.lineTo(cx + si * s * 0.7, cy - s * 0.5);
+                        ctx.lineTo(cx + si * s * 0.7 + s * 0.3, cy + s * 0.5);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    // Highlight
+                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                    ctx.beginPath();
+                    ctx.moveTo(cx - s * 0.15, cy + s * 0.5);
+                    ctx.lineTo(cx, cy - s * 0.3);
+                    ctx.lineTo(cx + s * 0.05, cy + s * 0.5);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (obj.type === 'powerup') {
+                    // Powerup: draw a heart
+                    var cx = screenX + objW/2;
+                    var cy = screenY + objH/2;
+                    var s = Math.min(objW, objH) * 0.32;
+                    ctx.fillStyle = color || '#e91e63';
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy + s * 0.7);
+                    ctx.bezierCurveTo(cx - s * 1.3, cy - s * 0.2, cx - s * 0.7, cy - s * 1.1, cx, cy - s * 0.4);
+                    ctx.bezierCurveTo(cx + s * 0.7, cy - s * 1.1, cx + s * 1.3, cy - s * 0.2, cx, cy + s * 0.7);
+                    ctx.fill();
+                    // Shine
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.beginPath();
+                    ctx.arc(cx - s * 0.3, cy - s * 0.3, s * 0.18, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (obj.type === 'goal') {
+                    // Goal: draw a flag on a pole
+                    var fx = screenX + objW * 0.35;
+                    var fy = screenY + objH * 0.15;
+                    var fh = objH * 0.7;
+                    var fw = objW * 0.4;
+                    // Pole
+                    ctx.strokeStyle = '#ddd';
+                    ctx.lineWidth = Math.max(2, objW * 0.06);
+                    ctx.beginPath();
+                    ctx.moveTo(fx, fy);
+                    ctx.lineTo(fx, fy + fh);
+                    ctx.stroke();
+                    // Flag
+                    ctx.fillStyle = color || '#2ecc71';
+                    ctx.beginPath();
+                    ctx.moveTo(fx, fy);
+                    ctx.lineTo(fx + fw, fy + fh * 0.2);
+                    ctx.lineTo(fx, fy + fh * 0.4);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (obj.type === 'checkpoint') {
+                    // Checkpoint: draw a pennant flag
+                    var fx = screenX + objW * 0.35;
+                    var fy = screenY + objH * 0.15;
+                    var fh = objH * 0.7;
+                    var fw = objW * 0.35;
+                    // Pole
+                    ctx.strokeStyle = '#aaa';
+                    ctx.lineWidth = Math.max(2, objW * 0.05);
+                    ctx.beginPath();
+                    ctx.moveTo(fx, fy);
+                    ctx.lineTo(fx, fy + fh);
+                    ctx.stroke();
+                    // Pennant
+                    ctx.fillStyle = obj.activated ? (obj.activatedColor || '#2ecc71') : (color || '#3498db');
+                    ctx.beginPath();
+                    ctx.moveTo(fx, fy);
+                    ctx.lineTo(fx + fw, fy + fh * 0.15);
+                    ctx.lineTo(fx, fy + fh * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Ground line
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(screenX + objW * 0.2, fy + fh);
+                    ctx.lineTo(screenX + objW * 0.8, fy + fh);
+                    ctx.stroke();
+                } else if (obj.type === 'npc') {
+                    // NPC: draw a friendly face
+                    var cx = screenX + objW/2;
+                    var cy = screenY + objH/2;
+                    var r = Math.min(objW, objH) * 0.35;
+                    ctx.fillStyle = color || '#3498db';
+                    ctx.beginPath();
+                    ctx.arc(cx, cy - r * 0.1, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Eyes
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(cx - r * 0.3, cy - r * 0.25, r * 0.2, 0, Math.PI * 2);
+                    ctx.arc(cx + r * 0.3, cy - r * 0.25, r * 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.arc(cx - r * 0.28, cy - r * 0.2, r * 0.1, 0, Math.PI * 2);
+                    ctx.arc(cx + r * 0.28, cy - r * 0.2, r * 0.1, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Smile
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = Math.max(1, r * 0.1);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy + r * 0.05, r * 0.3, 0.1 * Math.PI, 0.9 * Math.PI);
+                    ctx.stroke();
+                } else if (obj.type === 'door') {
+                    // Door: draw a door shape
+                    var dx = screenX + objW * 0.15;
+                    var dy = screenY + objH * 0.1;
+                    var dw = objW * 0.7;
+                    var dh = objH * 0.85;
+                    // Door frame
+                    ctx.fillStyle = color || '#8b4513';
+                    ctx.beginPath();
+                    ctx.roundRect(dx, dy, dw, dh, [dw * 0.15, dw * 0.15, 0, 0]);
+                    ctx.fill();
+                    // Panel lines
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(dx + dw * 0.1, dy + dh * 0.1, dw * 0.8, dh * 0.35);
+                    ctx.strokeRect(dx + dw * 0.1, dy + dh * 0.55, dw * 0.8, dh * 0.35);
+                    // Handle
+                    ctx.fillStyle = '#f1c40f';
+                    ctx.beginPath();
+                    ctx.arc(dx + dw * 0.78, dy + dh * 0.52, Math.max(2, dw * 0.08), 0, Math.PI * 2);
+                    ctx.fill();
                 } else if (!IS_TOPDOWN && obj.type === 'spring') {
                     // Draw a spring pad with coil
                     var sx = screenX;
@@ -9005,11 +9185,10 @@ ${includeComments ? `        // ────────────────
                     }
                 }
 
-                // Draw symbol/emoji - white for types with colored backgrounds, template color for others
-                // Springs now have a background, so use white emoji on colored bg
-                // Skip emoji for movingPlatform (has custom directional arrows) and mysteryBlock (has custom rendering)
-                if (obj.type !== 'movingPlatform' && obj.type !== 'mysteryBlock' && obj.type !== 'spring') {
-                    ctx.fillStyle = (obj.type === 'hazard' || obj.type === 'goal' || obj.type === 'powerup' || obj.type === 'checkpoint') ? color : '#fff';
+                // Only draw emoji for terrain zones and unknown types
+                // All standard types now have procedural icons drawn above
+                if (obj.type === 'terrainZone') {
+                    ctx.fillStyle = color;
                     ctx.font = (Math.min(objW, objH) * 0.7) + 'px sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
