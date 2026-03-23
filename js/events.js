@@ -1001,13 +1001,12 @@ function onKeyDown(e) {
     const tag = document.activeElement.tagName.toLowerCase();
     const isTyping = tag === 'input' || tag === 'textarea';
 
-    // Escape key - clear selection, deselect object placement, etc.
+    // Escape key - deselect object placement, etc.
     if (!isTyping && e.key === 'Escape') {
+        // Clear selection too if active
         if (selection) {
             selection = null;
             draw();
-            e.preventDefault();
-            return;
         }
         if (selectedObjectType) {
             clearObjectSelection();

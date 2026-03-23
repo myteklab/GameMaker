@@ -851,7 +851,7 @@ function drawSelection() {
         ctx.font = 'bold 13px sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
         ctx.textAlign = 'center';
-        ctx.fillText('Del = Clear    Enter = Fill    Esc = Cancel', x1 + w / 2, y1 + h + 18);
+        ctx.fillText('Del = Clear    Enter = Fill    Click = Cancel', x1 + w / 2, y1 + h + 18);
     }
 }
 
