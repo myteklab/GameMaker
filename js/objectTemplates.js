@@ -371,7 +371,8 @@ function editEnemyTemplate(id) {
 
     updateEnemyBehaviorOptions();
     toggleStompOptions();
-    updateEnemyHitboxPreview();
+    console.log('[DEBUG] about to call updateEnemyHitboxPreview');
+    try { updateEnemyHitboxPreview(); } catch(e) { console.error('[HitboxPreview ERROR]', e); }
     document.getElementById('enemy-template-editor').classList.add('visible');
 }
 
