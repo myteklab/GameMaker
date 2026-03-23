@@ -4329,9 +4329,10 @@ ${includeComments ? `    // ═════════════════�
                 template = getTemplateById(templates, obj.templateId);
             }
 
-            // Get size from template or default to RENDER_SIZE (scale applied)
-            var objWidth = (template && template.width) ? template.width * TILE_SCALE : RENDER_SIZE;
-            var objHeight = (template && template.height) ? template.height * TILE_SCALE : RENDER_SIZE;
+            // Get size from template or default to RENDER_SIZE
+            // Template dimensions match RENDER_SIZE at default (32px = 1 tile at 2x)
+            var objWidth = (template && template.width) ? template.width : RENDER_SIZE;
+            var objHeight = (template && template.height) ? template.height : RENDER_SIZE;
 
             // Position: center X in tile, but align bottom with tile bottom (so objects stand ON tiles)
             var objX = obj.x * RENDER_SIZE + RENDER_SIZE / 2;
