@@ -173,7 +173,7 @@ let backgroundLayers = [];
 // Game physics settings
 let gameSettings = {
     gameType: 'platformer',  // 'platformer' or 'topdown'
-    tileRenderScale: 1,      // Scale multiplier for tiles in-game (1, 2, or 4)
+    tileRenderScale: 2,      // Scale multiplier for tiles in-game (1, 2, or 4)
     gravity: 0.5,
     jumpPower: 10,
     moveSpeed: 4,
