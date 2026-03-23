@@ -1134,7 +1134,7 @@ function onKeyDown(e) {
         }
     }
 
-    // Tool shortcuts (D=Draw, F=Fill, E=Erase, M=Move)
+    // Tool shortcuts (D=Draw, F=Fill, E=Erase, M=Move, P=Go to Player)
     if (!isTyping && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const key = e.key.toLowerCase();
         if (key === 'd') {
@@ -1151,6 +1151,18 @@ function onKeyDown(e) {
             return;
         } else if (key === 'm') {
             setTool('move');
+            e.preventDefault();
+            return;
+        } else if (key === 'p') {
+            // Jump camera to player spawn position
+            var spawnPos = typeof getSpawnPosition === 'function' ? getSpawnPosition() : null;
+            if (spawnPos) {
+                cameraX = Math.max(0, spawnPos.x * tileSize - canvas.width / zoom / 2);
+                cameraY = Math.max(0, spawnPos.y * tileSize - canvas.height / zoom / 2);
+                if (typeof updateScrollbars === 'function') updateScrollbars();
+                draw();
+                showToast('Jumped to player (P)');
+            }
             e.preventDefault();
             return;
         }
