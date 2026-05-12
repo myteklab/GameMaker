@@ -1153,6 +1153,11 @@ function onKeyDown(e) {
             setTool('move');
             e.preventDefault();
             return;
+        } else if (key === 'l') {
+            setTileLayer(currentTileLayer === 'decor' ? 'terrain' : 'decor');
+            showToast('Layer: ' + (currentTileLayer === 'decor' ? 'Decoration' : 'Terrain'));
+            e.preventDefault();
+            return;
         } else if (key === 'p') {
             // Jump camera to player spawn position
             var spawnPos = typeof getSpawnPosition === 'function' ? getSpawnPosition() : null;

@@ -376,6 +376,7 @@ function loadProjectData(data) {
         singleLevel.tiles = data.level || [];
         singleLevel.spawnPoint = data.spawnPoint || null;
         singleLevel.backgroundLayers = data.backgroundLayers || [];
+        ensureDecorTiles(singleLevel);
 
         // Migrate game objects
         if (data.gameObjects) {
@@ -459,11 +460,33 @@ function loadProjectData(data) {
         ensurePlayerSpriteOptions();
     }
 
+    // Reflect tile-layer toggle state in the UI
+    if (typeof updateTileLayerUI === 'function') updateTileLayerUI();
+
     showToast('Project loaded!');
 }
 
 // Helper to migrate game objects in a level
+function ensureDecorTiles(lvl) {
+    // Make sure decorTiles exists and lines up row-for-row with terrain tiles
+    const tilesArr = Array.isArray(lvl.tiles) ? lvl.tiles : [];
+    if (!Array.isArray(lvl.decorTiles) || lvl.decorTiles.length !== tilesArr.length) {
+        lvl.decorTiles = tilesArr.map(row => '.'.repeat(typeof row === 'string' ? row.length : 0));
+    } else {
+        for (let y = 0; y < lvl.decorTiles.length; y++) {
+            const terrainLen = typeof tilesArr[y] === 'string' ? tilesArr[y].length : 0;
+            if (typeof lvl.decorTiles[y] !== 'string' || lvl.decorTiles[y].length !== terrainLen) {
+                lvl.decorTiles[y] = '.'.repeat(terrainLen);
+            }
+        }
+    }
+    return lvl;
+}
+
 function migrateGameObjects(lvl) {
+    // Add the decoration tile layer if this is a pre-decoration project
+    ensureDecorTiles(lvl);
+
     if (lvl.gameObjects) {
         lvl.gameObjects = lvl.gameObjects.map(obj => {
             if (!obj.templateId) {

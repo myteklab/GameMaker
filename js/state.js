@@ -40,7 +40,8 @@ function createNewLevel(id, name, levelType = 'gameplay') {
         levelType: levelType,  // 'gameplay' or 'menu'
         width: 150,
         height: 30,
-        tiles: [], // Array of tile row strings
+        tiles: [], // Array of tile row strings (terrain)
+        decorTiles: [], // Parallel array of row strings: decoration overlay (no collision)
         gameObjects: [],
         spawnPoint: null,
         backgroundLayers: [],
@@ -140,9 +141,16 @@ function getCurrentLevel() {
 let levelWidth = 150;
 let levelHeight = 30;
 let level = [];
+// Decoration tile layer (rendered above terrain, no collision).
+// Parallel to `level`: array of row strings using the same tile keys.
+let decorLevel = [];
 
 // Editor state
 let selectedTileKey = '.';
+// Which tile layer paint/erase/fill operate on: 'terrain' or 'decor'
+let currentTileLayer = 'terrain';
+// Whether the decoration layer is visible in the editor (always rendered in exports)
+let decorLayerVisible = true;
 let cameraX = 0;
 let cameraY = 0;
 let zoom = 2;
@@ -771,6 +779,7 @@ function saveUndoState(actionName = 'Edit') {
     // Deep copy the level array and game objects
     const snapshot = {
         level: level.map(row => row), // Copy each string row
+        decorLevel: decorLevel.map(row => row), // Copy decoration layer rows
         levelWidth: levelWidth,
         levelHeight: levelHeight,
         gameObjects: JSON.parse(JSON.stringify(gameObjects)), // Deep copy objects
@@ -800,6 +809,7 @@ function undo() {
     // Save current state to redo stack
     redoStack.push({
         level: level.map(row => row),
+        decorLevel: decorLevel.map(row => row),
         levelWidth: levelWidth,
         levelHeight: levelHeight,
         gameObjects: JSON.parse(JSON.stringify(gameObjects)),
@@ -810,6 +820,11 @@ function undo() {
     // Restore previous state
     const snapshot = undoStack.pop();
     level = snapshot.level.map(row => row);
+    decorLevel = (snapshot.decorLevel || []).map(row => row);
+    if (decorLevel.length !== level.length) {
+        // Snapshot from before decor layer existed — rebuild empty
+        decorLevel = level.map(row => '.'.repeat(row.length));
+    }
     levelWidth = snapshot.levelWidth;
     levelHeight = snapshot.levelHeight;
 
@@ -842,6 +857,7 @@ function redo() {
     // Save current state to undo stack
     undoStack.push({
         level: level.map(row => row),
+        decorLevel: decorLevel.map(row => row),
         levelWidth: levelWidth,
         levelHeight: levelHeight,
         gameObjects: JSON.parse(JSON.stringify(gameObjects)),
@@ -852,6 +868,10 @@ function redo() {
     // Restore redo state
     const snapshot = redoStack.pop();
     level = snapshot.level.map(row => row);
+    decorLevel = (snapshot.decorLevel || []).map(row => row);
+    if (decorLevel.length !== level.length) {
+        decorLevel = level.map(row => '.'.repeat(row.length));
+    }
     levelWidth = snapshot.levelWidth;
     levelHeight = snapshot.levelHeight;
 

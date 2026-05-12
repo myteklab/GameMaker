@@ -100,10 +100,13 @@ function setupAutoFocus() {
 
 function initLevel() {
     level = [];
+    decorLevel = [];
     for (let y = 0; y < levelHeight; y++) {
         level.push('.'.repeat(levelWidth));
+        decorLevel.push('.'.repeat(levelWidth));
     }
     updateLevelSizeDisplay();
+    if (typeof updateTileLayerUI === 'function') updateTileLayerUI();
 }
 
 // Scroll camera so the bottom of the level is visible

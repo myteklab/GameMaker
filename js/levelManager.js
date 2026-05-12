@@ -114,16 +114,32 @@ function syncFromCurrentLevel() {
     if (level.length === 0) {
         initLevelTiles();
     }
+
+    // Decoration layer: mirror terrain dimensions. Older levels missing
+    // decorTiles get an empty grid that matches the terrain row lengths.
+    decorLevel = Array.isArray(lvl.decorTiles) ? lvl.decorTiles : null;
+    if (!decorLevel || decorLevel.length !== level.length) {
+        decorLevel = level.map(row => '.'.repeat(row.length));
+        lvl.decorTiles = decorLevel;
+    }
+    for (let y = 0; y < decorLevel.length; y++) {
+        if (typeof decorLevel[y] !== 'string' || decorLevel[y].length !== level[y].length) {
+            decorLevel[y] = '.'.repeat(level[y].length);
+        }
+    }
 }
 
 // Initialize level tiles array
 function initLevelTiles() {
     level = [];
+    decorLevel = [];
     for (let y = 0; y < levelHeight; y++) {
         level.push('.'.repeat(levelWidth));
+        decorLevel.push('.'.repeat(levelWidth));
     }
     const lvl = getCurrentLevel();
     lvl.tiles = level;
+    lvl.decorTiles = decorLevel;
 }
 
 // Sync current level from global variables (before switching)
@@ -155,6 +171,14 @@ function syncToCurrentLevel() {
     lvl.gameObjects = gameObjects;
     lvl.spawnPoint = spawnPoint;
     lvl.backgroundLayers = backgroundLayers;
+
+    // Validate + persist decoration layer in lockstep with terrain
+    if (Array.isArray(decorLevel) && decorLevel.length === level.length) {
+        lvl.decorTiles = decorLevel;
+    } else {
+        lvl.decorTiles = level.map(row => '.'.repeat(row.length));
+        decorLevel = lvl.decorTiles;
+    }
 }
 
 // ============================================
@@ -244,10 +268,12 @@ function addNewLevel() {
     const newIndex = levels.length + 1;
     const newLevel = createNewLevel(null, `Level ${newIndex}`);
 
-    // Initialize empty tiles
+    // Initialize empty tiles + decoration grid
     newLevel.tiles = [];
+    newLevel.decorTiles = [];
     for (let y = 0; y < newLevel.height; y++) {
         newLevel.tiles.push('.'.repeat(newLevel.width));
+        newLevel.decorTiles.push('.'.repeat(newLevel.width));
     }
 
     // Set previous level to progress to this one
@@ -274,6 +300,9 @@ function duplicateCurrentLevel() {
     newLevel.width = current.width;
     newLevel.height = current.height;
     newLevel.tiles = current.tiles.map(row => row);
+    newLevel.decorTiles = (current.decorTiles && current.decorTiles.length === current.tiles.length)
+        ? current.decorTiles.map(row => row)
+        : current.tiles.map(row => '.'.repeat(row.length));
     newLevel.gameObjects = current.gameObjects.map(obj => ({...obj}));
     newLevel.spawnPoint = current.spawnPoint ? {...current.spawnPoint} : null;
     newLevel.backgroundLayers = current.backgroundLayers.map(layer => ({...layer}));
@@ -1013,28 +1042,29 @@ function saveLevelSettings() {
     const heightChanged = newHeight !== lvl.height;
 
     if (widthChanged || heightChanged) {
-        // Resize the level tiles array
-        const oldTiles = lvl.tiles || [];
-        const newTiles = [];
-
-        for (let y = 0; y < newHeight; y++) {
-            if (y < oldTiles.length) {
-                // Existing row - resize width
-                const oldRow = oldTiles[y] || '';
-                if (newWidth > oldRow.length) {
-                    // Expand row
-                    newTiles.push(oldRow + '.'.repeat(newWidth - oldRow.length));
+        // Helper: resize one row-string grid to newWidth x newHeight
+        function resizeGrid(oldRows) {
+            const out = [];
+            for (let y = 0; y < newHeight; y++) {
+                if (y < oldRows.length) {
+                    const oldRow = oldRows[y] || '';
+                    if (newWidth > oldRow.length) {
+                        out.push(oldRow + '.'.repeat(newWidth - oldRow.length));
+                    } else {
+                        out.push(oldRow.substring(0, newWidth));
+                    }
                 } else {
-                    // Shrink row
-                    newTiles.push(oldRow.substring(0, newWidth));
+                    out.push('.'.repeat(newWidth));
                 }
-            } else {
-                // New row - fill with empty
-                newTiles.push('.'.repeat(newWidth));
             }
+            return out;
         }
 
+        const newTiles = resizeGrid(lvl.tiles || []);
+        const newDecor = resizeGrid(lvl.decorTiles || []);
+
         lvl.tiles = newTiles;
+        lvl.decorTiles = newDecor;
         lvl.width = newWidth;
         lvl.height = newHeight;
 
@@ -1043,6 +1073,7 @@ function saveLevelSettings() {
             levelWidth = newWidth;
             levelHeight = newHeight;
             level = newTiles;
+            decorLevel = newDecor;
             updateLevelSizeDisplay();
             clampCamera();
         }

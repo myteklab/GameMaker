@@ -2,9 +2,12 @@
 // LEVEL EDITING
 // ============================================
 
-function setTileAt(tileX, tileY, key) {
-    if (tileY < 0 || tileY >= level.length) return;
-    if (tileX < 0 || tileX >= level[tileY].length) return;
+function setTileAt(tileX, tileY, key, layer) {
+    // Default to whichever layer the editor is currently painting on
+    const grid = (layer || currentTileLayer) === 'decor' ? decorLevel : level;
+
+    if (tileY < 0 || tileY >= grid.length) return;
+    if (tileX < 0 || tileX >= grid[tileY].length) return;
 
     // Validate key to prevent corruption
     if (key === undefined || key === null) {
@@ -16,16 +19,56 @@ function setTileAt(tileX, tileY, key) {
         return;
     }
 
-    const row = level[tileY];
+    const row = grid[tileY];
     const oldKey = row[tileX];
     if (oldKey === key) return; // No change
 
-    level[tileY] = row.substring(0, tileX) + key + row.substring(tileX + 1);
+    grid[tileY] = row.substring(0, tileX) + key + row.substring(tileX + 1);
     markDirty();
 
     // Update live data preview (debounced)
     if (window.liveDataTimeout) clearTimeout(window.liveDataTimeout);
     window.liveDataTimeout = setTimeout(updateLiveDataPreview, 100);
+}
+
+// ============================================
+// TILE LAYER (terrain / decoration)
+// ============================================
+
+function setTileLayer(layer) {
+    if (layer !== 'terrain' && layer !== 'decor') return;
+    if (currentTileLayer === layer) return;
+    currentTileLayer = layer;
+    updateTileLayerUI();
+    draw(); // active layer affects which one is dimmed
+}
+
+function toggleDecorVisibility() {
+    decorLayerVisible = !decorLayerVisible;
+    updateTileLayerUI();
+    draw();
+}
+
+function updateTileLayerUI() {
+    const terrainBtn = document.getElementById('layer-btn-terrain');
+    const decorBtn = document.getElementById('layer-btn-decor');
+    const visBtn = document.getElementById('layer-btn-vis');
+    if (terrainBtn && decorBtn) {
+        const onTerrain = currentTileLayer === 'terrain';
+        terrainBtn.style.background = onTerrain ? '#667eea' : 'transparent';
+        terrainBtn.style.color = onTerrain ? '#fff' : '#888';
+        terrainBtn.style.borderColor = onTerrain ? '#667eea' : '#444';
+        decorBtn.style.background = !onTerrain ? '#9b59b6' : 'transparent';
+        decorBtn.style.color = !onTerrain ? '#fff' : '#888';
+        decorBtn.style.borderColor = !onTerrain ? '#9b59b6' : '#444';
+    }
+    if (visBtn) {
+        visBtn.style.color = decorLayerVisible ? '#fff' : '#666';
+        visBtn.style.borderColor = decorLayerVisible ? '#888' : '#444';
+        visBtn.title = decorLayerVisible
+            ? 'Hide decoration layer in editor'
+            : 'Show decoration layer in editor';
+    }
 }
 
 // ============================================
@@ -352,12 +395,15 @@ function floodFill(startX, startY, newKey) {
         return;
     }
 
+    // Flood fill operates on whichever layer the editor is currently painting on
+    const grid = currentTileLayer === 'decor' ? decorLevel : level;
+
     // Bounds check
-    if (startY < 0 || startY >= level.length) return;
-    if (startX < 0 || startX >= level[startY].length) return;
+    if (startY < 0 || startY >= grid.length) return;
+    if (startX < 0 || startX >= grid[startY].length) return;
 
     // Get the target tile we're replacing
-    const targetKey = level[startY][startX];
+    const targetKey = grid[startY][startX];
 
     // Don't fill if clicking on same tile type
     if (targetKey === newKey) return;
@@ -374,15 +420,15 @@ function floodFill(startX, startY, newKey) {
 
         // Skip if already visited or out of bounds
         if (visited.has(key)) continue;
-        if (y < 0 || y >= level.length) continue;
-        if (x < 0 || x >= level[y].length) continue;
+        if (y < 0 || y >= grid.length) continue;
+        if (x < 0 || x >= grid[y].length) continue;
 
         // Skip if not the target tile
-        if (level[y][x] !== targetKey) continue;
+        if (grid[y][x] !== targetKey) continue;
 
         // Mark as visited and fill
         visited.add(key);
-        level[y] = level[y].substring(0, x) + newKey + level[y].substring(x + 1);
+        grid[y] = grid[y].substring(0, x) + newKey + grid[y].substring(x + 1);
         tilesChanged++;
 
         // Add neighbors to queue (4-direction: up, down, left, right)
@@ -399,10 +445,14 @@ function floodFill(startX, startY, newKey) {
     }
 }
 
-function getTileAt(tileX, tileY) {
-    if (tileY < 0 || tileY >= level.length) return '.';
-    if (tileX < 0 || tileX >= level[tileY].length) return '.';
-    return level[tileY][tileX];
+function getTileAt(tileX, tileY, layer) {
+    // Defaults to whichever layer the editor is currently painting on so that
+    // move-tool drags, selection copies, and the cursor inspector all operate
+    // on the layer the user is looking at.
+    const grid = (layer || currentTileLayer) === 'decor' ? decorLevel : level;
+    if (tileY < 0 || tileY >= grid.length) return '.';
+    if (tileX < 0 || tileX >= grid[tileY].length) return '.';
+    return grid[tileY][tileX];
 }
 
 // Note: Level resizing is now handled in the Level Settings modal (saveLevelSettings)
@@ -428,7 +478,7 @@ function resizeLevel(newWidth, newHeight) {
     // Save state before resize
     saveUndoState('Resize Level');
 
-    // Resize width
+    // Resize width (both layers in lockstep)
     for (let y = 0; y < level.length; y++) {
         if (level[y].length < newWidth) {
             level[y] += '.'.repeat(newWidth - level[y].length);
@@ -436,13 +486,22 @@ function resizeLevel(newWidth, newHeight) {
             level[y] = level[y].substring(0, newWidth);
         }
     }
+    for (let y = 0; y < decorLevel.length; y++) {
+        if (decorLevel[y].length < newWidth) {
+            decorLevel[y] += '.'.repeat(newWidth - decorLevel[y].length);
+        } else if (decorLevel[y].length > newWidth) {
+            decorLevel[y] = decorLevel[y].substring(0, newWidth);
+        }
+    }
 
-    // Resize height
+    // Resize height (both layers in lockstep)
     while (level.length < newHeight) {
         level.push('.'.repeat(newWidth));
+        decorLevel.push('.'.repeat(newWidth));
     }
     while (level.length > newHeight) {
         level.pop();
+        decorLevel.pop();
     }
 
     levelWidth = newWidth;

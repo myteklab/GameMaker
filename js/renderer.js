@@ -27,8 +27,9 @@ function draw() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // Tiles
+    // Tiles (terrain + optional decoration overlay)
     drawTiles();
+    if (decorLayerVisible) drawDecorTiles();
 
     // Grid
     if (document.getElementById('show-grid').checked) {
@@ -836,6 +837,15 @@ function drawBackground() {
 }
 
 function drawTiles() {
+    drawTileGrid(level, /* isDecor */ false);
+}
+
+function drawDecorTiles() {
+    drawTileGrid(decorLevel, /* isDecor */ true);
+}
+
+function drawTileGrid(grid, isDecor) {
+    if (!Array.isArray(grid) || grid.length === 0) return;
     const scaledTileSize = tileSize * zoom;
     const startCol = Math.floor(cameraX / tileSize);
     const startRow = Math.floor(cameraY / tileSize);
@@ -845,9 +855,14 @@ function drawTiles() {
     // Learning mode disabled in GameMaker (no-code environment)
     const showLetters = false;
 
-    for (let y = Math.max(0, startRow); y < Math.min(level.length, endRow); y++) {
-        for (let x = Math.max(0, startCol); x < Math.min(level[y].length, endCol); x++) {
-            const char = level[y][x];
+    // When painting on the *other* layer, dim this layer slightly so the user
+    // sees which one is active. Skip dimming during play-test (no layer concept).
+    const dim = isDecor !== (currentTileLayer === 'decor');
+    if (dim) ctx.globalAlpha = 0.55;
+
+    for (let y = Math.max(0, startRow); y < Math.min(grid.length, endRow); y++) {
+        for (let x = Math.max(0, startCol); x < Math.min(grid[y].length, endCol); x++) {
+            const char = grid[y][x];
             if (char === '.') continue;
 
             const screenX = (x * tileSize - cameraX) * zoom;
@@ -925,6 +940,8 @@ function drawTiles() {
             }
         }
     }
+
+    if (dim) ctx.globalAlpha = 1.0;
 }
 
 function drawGrid() {

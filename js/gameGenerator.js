@@ -432,6 +432,7 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
     levelsCode += '    var startingLevelIndex = ' + currentLevelIndex + ';\n';
     levelsCode += '    var currentLevelIndex = startingLevelIndex;\n';
     levelsCode += '    var level = [];\n';
+    levelsCode += '    var decorLevel = [];\n';  // Decoration overlay (no collision)
     levelsCode += '    var levelWidth = 0;\n';
     levelsCode += '    var levelHeight = 0;\n';
     levelsCode += '    var gameObjectsData = [];\n';
@@ -4056,6 +4057,12 @@ ${includeComments ? `    // ═════════════════�
 
         // Set level data
         level = lvl.tiles || [];
+        // Decoration overlay (always lockstep with terrain, defaults to empty)
+        if (Array.isArray(lvl.decorTiles) && lvl.decorTiles.length === level.length) {
+            decorLevel = lvl.decorTiles;
+        } else {
+            decorLevel = level.map(function(row) { return '.'.repeat(row.length); });
+        }
         levelWidth = lvl.width || level[0].length;
         levelHeight = lvl.height || level.length;
         gameObjectsData = lvl.gameObjects || [];
@@ -8145,6 +8152,45 @@ ${includeComments ? `        // ────────────────
                     } else {
                         ctx.fillStyle = tile.solid ? '#4a5568' : '#2d3748';
                         ctx.fillRect(screenX, screenY, RENDER_SIZE, RENDER_SIZE);
+                    }
+                }
+            }
+        }
+
+        // Decoration overlay (visual only, no collision). Painted above terrain
+        // and below game objects so a player can walk in front of trees, signs,
+        // etc. Uses the same tile definitions as terrain.
+        if (decorLevel && decorLevel.length > 0) {
+            for (var dy = Math.max(0, startRow); dy < Math.min(decorLevel.length, endRow); dy++) {
+                var drow = decorLevel[dy];
+                if (!drow) continue;
+                for (var dx = startCol; dx < endCol && dx < drow.length; dx++) {
+                    var dchar = drow[dx];
+                    if (dchar === '.') continue;
+                    var dtile = tileTypes[dchar];
+                    if (!dtile) continue;
+                    var dScreenX = dx * RENDER_SIZE - camX;
+                    var dScreenY = dy * RENDER_SIZE - camY;
+                    if (dtile.custom && customTileImages[dchar]) {
+                        var dctImg;
+                        if (dtile.animated && typeof animatedTileImages !== 'undefined' && animatedTileImages[dchar]) {
+                            var dFrameIdx = animatedTileCurrentFrames[dchar] || 0;
+                            dctImg = animatedTileImages[dchar][dFrameIdx];
+                        } else {
+                            dctImg = customTileImages[dchar];
+                        }
+                        if (dctImg && dctImg.complete && dctImg.naturalWidth > 0) {
+                            ctx.drawImage(dctImg, 0, 0, TILE_SIZE, TILE_SIZE,
+                                dScreenX, dScreenY, RENDER_SIZE, RENDER_SIZE);
+                        }
+                    } else if (tileset.complete && tileset.naturalWidth > 0) {
+                        ctx.drawImage(
+                            tileset,
+                            dtile.col * TILE_SIZE, dtile.row * TILE_SIZE,
+                            TILE_SIZE, TILE_SIZE,
+                            dScreenX, dScreenY,
+                            RENDER_SIZE, RENDER_SIZE
+                        );
                     }
                 }
             }
