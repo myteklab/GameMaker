@@ -452,6 +452,13 @@ function loadProjectData(data) {
     updateLiveDataPreview();
     draw();
 
+    // Multiplayer migration: if multiplayer is enabled but the roster is empty
+    // (legacy project, or upgraded from multiplayerAllowCustomSprites), populate
+    // the starter pack so the join modal always has options.
+    if (typeof ensurePlayerSpriteOptions === 'function') {
+        ensurePlayerSpriteOptions();
+    }
+
     showToast('Project loaded!');
 }
 

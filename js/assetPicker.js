@@ -126,7 +126,8 @@
             categories: [category || 'sprites'],
             onSelect: function(asset) {
                 if (callback && typeof callback === 'function') {
-                    callback(asset.file_url, asset.metadata);
+                    // Third arg (asset) is back-compat-safe; existing callers ignore extras
+                    callback(asset.file_url, asset.metadata, asset);
                 }
             },
             onError: function(error) {

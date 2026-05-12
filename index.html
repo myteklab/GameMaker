@@ -3862,17 +3862,16 @@
                             </div>
                         </div>
 
-                        <!-- Custom Player Sprites -->
+                        <!-- Player Sprite Options (curated roster) -->
                         <div style="margin-top: 15px; padding: 12px; background: rgba(155, 89, 182, 0.1); border: 1px solid rgba(155, 89, 182, 0.3); border-radius: 8px;">
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 8px;">
-                                <input type="checkbox" id="setting-multiplayer-custom-sprites" onchange="updateGameSetting('multiplayerAllowCustomSprites', this.checked)" style="width: 18px; height: 18px;">
-                                <div>
-                                    <div style="font-weight: bold; color: #fff;">🎨 Allow Custom Player Sprites</div>
-                                    <div style="font-size: 10px; color: #888;">Players can enter their own sprite URL when joining</div>
-                                </div>
-                            </label>
-                            <div style="font-size: 9px; color: #9b59b6; line-height: 1.4; margin-top: 8px;">
-                                When enabled, the join dialog will show fields for players to paste a sprite image URL and specify animation frames. Custom sprites are scaled to fit your game's player size.
+                            <div style="font-weight: bold; color: #fff; margin-bottom: 4px;">🎮 Player Sprite Options</div>
+                            <div style="font-size: 10px; color: #888; margin-bottom: 10px;">Players choose from this list when joining. Sprites must be 3 cols x 4 rows (down/left/right/up x walk cycle).</div>
+                            <div id="player-sprite-roster" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+                                <!-- Populated by renderPlayerSpriteRoster() -->
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="addPlayerSpriteFromLibrary()" style="flex: 1; padding: 8px; background: linear-gradient(135deg, #9b59b6, #8e44ad); border: none; border-radius: 6px; color: #fff; font-size: 12px; cursor: pointer; font-weight: bold;">+ Add Sprite</button>
+                                <button onclick="resetPlayerSpritesToDefaults()" style="padding: 8px 12px; background: transparent; border: 1px solid #9b59b6; border-radius: 6px; color: #9b59b6; font-size: 11px; cursor: pointer;">Reset to defaults</button>
                             </div>
                         </div>
 

@@ -256,8 +256,10 @@ let gameSettings = {
     multiplayerPvPDamage: 1,           // Damage per hit (hearts)
     multiplayerPvPKillScore: 100,      // Score awarded for eliminating another player
     multiplayerPvPLives: 3,            // Starting lives in PvP mode (1-10)
-    // Custom Player Sprites (allows players to use their own sprite URLs when joining)
-    multiplayerAllowCustomSprites: false,  // Allow players to provide custom sprite URL when joining
+    // Player Sprite Options (curated list players pick from at multiplayer join)
+    // Each entry: { libraryId, name, url, w, h }. Layout is fixed 3 cols x 4 rows (16x16 frames typical).
+    // Auto-populated from DEFAULT_PLAYER_SPRITE_IDS the first time multiplayerEnabled flips true.
+    playerSpriteOptions: [],
     // Cheat Codes (Designer enables these for players to discover)
     cheatsEnabled: false,              // Master toggle for cheat code system
     cheatFeedbackEnabled: true,        // Show "CHEAT ACTIVATED!" message when code entered

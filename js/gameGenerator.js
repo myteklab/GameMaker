@@ -152,7 +152,38 @@ async function generateGameHTMLAsync(includeComments = false, pixelScale = 1) {
     const pfxIds = collectPfxIds();
     const bundledPfxData = getAllPfxData(pfxIds);
 
-    return generateGameHTML(includeComments, pixelScale, bundledSfxData, bundledPfxData);
+    // Bundle curated player sprites for multiplayer (top-down only)
+    const bundledPlayerSprites = (gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown')
+        ? await bundlePlayerSprites()
+        : [];
+
+    return generateGameHTML(includeComments, pixelScale, bundledSfxData, bundledPfxData, bundledPlayerSprites);
+}
+
+// Fetch each curated sprite URL and convert to a base64 data URL so the export
+// is fully offline. Returns [{name, data, w, h}, ...]; entries that fail to
+// fetch or encode are silently dropped.
+async function bundlePlayerSprites() {
+    const options = Array.isArray(gameSettings.playerSpriteOptions) ? gameSettings.playerSpriteOptions : [];
+    if (options.length === 0) return [];
+    const bundled = [];
+    for (const opt of options) {
+        try {
+            const resp = await fetch(opt.url);
+            if (!resp.ok) continue;
+            const blob = await resp.blob();
+            const dataUrl = await new Promise((res, rej) => {
+                const reader = new FileReader();
+                reader.onload = () => res(reader.result);
+                reader.onerror = () => rej(new Error('encode failed'));
+                reader.readAsDataURL(blob);
+            });
+            bundled.push({ name: opt.name, data: dataUrl, w: opt.w, h: opt.h });
+        } catch (e) {
+            console.warn('bundlePlayerSprites: skipped', opt.name, e);
+        }
+    }
+    return bundled;
 }
 
 // Helper function to format fire key for display
@@ -172,7 +203,7 @@ function formatFireKey(keyCode) {
     return keyMap[keyCode] || keyCode.replace('Key', '');
 }
 
-function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxData = {}, bundledPfxData = {}) {
+function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxData = {}, bundledPfxData = {}, bundledPlayerSprites = []) {
     // Auto-collect inline data if caller didn't provide any
     if (Object.keys(bundledSfxData).length === 0) {
         bundledSfxData = getAllSfxData(collectSfxIds());
@@ -578,7 +609,7 @@ KEY ELEMENTS:
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <base href="${window.location.origin}/">
     <title>My Platformer Game</title>
-${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown') ? '    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>\n' : ''}${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown' && (gameSettings.multiplayerAllowCustomSprites === true || gameSettings.multiplayerAllowCustomSprites === 'true')) ? '    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">\n' : ''}    ${includeComments ? `<!--
+${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown') ? '    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>\n' : ''}    ${includeComments ? `<!--
     ═══════════════════════════════════════════════════════════════════════════
     CSS STYLES - How the page looks
     ═══════════════════════════════════════════════════════════════════════════
@@ -2168,17 +2199,20 @@ ${includeComments ? `    // ═════════════════�
     var PVP_DAMAGE = ${gameSettings.multiplayerPvPDamage || 1};
     var PVP_KILL_SCORE = ${gameSettings.multiplayerPvPKillScore || 100};
     var PVP_STARTING_LIVES = ${gameSettings.multiplayerPvPLives || 3};
-    // Custom Player Sprites - allow players to bring their own sprite URL
-    var MULTIPLAYER_ALLOW_CUSTOM_SPRITES = ${gameSettings.multiplayerAllowCustomSprites === true};
+    // Curated player sprite options (top-down multiplayer). Players pick one
+    // from this list at join time. Empty -> no picker, default sprite used.
+    var PLAYER_SPRITES = ${JSON.stringify(bundledPlayerSprites)};
+    var PLAYER_SPRITE_COLS = 3;
+    var PLAYER_SPRITE_ROWS = 4;
 
     var socket = null;
     var myPlayerId = null;
     var myPlayerName = '';   // Store local player's chosen name
     var roomCode = null;
-    var remotePlayers = {};  // { odlKx123: { x, y, targetX, targetY, name, facingDirection, color, score, lives, customSprite, customSpriteImage, customSpriteLoaded } }
-    var myCustomSprite = null; // { url, frames } - local player's custom sprite data
-    var myCustomSpriteImage = null; // Image object for local player's custom sprite
-    var myCustomSpriteLoaded = false; // Whether the custom sprite has loaded
+    var remotePlayers = {};  // { id: { ..., customSprite:{idx}, customSpriteImage, customSpriteLoaded } }
+    var myCustomSprite = null; // { idx } when player picked one from PLAYER_SPRITES; null otherwise
+    var myCustomSpriteImage = null; // Image object for local player's chosen sprite
+    var myCustomSpriteLoaded = false; // Whether the chosen sprite has loaded
     var myGreetingMessage = null; // Local player's greeting message for other players to read
     var remoteProjectiles = []; // Projectiles fired by other players
     var chatMessages = [];   // Recent chat messages for overlay
@@ -2266,25 +2300,12 @@ ${includeComments ? `    // ═════════════════�
         var overlay = document.createElement('div');
         overlay.id = 'mp-join-overlay';
 
-        var customSpriteHTML = '';
-        if (MULTIPLAYER_ALLOW_CUSTOM_SPRITES) {
-            customSpriteHTML =
-                '<div style="margin: 15px 0; padding: 12px; background: rgba(155, 89, 182, 0.1); border: 1px solid rgba(155, 89, 182, 0.3); border-radius: 8px; text-align: left;">' +
-                '<div style="color: #9b59b6; font-size: 11px; font-weight: bold; margin-bottom: 8px;">🎨 Custom Sprite (optional)</div>' +
-                '<div style="display: flex; gap: 8px; margin-bottom: 8px;">' +
-                '<input type="text" id="mp-sprite-url" placeholder="Sprite URL (https://...)" ' +
-                'style="flex: 1; padding: 10px; background: #16213e; border: 1px solid #9b59b6; border-radius: 6px; color: #fff; font-size: 12px; box-sizing: border-box;">' +
-                '<button onclick="openMPSpritePicker()" style="padding: 10px 14px; background: linear-gradient(135deg, #9b59b6, #8e44ad); border: none; border-radius: 6px; color: #fff; font-size: 11px; cursor: pointer; white-space: nowrap;">📁 Browse</button>' +
-                '</div>' +
-                '<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">' +
-                '<label style="color: #888; font-size: 11px; white-space: nowrap;">Cols:</label>' +
-                '<input type="number" id="mp-sprite-cols" value="1" min="1" max="16" ' +
-                'style="width: 50px; padding: 6px; background: #16213e; border: 1px solid #9b59b6; border-radius: 6px; color: #fff; font-size: 12px; text-align: center;">' +
-                '<label style="color: #888; font-size: 11px; white-space: nowrap;">Rows:</label>' +
-                '<input type="number" id="mp-sprite-rows" value="1" min="1" max="8" ' +
-                'style="width: 50px; padding: 6px; background: #16213e; border: 1px solid #9b59b6; border-radius: 6px; color: #fff; font-size: 12px; text-align: center;">' +
-                '<span style="color: #666; font-size: 10px;">(spritesheet layout)</span>' +
-                '</div>' +
+        var spriteStripHTML = '';
+        if (PLAYER_SPRITES.length > 0) {
+            spriteStripHTML =
+                '<div style="margin: 15px 0; padding: 12px; background: rgba(155, 89, 182, 0.1); border: 1px solid rgba(155, 89, 182, 0.3); border-radius: 8px;">' +
+                '<div style="color: #9b59b6; font-size: 11px; font-weight: bold; margin-bottom: 8px; text-align: left;">🎮 Choose your character</div>' +
+                '<div id="mp-sprite-strip" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;"></div>' +
                 '</div>';
         }
 
@@ -2308,75 +2329,82 @@ ${includeComments ? `    // ═════════════════�
             '<input type="text" id="mp-room-code" placeholder="Room Code (leave empty to create)" maxlength="20" ' +
             'style="width: 100%; padding: 12px; background: #16213e; border: 1px solid #667eea; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box;">' +
             greetingHTML +
-            customSpriteHTML +
+            spriteStripHTML +
             '<button onclick="connectMultiplayer()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 8px; color: #fff; font-size: 14px; cursor: pointer; font-weight: bold; margin-top: 15px;">🎮 Join Game</button>' +
             '<button onclick="startSinglePlayer()" style="width: 100%; padding: 10px; background: transparent; border: 1px solid #444; border-radius: 8px; color: #888; font-size: 12px; cursor: pointer; margin-top: 10px;">Play Solo Instead</button>' +
             '</div></div>';
         document.body.appendChild(overlay);
+        populateSpriteStrip();
     }
 
-    // Open asset library picker for multiplayer sprite
-    function openMPSpritePicker() {
-        // Callback to handle asset selection
-        function handleAssetSelect(url, metadata) {
-            var urlInput = document.getElementById('mp-sprite-url');
-            if (urlInput && url) {
-                urlInput.value = url;
+    // Track player's currently selected sprite index into PLAYER_SPRITES
+    var myCustomSpriteIdx = -1;
 
-                // Try to auto-fill cols/rows from metadata
-                if (metadata) {
-                    try {
-                        var meta = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
-                        if (meta.columns) {
-                            var colsInput = document.getElementById('mp-sprite-cols');
-                            if (colsInput) colsInput.value = meta.columns;
-                        }
-                        if (meta.rows) {
-                            var rowsInput = document.getElementById('mp-sprite-rows');
-                            if (rowsInput) rowsInput.value = meta.rows;
-                        }
-                    } catch (e) {}
+    // localStorage key for last-used sprite selection
+    var SPRITE_LS_KEY = 'gm_sprite_idx:' + (typeof GAME_TITLE !== 'undefined' ? GAME_TITLE : 'game');
+
+    // Render the sprite strip: one animated tile per PLAYER_SPRITES entry
+    function populateSpriteStrip() {
+        var strip = document.getElementById('mp-sprite-strip');
+        if (!strip) return;
+        var lastIdx = parseInt(localStorage.getItem(SPRITE_LS_KEY));
+        if (isNaN(lastIdx) || lastIdx < 0 || lastIdx >= PLAYER_SPRITES.length) lastIdx = 0;
+        myCustomSpriteIdx = lastIdx;
+
+        PLAYER_SPRITES.forEach(function(sprite, idx) {
+            var wrap = document.createElement('div');
+            wrap.style.cssText = 'position: relative; cursor: pointer; padding: 4px; border-radius: 6px; transition: background 0.15s; background: ' + (idx === lastIdx ? 'rgba(155, 89, 182, 0.4)' : 'transparent') + '; border: 2px solid ' + (idx === lastIdx ? '#9b59b6' : 'transparent') + ';';
+            wrap.title = sprite.name;
+            wrap.dataset.idx = idx;
+            var canvas = document.createElement('canvas');
+            canvas.width = 48;
+            canvas.height = 48;
+            canvas.style.cssText = 'background: #16213e; border-radius: 4px; image-rendering: pixelated; image-rendering: crisp-edges; display: block;';
+            wrap.appendChild(canvas);
+            strip.appendChild(wrap);
+
+            var img = new Image();
+            var frame = 0;
+            img.onload = function() {
+                var fw = img.naturalWidth / PLAYER_SPRITE_COLS;
+                var fh = img.naturalHeight / PLAYER_SPRITE_ROWS;
+                var ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = false;
+                var walkCycle = [0, 1, 2, 1]; // step, idle, step, idle
+                function draw() {
+                    if (!canvas.isConnected) return;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    var col = walkCycle[frame % walkCycle.length];
+                    // Row 0 = facing down
+                    ctx.drawImage(img, col * fw, 0, fw, fh, 0, 0, canvas.width, canvas.height);
+                    frame++;
                 }
-            }
-        }
+                draw();
+                setInterval(draw, 250);
+            };
+            img.src = sprite.data;
 
-        // Option 1: Try parent window callback (iframe mode)
-        var pickerFn = (window.parent && window.parent !== window && window.parent.openAssetPickerWithCallback) || window.openAssetPickerWithCallback;
-        if (typeof pickerFn === 'function') {
-            pickerFn(handleAssetSelect, 'sprites');
-            return;
-        }
-
-        // Option 2: Use AssetLibraryPicker directly (standalone mode)
-        if (typeof AssetLibraryPicker === 'function') {
-            var picker = new AssetLibraryPicker({
-                categories: ['sprites'],
-                apiBase: PLATFORM_BASE_URL + 'api/v1',
-                onSelect: function(asset) {
-                    var fileUrl = asset.file_url || (PLATFORM_BASE_URL + 'file.php?file=' + asset.file_path);
-                    handleAssetSelect(fileUrl, asset.metadata);
-                },
-                onError: function(error) {
-                    console.error('Asset picker error:', error);
-                    alert('Error loading assets. Please try again or paste a URL manually.');
-                }
+            wrap.addEventListener('click', function() {
+                myCustomSpriteIdx = idx;
+                localStorage.setItem(SPRITE_LS_KEY, String(idx));
+                // Update selection highlight
+                Array.prototype.forEach.call(strip.children, function(child, i) {
+                    var sel = (i === idx);
+                    child.style.background = sel ? 'rgba(155, 89, 182, 0.4)' : 'transparent';
+                    child.style.borderColor = sel ? '#9b59b6' : 'transparent';
+                });
             });
-            picker.open({ category: 'sprites' });
-            return;
-        }
-
-        // No picker available
-        alert('Asset Library not available. Please paste a sprite URL manually.');
+        });
     }
-    window.openMPSpritePicker = openMPSpritePicker;
 
-    // Load a custom sprite for a remote player
-    function loadRemotePlayerSprite(playerId, url) {
+    // Load a curated sprite for a remote player (looks up local PLAYER_SPRITES)
+    function loadRemotePlayerSprite(playerId, idx) {
         var rp = remotePlayers[playerId];
         if (!rp) return;
+        var sprite = PLAYER_SPRITES[idx];
+        if (!sprite) return;
 
         var img = new Image();
-        img.crossOrigin = 'anonymous';
         img.onload = function() {
             rp.customSpriteImage = img;
             rp.customSpriteLoaded = true;
@@ -2385,45 +2413,31 @@ ${includeComments ? `    // ═════════════════�
         img.onerror = function() {
             rp.customSpriteError = true;
             rp.customSpriteLoaded = false;
-            console.warn('Failed to load custom sprite for player:', playerId, url);
+            console.warn('Failed to load sprite idx for player:', playerId, idx);
         };
-        img.src = url;
+        img.src = sprite.data;
     }
 
     function connectMultiplayer() {
         myPlayerName = document.getElementById('mp-player-name').value.trim() || 'Player';
         var inputRoomCode = document.getElementById('mp-room-code').value.trim();
 
-        // Capture custom sprite data if enabled
-        if (MULTIPLAYER_ALLOW_CUSTOM_SPRITES) {
-            var spriteUrlInput = document.getElementById('mp-sprite-url');
-            var spriteColsInput = document.getElementById('mp-sprite-cols');
-            var spriteRowsInput = document.getElementById('mp-sprite-rows');
-            var spriteUrl = spriteUrlInput ? spriteUrlInput.value.trim() : '';
-            var spriteCols = spriteColsInput ? Math.max(1, Math.min(16, parseInt(spriteColsInput.value) || 1)) : 1;
-            var spriteRows = spriteRowsInput ? Math.max(1, Math.min(8, parseInt(spriteRowsInput.value) || 1)) : 1;
-
-            // Validate URL (basic check)
-            if (spriteUrl && (spriteUrl.startsWith('http://') || spriteUrl.startsWith('https://'))) {
-                myCustomSprite = { url: spriteUrl, cols: spriteCols, rows: spriteRows };
-                // Load the custom sprite image for local player
-                myCustomSpriteImage = new Image();
-                myCustomSpriteImage.crossOrigin = 'anonymous';
-                myCustomSpriteImage.onload = function() {
-                    myCustomSpriteLoaded = true;
-                    console.log('Local player custom sprite loaded:', spriteUrl, 'cols:', spriteCols, 'rows:', spriteRows);
-                };
-                myCustomSpriteImage.onerror = function() {
-                    myCustomSpriteLoaded = false;
-                    myCustomSpriteImage = null;
-                    console.warn('Failed to load custom sprite:', spriteUrl);
-                };
-                myCustomSpriteImage.src = spriteUrl;
-            } else {
-                myCustomSprite = null;
-                myCustomSpriteImage = null;
+        // Capture sprite selection (from sprite-strip picker)
+        if (PLAYER_SPRITES.length > 0 && myCustomSpriteIdx >= 0 && myCustomSpriteIdx < PLAYER_SPRITES.length) {
+            var chosen = PLAYER_SPRITES[myCustomSpriteIdx];
+            myCustomSprite = { idx: myCustomSpriteIdx };
+            myCustomSpriteImage = new Image();
+            myCustomSpriteImage.onload = function() { myCustomSpriteLoaded = true; };
+            myCustomSpriteImage.onerror = function() {
                 myCustomSpriteLoaded = false;
-            }
+                myCustomSpriteImage = null;
+                console.warn('Failed to load local sprite idx:', myCustomSpriteIdx);
+            };
+            myCustomSpriteImage.src = chosen.data;
+        } else {
+            myCustomSprite = null;
+            myCustomSpriteImage = null;
+            myCustomSpriteLoaded = false;
         }
 
         // Capture greeting message (always available)
@@ -2546,9 +2560,9 @@ ${includeComments ? `    // ═════════════════�
                 greetingMessage: data.greetingMessage || null
             };
 
-            // Load custom sprite if provided
-            if (data.customSprite && data.customSprite.url) {
-                loadRemotePlayerSprite(data.playerId, data.customSprite.url);
+            // Load curated sprite if provided (idx into PLAYER_SPRITES)
+            if (data.customSprite && typeof data.customSprite.idx === 'number') {
+                loadRemotePlayerSprite(data.playerId, data.customSprite.idx);
             }
 
             // Show notification if player has a greeting
@@ -3304,8 +3318,8 @@ ${includeComments ? `    // ═════════════════�
             // Check for custom sprite first
             if (rp.customSpriteLoaded && rp.customSpriteImage && rp.customSpriteImage.complete && rp.customSpriteImage.naturalWidth > 0) {
                 spriteToUse = rp.customSpriteImage;
-                frameCount = (rp.customSprite && rp.customSprite.cols) ? rp.customSprite.cols : 1;
-                rowCount = (rp.customSprite && rp.customSprite.rows) ? rp.customSprite.rows : 1;
+                frameCount = PLAYER_SPRITE_COLS;
+                rowCount = PLAYER_SPRITE_ROWS;
                 useCustomSprite = true;
             } else if (playerSprite && playerSprite.complete && playerSprite.naturalWidth > 0) {
                 // Fall back to game's player sprite
@@ -8214,16 +8228,16 @@ ${includeComments ? `        // ────────────────
             ctx.translate(-idleCenterX, -idleCenterY);
         }
 
-        // Determine which sprite to use: custom sprite (if multiplayer with custom enabled) or default
+        // Determine which sprite to use: chosen multiplayer sprite or default
         var spriteToUse = playerSprite;
         var spriteCols = PLAYER_SPRITESHEET_COLS;
         var spriteRows = PLAYER_SPRITESHEET_ROWS;
 
-        // Use custom sprite if in multiplayer mode and custom sprite is loaded
-        if (MULTIPLAYER_ALLOW_CUSTOM_SPRITES && myCustomSpriteLoaded && myCustomSpriteImage && myCustomSpriteImage.complete && myCustomSpriteImage.naturalWidth > 0) {
+        // Use chosen sprite if loaded
+        if (myCustomSpriteLoaded && myCustomSpriteImage && myCustomSpriteImage.complete && myCustomSpriteImage.naturalWidth > 0) {
             spriteToUse = myCustomSpriteImage;
-            spriteCols = myCustomSprite ? (myCustomSprite.cols || 1) : 1;
-            spriteRows = myCustomSprite ? (myCustomSprite.rows || 1) : 1;
+            spriteCols = PLAYER_SPRITE_COLS;
+            spriteRows = PLAYER_SPRITE_ROWS;
         }
 
         if (spriteToUse && spriteToUse.complete && spriteToUse.naturalWidth > 0) {

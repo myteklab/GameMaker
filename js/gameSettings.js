@@ -2,6 +2,62 @@
 // GAME SETTINGS
 // ============================================
 
+// Default multiplayer player sprites (top-down). Auto-populated into
+// gameSettings.playerSpriteOptions the first time multiplayer is enabled
+// on a project that doesn't already have a roster. All are 48x64 = 3x4
+// (16x16 frames, rows = down/left/right/up, cols = walk cycle).
+const DEFAULT_PLAYER_SPRITE_IDS = [
+    '9719f8c2-f985-43ab-af04-4517b2b26a0c', // knight
+    '25f81f8b-67ab-4626-97f1-a61f120e86d3', // wizard
+    'd31f7fae-8ec4-4649-b8c0-12dec71239fd', // ninja
+    '25938f19-35eb-4081-a17a-052234a1eb17', // princess
+    'fcc5ca89-4e36-4f7e-b6f0-7a2f1553e317', // clown
+    'f9e66ef9-a1db-425e-8776-fbdaceba0999', // angel
+];
+
+const PLAYER_SPRITE_LAYOUT = { cols: 3, rows: 4 };
+
+// Fetch one library asset by id, resolve to {libraryId, name, url, w, h}.
+// Returns null on failure.
+async function resolveLibrarySpriteById(id) {
+    try {
+        const resp = await fetch(`/api/v1/library/assets/${id}`);
+        if (!resp.ok) return null;
+        const body = await resp.json();
+        const asset = body && body.data && body.data.asset;
+        if (!asset) return null;
+        const storageBase = window.ASSET_STORAGE_URL || '/storage/library';
+        const url = storageBase + '/' + asset.file_path;
+        const dims = await new Promise(res => {
+            const img = new Image();
+            img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight });
+            img.onerror = () => res(null);
+            img.src = url;
+        });
+        if (!dims) return null;
+        return { libraryId: id, name: asset.name, url, w: dims.w, h: dims.h };
+    } catch (e) {
+        return null;
+    }
+}
+
+// Resolve every starter pack sprite, dropping any that fail.
+async function resolveStarterSpritePack() {
+    const results = await Promise.all(DEFAULT_PLAYER_SPRITE_IDS.map(resolveLibrarySpriteById));
+    return results.filter(Boolean);
+}
+
+// If multiplayer is enabled and the project has no sprite roster yet, populate it.
+async function ensurePlayerSpriteOptions() {
+    if (!gameSettings.multiplayerEnabled) return;
+    if (Array.isArray(gameSettings.playerSpriteOptions) && gameSettings.playerSpriteOptions.length > 0) return;
+    const pack = await resolveStarterSpritePack();
+    if (pack.length === 0) return;
+    gameSettings.playerSpriteOptions = pack;
+    if (typeof renderPlayerSpriteRoster === 'function') renderPlayerSpriteRoster();
+    if (typeof markDirty === 'function') markDirty();
+}
+
 // ============================================
 // GAME TYPE SYSTEM
 // ============================================
@@ -199,10 +255,18 @@ function updateGameSetting(key, value) {
              key === 'projectileCollectsItems' || key === 'saveRPGProgress' ||
              key === 'multiplayerEnabled' || key === 'multiplayerShowChat' ||
              key === 'multiplayerSyncItems' || key === 'multiplayerSyncEnemies' ||
-             key === 'multiplayerPvPEnabled' || key === 'multiplayerAllowCustomSprites' ||
+             key === 'multiplayerPvPEnabled' ||
              key === 'cheatsEnabled' || key === 'cheatFeedbackEnabled' ||
              key === 'runTimerEnabled' || key === 'particleEffectsEnabled') {
         gameSettings[key] = value === true || value === 'true';
+        // First time multiplayer flips on, fill in the starter sprite roster
+        if (key === 'multiplayerEnabled' && gameSettings[key]) {
+            ensurePlayerSpriteOptions();
+        }
+    }
+    // Player sprite roster (array of {libraryId,name,url,w,h})
+    else if (key === 'playerSpriteOptions') {
+        gameSettings[key] = Array.isArray(value) ? value : [];
     }
     // Particle effect URLs (nested object)
     else if (key.startsWith('particleEffect_')) {
@@ -2386,11 +2450,119 @@ function updateMultiplayerUI() {
     const pvpLivesDisplay = document.getElementById('pvp-lives-display');
     if (pvpLivesDisplay) pvpLivesDisplay.textContent = gameSettings.multiplayerPvPLives || 3;
 
-    // Custom Player Sprites checkbox
-    const customSpritesCheckbox = document.getElementById('setting-multiplayer-custom-sprites');
-    if (customSpritesCheckbox) {
-        customSpritesCheckbox.checked = gameSettings.multiplayerAllowCustomSprites === true;
+    // Player sprite roster
+    renderPlayerSpriteRoster();
+}
+
+// Render the curated sprite roster in the multiplayer panel
+function renderPlayerSpriteRoster() {
+    const container = document.getElementById('player-sprite-roster');
+    if (!container) return;
+    const options = Array.isArray(gameSettings.playerSpriteOptions) ? gameSettings.playerSpriteOptions : [];
+    if (options.length === 0) {
+        container.innerHTML = '<div style="color: #888; font-size: 11px; padding: 8px; font-style: italic;">No sprites yet. Players will use the default character. Click "Reset to defaults" for the starter pack.</div>';
+        return;
     }
+    container.innerHTML = options.map((s, i) =>
+        '<div class="player-sprite-row" style="display: flex; align-items: center; gap: 8px; padding: 6px; background: rgba(0,0,0,0.25); border-radius: 4px;">' +
+            '<span style="color: #888; font-size: 11px; width: 18px; text-align: center;">' + (i + 1) + '</span>' +
+            '<canvas class="player-sprite-thumb" width="32" height="32" data-url="' + (s.url || '') + '" data-w="' + (s.w || 0) + '" data-h="' + (s.h || 0) + '" style="background: #16213e; border-radius: 4px; image-rendering: pixelated; image-rendering: crisp-edges;"></canvas>' +
+            '<span style="flex: 1; color: #fff; font-size: 12px;">' + escapeHtml(s.name || '(unnamed)') + '</span>' +
+            '<button onclick="movePlayerSprite(' + i + ', -1)" ' + (i === 0 ? 'disabled' : '') + ' title="Move up" style="background: transparent; border: none; color: ' + (i === 0 ? '#444' : '#9b59b6') + '; font-size: 14px; cursor: ' + (i === 0 ? 'default' : 'pointer') + '; padding: 2px 6px;">▲</button>' +
+            '<button onclick="movePlayerSprite(' + i + ', 1)" ' + (i === options.length - 1 ? 'disabled' : '') + ' title="Move down" style="background: transparent; border: none; color: ' + (i === options.length - 1 ? '#444' : '#9b59b6') + '; font-size: 14px; cursor: ' + (i === options.length - 1 ? 'default' : 'pointer') + '; padding: 2px 6px;">▼</button>' +
+            '<button onclick="removePlayerSprite(' + i + ')" title="Remove" style="background: transparent; border: none; color: #e74c3c; font-size: 14px; cursor: pointer; padding: 2px 8px;">✕</button>' +
+        '</div>'
+    ).join('');
+    // Draw thumbnails (first "down" frame at row 0, col 0)
+    container.querySelectorAll('canvas.player-sprite-thumb').forEach(canvas => {
+        const url = canvas.dataset.url;
+        const w = parseInt(canvas.dataset.w);
+        const h = parseInt(canvas.dataset.h);
+        if (!url || !w || !h) return;
+        const img = new Image();
+        img.onload = () => {
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            const fw = w / PLAYER_SPRITE_LAYOUT.cols;
+            const fh = h / PLAYER_SPRITE_LAYOUT.rows;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, fw, fh, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = url;
+    });
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Open the asset library picker to add a sprite to the roster
+function addPlayerSpriteFromLibrary() {
+    const opener = window.openAssetPickerWithCallback ||
+                   (window.parent && window.parent !== window && window.parent.openAssetPickerWithCallback);
+    if (!opener) {
+        showToast('Asset picker unavailable', 'warning');
+        return;
+    }
+    opener(async function(url, metadata, asset) {
+        if (!url) return;
+        // Measure dimensions from the loaded image
+        const dims = await new Promise(res => {
+            const img = new Image();
+            img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight });
+            img.onerror = () => res(null);
+            img.src = url;
+        });
+        if (!dims) {
+            showToast('Could not load sprite', 'warning');
+            return;
+        }
+        if (dims.w % PLAYER_SPRITE_LAYOUT.cols !== 0 || dims.h % PLAYER_SPRITE_LAYOUT.rows !== 0) {
+            showToast('Sprite must divide into 3 cols x 4 rows', 'warning');
+            return;
+        }
+        if (!Array.isArray(gameSettings.playerSpriteOptions)) gameSettings.playerSpriteOptions = [];
+        gameSettings.playerSpriteOptions.push({
+            libraryId: (asset && asset.id) || null,
+            name: (asset && asset.name) || 'sprite',
+            url: url,
+            w: dims.w,
+            h: dims.h,
+        });
+        renderPlayerSpriteRoster();
+        markDirty();
+    }, 'sprites');
+}
+
+function removePlayerSprite(idx) {
+    if (!Array.isArray(gameSettings.playerSpriteOptions)) return;
+    gameSettings.playerSpriteOptions.splice(idx, 1);
+    renderPlayerSpriteRoster();
+    markDirty();
+}
+
+function movePlayerSprite(idx, delta) {
+    const arr = gameSettings.playerSpriteOptions;
+    if (!Array.isArray(arr)) return;
+    const target = idx + delta;
+    if (target < 0 || target >= arr.length) return;
+    const [item] = arr.splice(idx, 1);
+    arr.splice(target, 0, item);
+    renderPlayerSpriteRoster();
+    markDirty();
+}
+
+async function resetPlayerSpritesToDefaults() {
+    showToast('Loading starter pack...', 'info');
+    const pack = await resolveStarterSpritePack();
+    if (pack.length === 0) {
+        showToast('Could not load starter pack', 'warning');
+        return;
+    }
+    gameSettings.playerSpriteOptions = pack;
+    renderPlayerSpriteRoster();
+    markDirty();
+    showToast('Starter pack loaded', 'success');
 }
 
 // Toggle PvP settings visibility
