@@ -2542,6 +2542,35 @@ ${includeComments ? `    // ═════════════════�
             requestAnimationFrame(gameLoop);
         });
 
+        // Sent by the server right after we join, listing players already in the room
+        // so we render them with their chosen sprite/name/greeting without waiting
+        // for them to move.
+        socket.on('gm_existing_players', function(data) {
+            if (!data || !Array.isArray(data.players)) return;
+            data.players.forEach(function(p, i) {
+                if (!p || !p.playerId) return;
+                var pos = p.position || { x: 0, y: 0 };
+                remotePlayers[p.playerId] = {
+                    x: pos.x,
+                    y: pos.y,
+                    targetX: pos.x,
+                    targetY: pos.y,
+                    name: p.name || 'Player',
+                    facingDirection: 'down',
+                    color: getPlayerColor(Object.keys(remotePlayers).length),
+                    customSprite: p.customSprite || null,
+                    customSpriteImage: null,
+                    customSpriteLoaded: false,
+                    customSpriteError: false,
+                    greetingMessage: p.greetingMessage || null,
+                };
+                if (p.customSprite && typeof p.customSprite.idx === 'number') {
+                    loadRemotePlayerSprite(p.playerId, p.customSprite.idx);
+                }
+            });
+            updatePlayerCount();
+        });
+
         socket.on('gm_player_joined', function(data) {
             remotePlayers[data.playerId] = {
                 x: data.position.x,
