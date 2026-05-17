@@ -2385,13 +2385,23 @@ ${includeComments ? `    // ═════════════════�
             '<div style="color: #666; font-size: 10px; margin-top: 6px;">Other players can approach you and press E to read this message</div>' +
             '</div>';
 
+        // Prefer the platform's logged-in user name (set by preview.html) over
+        // the author's baked-in default. Skip values containing "@" so emails
+        // don't leak into the multiplayer chat.
+        var defaultName = MULTIPLAYER_PLAYER_NAME;
+        if (window.MP_DEFAULT_PLAYER_NAME && String(window.MP_DEFAULT_PLAYER_NAME).indexOf('@') === -1) {
+            defaultName = String(window.MP_DEFAULT_PLAYER_NAME).slice(0, 20);
+        }
+        // Escape for an HTML attribute
+        var defaultNameAttr = String(defaultName).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
         overlay.innerHTML = '<div style="background: rgba(0,0,0,0.95); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 9999;">' +
             '<div style="background: #1a1a2e; padding: 30px; border-radius: 15px; border: 2px solid #667eea; max-width: 400px; text-align: center; max-height: 90vh; overflow-y: auto;">' +
             '<div style="font-size: 24px; margin-bottom: 10px; color: #fff;">🌐 Multiplayer</div>' +
             '<div style="color: #888; font-size: 12px; margin-bottom: 20px;">' +
             '<span style="background: #f39c12; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px;">EXPERIMENTAL</span>' +
             '</div>' +
-            '<input type="text" id="mp-player-name" placeholder="Your Name" value="' + MULTIPLAYER_PLAYER_NAME + '" maxlength="20" ' +
+            '<input type="text" id="mp-player-name" placeholder="Your Name" value="' + defaultNameAttr + '" maxlength="20" ' +
             'style="width: 100%; padding: 12px; margin-bottom: 10px; background: #16213e; border: 1px solid #667eea; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box;">' +
             '<input type="text" id="mp-room-code" placeholder="Room Code (leave empty to create)" maxlength="20" ' +
             'style="width: 100%; padding: 12px; background: #16213e; border: 1px solid #667eea; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box;">' +
