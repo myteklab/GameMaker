@@ -2940,9 +2940,9 @@ ${includeComments ? `    // ═════════════════�
 
         overlay.style.cssText = 'position: fixed; top: ' + topOffset + 'px; right: ' + rightOffset + 'px; background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 8px; z-index: 1000; font-size: 11px; font-family: sans-serif; min-width: 140px; max-width: 200px; border: 1px solid rgba(102,126,234,0.3);';
         overlay.innerHTML =
-            '<div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleMpPanel()">' +
-                '<div style="color: #667eea; font-weight: bold; font-size: 13px;">🎮 ' + roomCode + '</div>' +
-                '<div id="mp-collapse-icon" style="color: #666; font-size: 10px;">' + (mpPanelCollapsed ? '▶' : '▼') + '</div>' +
+            '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                '<div id="mp-room-code-display" onclick="copyRoomCode(event)" title="Click to copy room code" style="cursor: pointer; color: #667eea; font-weight: bold; font-size: 13px; padding-right: 4px; user-select: none;">🎮 ' + roomCode + '</div>' +
+                '<div id="mp-collapse-icon" onclick="toggleMpPanel()" style="cursor: pointer; color: #666; font-size: 10px; padding: 2px 6px;">' + (mpPanelCollapsed ? '▶' : '▼') + '</div>' +
             '</div>' +
             '<div id="mp-panel-content" style="' + (mpPanelCollapsed ? 'display:none;' : '') + '">' +
                 '<div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0; padding-top: 6px;">' +
@@ -2984,6 +2984,40 @@ ${includeComments ? `    // ═════════════════�
         var icon = document.getElementById('mp-collapse-icon');
         if (content) content.style.display = mpPanelCollapsed ? 'none' : 'block';
         if (icon) icon.textContent = mpPanelCollapsed ? '▶' : '▼';
+    }
+
+    // Click-to-copy on the room code chip. Brief inline "Copied!" feedback.
+    function copyRoomCode(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (!roomCode) return;
+        var el = document.getElementById('mp-room-code-display');
+        function showCopied() {
+            if (!el) return;
+            var orig = el.innerHTML;
+            el.innerHTML = '✓ Copied!';
+            setTimeout(function() {
+                var current = document.getElementById('mp-room-code-display');
+                if (current) current.innerHTML = orig;
+            }, 1200);
+        }
+        function fallback() {
+            try {
+                var ta = document.createElement('textarea');
+                ta.value = roomCode;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showCopied();
+            } catch (err) {}
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(roomCode).then(showCopied, fallback);
+        } else {
+            fallback();
+        }
     }
 
     var chatInputActive = false;
@@ -3587,6 +3621,7 @@ ${includeComments ? `    // ═════════════════�
         window.connectMultiplayer = connectMultiplayer;
         window.startSinglePlayer = startSinglePlayer;
         window.toggleMpPanel = toggleMpPanel;
+        window.copyRoomCode = copyRoomCode;
         window.openChatInput = openChatInput;
         window.chatInputActive = false; // Expose for keydown check
     }
