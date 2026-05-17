@@ -2299,6 +2299,7 @@ ${includeComments ? `    // ═════════════════�
     var mpPanelCollapsed = false;    // Track if multiplayer panel is collapsed
     var myPvPLives = PVP_ENABLED ? PVP_STARTING_LIVES : 0;  // Local player's PvP lives
     var pvpEliminated = false;       // True when player has been eliminated
+    var recentlyRespawnedUntil = 0;  // Timestamp end for the more dramatic post-respawn flash
 
     // RPG Progress Save/Load Functions
     function saveRPGProgress() {
@@ -2896,24 +2897,27 @@ ${includeComments ? `    // ═════════════════�
                 }
             }
 
-            // If victim is us, handle respawn
+            // If victim is us, show the elimination overlay then respawn
             if (data.victimId === myPlayerId) {
+                var RESPAWN_MS = 2000;
+                showEliminationOverlay(data.killerName, RESPAWN_MS);
+                triggerScreenShake(12, 20);
                 setTimeout(function() {
-                    // Respawn with reset
                     pvpEliminated = false;
                     myPvPLives = PVP_STARTING_LIVES;
                     score = 0;
-                    // Reset position to spawn with random offset to prevent camping
+                    // Respawn at the level's spawn point (no random offset; the
+                    // 2s delay is enough anti-camping, and the offset could
+                    // drop the player into a wall in top-down RPG layouts)
                     findStartPosition();
-                    var offsetTiles = 1 + Math.floor(Math.random() * 3);
-                    var direction = Math.random() < 0.5 ? -1 : 1;
-                    player.x = player.x + (offsetTiles * RENDER_SIZE * direction);
-                    player.x = Math.max(RENDER_SIZE, Math.min(player.x, levelWidth * RENDER_SIZE - RENDER_SIZE * 2));
                     player.speedX = 0;
                     player.speedY = 0;
+                    // Strong post-respawn invincibility window with intense flash
+                    player.invincibleUntil = Date.now() + 2500;
+                    recentlyRespawnedUntil = Date.now() + 2500;
                     showChatMessage('System', '🔄 Respawned! Score reset.');
                     updateMpLeaderboard();
-                }, 2000); // 2 second respawn delay
+                }, RESPAWN_MS);
             } else if (remotePlayers[data.victimId]) {
                 // Remote player eliminated - show skull, then reset after respawn
                 remotePlayers[data.victimId].lives = 0;
@@ -2943,6 +2947,54 @@ ${includeComments ? `    // ═════════════════�
         var overlay = document.getElementById('mp-join-overlay');
         if (overlay) overlay.remove();
         requestAnimationFrame(gameLoop);
+    }
+
+    // Full-screen overlay shown for the PvP respawn delay so the player
+    // unambiguously knows they died and how long until they respawn.
+    function showEliminationOverlay(killerName, respawnMs) {
+        var existing = document.getElementById('mp-elim-overlay');
+        if (existing) existing.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'mp-elim-overlay';
+        overlay.style.cssText = [
+            'position: fixed', 'inset: 0',
+            'background: radial-gradient(ellipse at center, rgba(180,30,30,0.55), rgba(0,0,0,0.75))',
+            'display: flex', 'flex-direction: column',
+            'align-items: center', 'justify-content: center',
+            'z-index: 99999', 'color: #fff',
+            'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            'pointer-events: none', 'transition: opacity 0.4s ease-out'
+        ].join(';');
+
+        var safeName = String(killerName || 'someone').replace(/[<>&"]/g, '');
+        overlay.innerHTML =
+            '<div style="font-size: 80px; line-height: 1; margin-bottom: 12px;">💀</div>' +
+            '<div style="font-size: 36px; font-weight: 900; letter-spacing: 2px; text-shadow: 3px 3px 0 #000, 0 0 16px rgba(255,80,80,0.7);">ELIMINATED</div>' +
+            '<div style="font-size: 18px; margin-top: 14px; opacity: 0.9; text-shadow: 1px 1px 0 #000;">by ' + safeName + '</div>' +
+            '<div id="mp-elim-countdown" style="font-size: 15px; margin-top: 22px; opacity: 0.85;">Respawning in ' + Math.ceil(respawnMs / 1000) + 's...</div>';
+        document.body.appendChild(overlay);
+
+        var remaining = Math.ceil(respawnMs / 1000);
+        var countdownEl = document.getElementById('mp-elim-countdown');
+        var interval = setInterval(function() {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(interval);
+                return;
+            }
+            if (countdownEl) countdownEl.textContent = 'Respawning in ' + remaining + 's...';
+        }, 1000);
+
+        setTimeout(function() {
+            clearInterval(interval);
+            if (overlay && overlay.parentNode) {
+                overlay.style.opacity = '0';
+                setTimeout(function() {
+                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                }, 400);
+            }
+        }, respawnMs);
     }
 
     function showRoomCodeOverlay() {
@@ -8383,10 +8435,19 @@ ${includeComments ? `        // ────────────────
         var playerScreenX = player.x - camX;
         var playerScreenY = player.y - camY + (player.spriteOffsetY || 0);
 
-        // Invincibility flashing effect - flash every 100ms (includes cheat invincibility)
-        var isInvincible = Date.now() < player.invincibleUntil || (CHEATS_ENABLED && isCheatInvincible());
-        if (isInvincible && Math.floor(Date.now() / 100) % 2 === 0) {
-            ctx.globalAlpha = 0.3;
+        // Invincibility flashing effect - flash every 100ms (includes cheat invincibility).
+        // Stronger flash (alpha 0) during the post-respawn window so the player
+        // unmistakably knows they just came back from a death.
+        var nowFlash = Date.now();
+        var isInvincible = nowFlash < player.invincibleUntil || (CHEATS_ENABLED && isCheatInvincible());
+        var isPostRespawn = nowFlash < recentlyRespawnedUntil;
+        if (isInvincible) {
+            if (isPostRespawn) {
+                // Faster, harder flash
+                if (Math.floor(nowFlash / 80) % 2 === 0) ctx.globalAlpha = 0.05;
+            } else if (Math.floor(nowFlash / 100) % 2 === 0) {
+                ctx.globalAlpha = 0.3;
+            }
         }
 
         // Get cheat size multiplier
