@@ -2599,6 +2599,7 @@ ${includeComments ? `    // ═════════════════�
             socket.emit('gm_join_game', {
                 x: spawnX,
                 y: spawnY,
+                level: currentLevelIndex,  // Per-level multiplayer: track which level the player is in
                 customSprite: myCustomSprite,  // Include custom sprite data (null if none)
                 greetingMessage: myGreetingMessage  // Include greeting message (null if none)
             });
@@ -2699,6 +2700,17 @@ ${includeComments ? `    // ═════════════════�
             var pName = leavingPlayer ? leavingPlayer.name : 'A player';
             delete remotePlayers[data.playerId];
             showChatMessage('System', '👋 ' + pName + ' left the game');
+            updatePlayerCount();
+        });
+
+        // A peer walked through a door into a different level. They still
+        // exist in the room (chat works) but should no longer render here.
+        socket.on('gm_player_left_level', function(data) {
+            var p = remotePlayers[data.playerId];
+            if (p) {
+                showChatMessage('System', '🚪 ' + (p.name || 'A player') + ' entered another area');
+            }
+            delete remotePlayers[data.playerId];
             updatePlayerCount();
         });
 
@@ -4196,6 +4208,18 @@ ${includeComments ? `    // ═════════════════�
         // Initialize objects and player
         initGameObjects();
         findStartPosition();
+
+        // Per-level multiplayer: notify the relay so other clients drop us
+        // from the old level's view and the new level's peers get a join
+        // event. Server replies with gm_existing_players for the new level.
+        if (MULTIPLAYER_ENABLED && multiplayerReady && socket) {
+            remotePlayers = {}; // Clear old-level peers; server will resend the new level's list
+            socket.emit('gm_level_change', {
+                level: currentLevelIndex,
+                x: player ? player.x : 0,
+                y: player ? player.y : 0,
+            });
+        }
 
         return true;
     }
