@@ -2,6 +2,26 @@
 // PLAY TEST MODE
 // ============================================
 
+// Pull the logged-in platform user's name (display_name preferred, then
+// username) for prefilling the multiplayer join modal. Returns '' if not
+// available, signed out, or the only available value is email-shaped.
+async function getPlatformPlayerName() {
+    if (typeof Platform === 'undefined' || !Platform.getUserInfo) return '';
+    try {
+        const info = await Platform.getUserInfo();
+        if (!info) return '';
+        const looksLikeEmail = (s) => typeof s === 'string' && s.indexOf('@') !== -1;
+        let name = '';
+        if (info.displayName && !looksLikeEmail(info.displayName)) name = info.displayName;
+        else if (info.username && !looksLikeEmail(info.username)) name = info.username;
+        else if (info.displayName && looksLikeEmail(info.displayName)) name = info.displayName.split('@')[0];
+        else if (info.username && looksLikeEmail(info.username)) name = info.username.split('@')[0];
+        return String(name || '').trim().slice(0, 20);
+    } catch (e) {
+        return '';
+    }
+}
+
 // Toggle play test modal with Escape key
 function togglePlayTestModal() {
     const modal = document.getElementById('playtest-modal');
@@ -112,7 +132,17 @@ async function loadGamePreview() {
     const iframe = document.getElementById('game-preview-frame');
     const pixelScaleRadio = document.querySelector('input[name="pixel-scale"]:checked');
     const pixelScale = pixelScaleRadio ? parseInt(pixelScaleRadio.value) : 1;
-    const gameHTML = await generateGameHTMLAsync(false, pixelScale);
+    let gameHTML = await generateGameHTMLAsync(false, pixelScale);
+
+    // Inject the platform user's name so multiplayer play-test prefills it,
+    // matching the /p/ preview behavior. Skipped for downloaded exports.
+    const playerName = await getPlatformPlayerName();
+    if (playerName) {
+        const escaped = playerName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const snippet = '<script>window.MP_DEFAULT_PLAYER_NAME = \'' + escaped + '\';</script>';
+        // Drop it right after <head> so it runs before the join modal renders
+        gameHTML = gameHTML.replace(/<head>/i, '<head>' + snippet);
+    }
 
     // Clean up previous blob URL
     if (currentBlobUrl) {
