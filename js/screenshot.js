@@ -21,7 +21,15 @@ function generateScreenshot() {
             var gridWasChecked = gridCheckbox && gridCheckbox.checked;
             if (gridCheckbox) gridCheckbox.checked = false;
 
-            // Redraw without grid
+            // Suppress the editor's active-layer dimming so both layers
+            // render at full opacity in the preview.
+            window.__snapshotMode = true;
+            // Force the decoration layer visible for the snapshot even if the
+            // author has the editor's eye toggle hiding it.
+            var prevDecorVisible = decorLayerVisible;
+            decorLayerVisible = true;
+
+            // Redraw without grid / without dim
             if (typeof draw === 'function') {
                 draw();
             }
@@ -40,16 +48,21 @@ function generateScreenshot() {
 
             sctx.drawImage(canvas, drawX, drawY, drawW, drawH);
 
-            // Restore grid
+            // Restore snapshot-mode + decoration visibility + grid
+            window.__snapshotMode = false;
+            decorLayerVisible = prevDecorVisible;
             if (gridCheckbox && gridWasChecked) {
                 gridCheckbox.checked = true;
-                draw();
             }
+            draw();
 
             return screenshotCanvas.toDataURL('image/png');
         }
     } catch (e) {
-        // Canvas tainted by CORS images, fall back to manual rendering
+        // Canvas tainted by CORS images, fall back to manual rendering.
+        // Always clear the snapshot-mode flag and restore decor visibility.
+        window.__snapshotMode = false;
+        if (typeof prevDecorVisible !== 'undefined') decorLayerVisible = prevDecorVisible;
         // Restore grid if we toggled it
         if (typeof gridCheckbox !== 'undefined' && gridCheckbox && gridWasChecked) {
             gridCheckbox.checked = true;
@@ -145,42 +158,53 @@ function generateScreenshot() {
     var endRow = Math.ceil((viewTop + viewHeight) / tileSize);
     var tileScreenSize = tileSize * scale;
 
+    // Helper: draw one cell of a grid into sctx
+    function drawGridCell(char, x, y) {
+        if (char === '.' || char === ' ') return;
+        var tile = tiles[char];
+        var charCode = char.charCodeAt(0);
+        var isCustom = (charCode >= 0xE000 && charCode <= 0xF8FF);
+        if (!tile && !isCustom) return;
+        var screenX = offsetX + (x * tileSize - viewLeft) * scale;
+        var screenY = offsetY + (y * tileSize - viewTop) * scale;
+        if (isCustom) {
+            var customImg = customTileImageCache[char];
+            if (customImg && customImg.complete && customImg.naturalWidth > 0) {
+                sctx.drawImage(customImg, screenX, screenY, tileScreenSize, tileScreenSize);
+            } else {
+                sctx.fillStyle = '#4a90d9';
+                sctx.fillRect(screenX, screenY, tileScreenSize, tileScreenSize);
+            }
+            return;
+        }
+        if (canUseTileset && tilesetImage) {
+            sctx.drawImage(
+                tilesetImage,
+                tile.x, tile.y, tileSize, tileSize,
+                screenX, screenY, tileScreenSize, tileScreenSize
+            );
+        } else {
+            sctx.fillStyle = tile.solid ? '#6B5B40' : '#4A6B40';
+            sctx.fillRect(screenX, screenY, tileScreenSize, tileScreenSize);
+        }
+    }
+
+    // Terrain layer
     for (var y = Math.max(0, startRow); y < Math.min(level.length, endRow); y++) {
         var row = level[y];
         if (!row) continue;
         for (var x = Math.max(0, startCol); x < Math.min(row.length, endCol); x++) {
-            var char = row[x];
-            if (char === '.' || char === ' ') continue;
+            drawGridCell(row[x], x, y);
+        }
+    }
 
-            var tile = tiles[char];
-            var charCode = char.charCodeAt(0);
-            var isCustom = (charCode >= 0xE000 && charCode <= 0xF8FF);
-
-            if (!tile && !isCustom) continue;
-
-            var screenX = offsetX + (x * tileSize - viewLeft) * scale;
-            var screenY = offsetY + (y * tileSize - viewTop) * scale;
-
-            if (isCustom) {
-                var customImg = customTileImageCache[char];
-                if (customImg && customImg.complete && customImg.naturalWidth > 0) {
-                    sctx.drawImage(customImg, screenX, screenY, tileScreenSize, tileScreenSize);
-                } else {
-                    sctx.fillStyle = '#4a90d9';
-                    sctx.fillRect(screenX, screenY, tileScreenSize, tileScreenSize);
-                }
-                continue;
-            }
-
-            if (canUseTileset && tilesetImage) {
-                sctx.drawImage(
-                    tilesetImage,
-                    tile.x, tile.y, tileSize, tileSize,
-                    screenX, screenY, tileScreenSize, tileScreenSize
-                );
-            } else {
-                sctx.fillStyle = tile.solid ? '#6B5B40' : '#4A6B40';
-                sctx.fillRect(screenX, screenY, tileScreenSize, tileScreenSize);
+    // Decoration overlay (rendered above terrain, below objects — matches runtime)
+    if (typeof decorLevel !== 'undefined' && Array.isArray(decorLevel)) {
+        for (var dy = Math.max(0, startRow); dy < Math.min(decorLevel.length, endRow); dy++) {
+            var drow = decorLevel[dy];
+            if (!drow) continue;
+            for (var dx = Math.max(0, startCol); dx < Math.min(drow.length, endCol); dx++) {
+                drawGridCell(drow[dx], dx, dy);
             }
         }
     }

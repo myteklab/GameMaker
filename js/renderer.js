@@ -856,8 +856,9 @@ function drawTileGrid(grid, isDecor) {
     const showLetters = false;
 
     // When painting on the *other* layer, dim this layer slightly so the user
-    // sees which one is active. Skip dimming during play-test (no layer concept).
-    const dim = isDecor !== (currentTileLayer === 'decor');
+    // sees which one is active. Suppressed during snapshot capture so previews
+    // show both layers at full opacity.
+    const dim = !window.__snapshotMode && (isDecor !== (currentTileLayer === 'decor'));
     if (dim) ctx.globalAlpha = 0.55;
 
     for (let y = Math.max(0, startRow); y < Math.min(grid.length, endRow); y++) {
