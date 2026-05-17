@@ -305,7 +305,7 @@ function updateGameSetting(key, value) {
 
         // Special validation for multiplayerMaxPlayers (must be 2-12)
         if (key === 'multiplayerMaxPlayers') {
-            gameSettings[key] = Math.max(2, Math.min(12, gameSettings[key]));
+            gameSettings[key] = Math.max(2, Math.min(30, gameSettings[key]));
         }
         // Special validation for PvP settings
         if (key === 'multiplayerPvPDamage') {

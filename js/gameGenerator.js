@@ -3101,7 +3101,14 @@ ${includeComments ? `    // ═════════════════�
     }
 
     function getPlayerColor(index) {
-        var colors = ['#00d9ff', '#ff006e', '#8338ec', '#fb5607', '#ffbe0b', '#06ffa5', '#ff595e', '#1982c4'];
+        // 30 visually distinct colors, ordered so the first 8 stay vivid for
+        // small rooms. After 30 we wrap around (cap matches the player limit).
+        var colors = [
+            '#00d9ff', '#ff006e', '#8338ec', '#fb5607', '#ffbe0b', '#06ffa5', '#ff595e', '#1982c4',
+            '#ff8c00', '#00b894', '#e84393', '#0984e3', '#fdcb6e', '#a29bfe', '#d63031', '#00cec9',
+            '#6c5ce7', '#fd79a8', '#55efc4', '#fab1a0', '#74b9ff', '#b2bec3', '#e17055', '#81ecec',
+            '#ffeaa7', '#dfe6e9', '#2d3436', '#e84118', '#7bed9f', '#ff7675'
+        ];
         return colors[index % colors.length];
     }
 
