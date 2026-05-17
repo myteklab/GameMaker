@@ -6,13 +6,34 @@
 // gameSettings.playerSpriteOptions the first time multiplayer is enabled
 // on a project that doesn't already have a roster. All are 48x64 = 3x4
 // (16x16 frames, rows = down/left/right/up, cols = walk cycle).
+// Demon / demoness intentionally omitted to keep the classroom-safe default;
+// authors can still add them manually via the Add Sprite picker.
 const DEFAULT_PLAYER_SPRITE_IDS = [
     '9719f8c2-f985-43ab-af04-4517b2b26a0c', // knight
+    'c7cae44f-1c5a-4465-b5c8-10982eaab60f', // cuteknight
+    '072a56c4-49ca-4e10-9258-edd83040c40d', // darkknight
+    '7edbf866-9560-4329-9040-3f733cec2681', // darkknight (alt)
     '25f81f8b-67ab-4626-97f1-a61f120e86d3', // wizard
     'd31f7fae-8ec4-4649-b8c0-12dec71239fd', // ninja
+    'e47b27f6-2d52-423a-91a3-e90c16e4b8e7', // archer
+    '9b7553ef-ac44-4c0a-bb93-c5caaa5d7f18', // archer (alt)
+    '9e9ad6a6-ca25-4ebc-9327-49e08a9369a2', // berserker
+    'b3a7485d-c532-49f1-b7c4-a72671323956', // berserker (alt)
+    '4026a1cd-5329-4743-a005-c1f5e23c9577', // dragoon
+    '428ed4f5-8acd-4827-b7e4-95e693751854', // gladiator
+    '6c08dfcc-0df2-4012-b068-2e963177882b', // healer
+    'f9e66ef9-a1db-425e-8776-fbdaceba0999', // angel
+    'a2738546-9023-4ed6-b71d-8437b0d6e61a', // king
+    '5c6691f1-ef50-4b74-8db6-706d54139331', // queen
+    'cceb4199-e522-4b15-a422-58d1be6611a4', // prince
     '25938f19-35eb-4081-a17a-052234a1eb17', // princess
     'fcc5ca89-4e36-4f7e-b6f0-7a2f1553e317', // clown
-    'f9e66ef9-a1db-425e-8776-fbdaceba0999', // angel
+    'fea8247d-6db9-4389-a907-ad7bdb94e8a2', // clown (alt)
+    '3108667c-9e7a-4d91-8a2a-70c697345fbb', // man
+    '2970ccb4-bd87-4bf2-84cf-805df1359104', // woman
+    'b723b324-36d8-4fde-a9be-fc29077bcb7c', // oldman
+    'b22eea11-7169-4785-8a51-f17bc3d76ffd', // oldwoman
+    '56266570-acf8-4806-ac83-089ce7af3eb5', // executive
 ];
 
 const PLAYER_SPRITE_LAYOUT = { cols: 3, rows: 4 };
