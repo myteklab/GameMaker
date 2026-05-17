@@ -1040,11 +1040,14 @@ function deleteCustomTile(key) {
     });
 }
 
-// Clear the multi-cell stamp brush (called from the brush-indicator chip)
-function clearTileBrush() {
+// Clear the multi-cell stamp brush. Pass silent=true to skip the toast
+// (used when the user is implicitly switching away from tile painting,
+// e.g. selecting an object to place, pressing Escape).
+function clearTileBrush(silent) {
+    if (!tileBrush && !tilesetSelectionRect) return;
     tileBrush = null;
     tilesetSelectionRect = null;
     if (typeof updateBrushIndicator === 'function') updateBrushIndicator();
     if (typeof renderTilesetPreview === 'function') renderTilesetPreview();
-    showToast('Brush cleared');
+    if (!silent) showToast('Brush cleared');
 }

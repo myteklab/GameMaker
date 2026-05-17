@@ -1076,9 +1076,15 @@ function onKeyDown(e) {
     const tag = document.activeElement.tagName.toLowerCase();
     const isTyping = tag === 'input' || tag === 'textarea';
 
-    // Escape key - deselect object placement, etc.
+    // Escape key - deselect object placement, brush, selection, etc.
     if (!isTyping && e.key === 'Escape') {
-        // Clear selection if active (don't fall through to play test)
+        // Clear multi-cell stamp brush first if active
+        if (tileBrush) {
+            clearTileBrush();
+            e.preventDefault();
+            return;
+        }
+        // Clear rect selection if active (don't fall through to play test)
         if (selection) {
             selection = null;
             draw();

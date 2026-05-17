@@ -3227,6 +3227,10 @@ function clearTileSelection() {
     // Reset to eraser (no active tile for placement)
     selectedTileKey = '.';
 
+    // Drop any multi-cell stamp brush too, so clicking an object after
+    // building a brush actually places that object (not the brush pattern).
+    if (typeof clearTileBrush === 'function') clearTileBrush(true);
+
     // Update visual selection in tile palette
     document.querySelectorAll('.tile-item').forEach(el => {
         el.classList.toggle('selected', el.dataset.key === '.');
