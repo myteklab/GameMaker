@@ -413,7 +413,11 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
         var t = tileEffectTime * speed / 1000;
         var centerX = screenX + RENDER_SIZE / 2;
         var centerY = screenY + RENDER_SIZE / 2;
-        var phase = (x * 0.5 + y * 0.3) * Math.PI;
+        // Phase set to 0 so multi-tile stamps (e.g. a 2x3 tree) stay coherent.
+        // Trade-off: identical-effect tiles across the level move in unison.
+        // Acceptable for pixel-art RPG aesthetic; escalate to per-stamp groups
+        // if forests need per-tree variation.
+        var phase = 0;
         switch (fx.effect) {
             case 'sway':
                 var swayAngle = Math.sin(t * 2 + phase) * intensity * 0.15;
