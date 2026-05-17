@@ -275,6 +275,7 @@ function updateGameSetting(key, value) {
     else if (key === 'playerColor' || key === 'playerSpriteURL' ||
              key === 'projectileColor' || key === 'projectileSpriteURL' ||
              key === 'projectileFireKey' || key === 'projectileMode' ||
+             key === 'projectileAimMode' ||
              key === 'jumpMode' || key === 'playerIdleEffect') {
         gameSettings[key] = value;
     }
@@ -595,6 +596,8 @@ function updateGameSettingsUI() {
         projectileEnabledCheckbox.checked = gameSettings.projectileEnabled === true;
     }
     setInputValue('setting-projectile-fire-key', gameSettings.projectileFireKey || 'KeyX');
+    setInputValue('setting-projectile-aim-mode', gameSettings.projectileAimMode || 'keyboard');
+    if (typeof toggleAimModeOptions === 'function') toggleAimModeOptions();
     setInputValue('setting-projectile-mode', gameSettings.projectileMode || 'cooldown');
     setInputValue('setting-projectile-cooldown', gameSettings.projectileCooldown || 500);
     setInputValue('setting-projectile-speed', gameSettings.projectileSpeed || 8);
@@ -692,6 +695,15 @@ function toggleAmmoOptions() {
     const ammoOptions = document.getElementById('ammo-options');
     if (modeSelect && ammoOptions) {
         ammoOptions.style.display = modeSelect.value === 'ammo' ? 'block' : 'none';
+    }
+}
+
+// Show / hide the Fire Key row based on Aim Mode (Mouse aim doesn't use it)
+function toggleAimModeOptions() {
+    const modeSelect = document.getElementById('setting-projectile-aim-mode');
+    const fireKeyGroup = document.getElementById('setting-projectile-fire-key-group');
+    if (modeSelect && fireKeyGroup) {
+        fireKeyGroup.style.display = modeSelect.value === 'mouse' ? 'none' : '';
     }
 }
 

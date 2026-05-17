@@ -4549,6 +4549,14 @@
                     <div id="projectile-options" style="display: none;">
                         <div class="form-row">
                             <div class="form-group">
+                                <label>Aim Mode</label>
+                                <select id="setting-projectile-aim-mode" onchange="updateGameSetting('projectileAimMode', this.value); toggleAimModeOptions();">
+                                    <option value="keyboard">Keyboard (face + fire key)</option>
+                                    <option value="mouse">Mouse (point and click)</option>
+                                </select>
+                                <small style="color: #666; font-size: 9px;">How players aim and fire</small>
+                            </div>
+                            <div class="form-group" id="setting-projectile-fire-key-group">
                                 <label>Fire Key</label>
                                 <select id="setting-projectile-fire-key" onchange="updateGameSetting('projectileFireKey', this.value)">
                                     <option value="KeyX">X</option>

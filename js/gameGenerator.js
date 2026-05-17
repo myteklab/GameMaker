@@ -938,9 +938,17 @@ It's like a blank piece of paper that JavaScript can draw on.
 The id="game" lets JavaScript find this specific canvas.
 -->` : ''}
 <canvas id="game"></canvas>
-<div id="info">${gameSettings.gameType === 'topdown'
-    ? `WASD to move | E to interact${gameSettings.projectileEnabled ? ` | ${formatFireKey(gameSettings.projectileFireKey)} to shoot` : ''} | R to restart`
-    : `Arrow Keys / WASD to move | Space to jump${gameSettings.projectileEnabled ? ` | ${formatFireKey(gameSettings.projectileFireKey)} to shoot` : ''} | R to restart`}</div>
+<div id="info">${(function() {
+    var shootHint = '';
+    if (gameSettings.projectileEnabled) {
+        shootHint = gameSettings.projectileAimMode === 'mouse'
+            ? ' | Click to shoot'
+            : ' | ' + formatFireKey(gameSettings.projectileFireKey) + ' to shoot';
+    }
+    return gameSettings.gameType === 'topdown'
+        ? 'WASD to move | E to interact' + shootHint + ' | R to restart'
+        : 'Arrow Keys / WASD to move | Space to jump' + shootHint + ' | R to restart';
+})()}</div>
 
 ${includeComments ? `<!-- Mobile touch controls - shown only on touch devices -->` : ''}
 <div class="mobile-controls" id="mobile-controls">
@@ -962,7 +970,7 @@ ${includeComments ? `<!-- Keyboard controls overlay - shown only on desktop -->`
     <div class="control-row"><span class="control-key">I</span><span class="control-action">Inventory</span></div>`
         : `<div class="control-row"><span class="control-key">←→</span><span class="control-action">Move</span></div>
     <div class="control-row"><span class="control-key">Space</span><span class="control-action">Jump</span></div>`}
-    ${gameSettings.projectileEnabled ? `<div class="control-row"><span class="control-key">${formatFireKey(gameSettings.projectileFireKey)}</span><span class="control-action">Shoot</span></div>` : ''}
+    ${gameSettings.projectileEnabled ? `<div class="control-row"><span class="control-key">${gameSettings.projectileAimMode === 'mouse' ? 'Click' : formatFireKey(gameSettings.projectileFireKey)}</span><span class="control-action">Shoot${gameSettings.projectileAimMode === 'mouse' ? ' (aim with mouse)' : ''}</span></div>` : ''}
     ${gameSettings.multiplayerEnabled ? `<div class="control-row"><span class="control-key">T</span><span class="control-action">Chat</span></div>` : ''}
     <div class="control-row"><span class="control-key">R</span><span class="control-action">Restart</span></div>
     <div class="controls-hint">Hides when you start playing</div>
@@ -1212,6 +1220,7 @@ ${includeComments ? `    // ═════════════════�
     // Projectile System Settings
     var PROJECTILE_ENABLED = ${gameSettings.projectileEnabled === true};
     var PROJECTILE_FIRE_KEY = '${gameSettings.projectileFireKey || 'KeyX'}';
+    var PROJECTILE_AIM_MODE = '${gameSettings.projectileAimMode || 'keyboard'}'; // 'keyboard' or 'mouse'
     var PROJECTILE_MODE = '${gameSettings.projectileMode || 'cooldown'}';
     var PROJECTILE_COOLDOWN = ${gameSettings.projectileCooldown || 500};
     var PROJECTILE_START_AMMO = ${gameSettings.projectileStartAmmo || 10};
@@ -5007,6 +5016,35 @@ ${includeComments ? `    // ═════════════════�
     });
     document.addEventListener('keyup', function(e) { keys[e.code] = false; });
 
+    // Mouse aim tracking: cursor position in canvas-pixel coords (camera-relative).
+    // Updated on mousemove; mouseDown is true while the left button is held.
+    var mouseCanvasX = CANVAS_WIDTH / 2;
+    var mouseCanvasY = CANVAS_HEIGHT / 2;
+    var mouseDown = false;
+    if (PROJECTILE_AIM_MODE === 'mouse' && canvas) {
+        function updateMouseFromEvent(e) {
+            var rect = canvas.getBoundingClientRect();
+            var scaleX = CANVAS_WIDTH / rect.width;
+            var scaleY = CANVAS_HEIGHT / rect.height;
+            mouseCanvasX = (e.clientX - rect.left) * scaleX;
+            mouseCanvasY = (e.clientY - rect.top) * scaleY;
+        }
+        canvas.addEventListener('mousemove', updateMouseFromEvent);
+        canvas.addEventListener('mousedown', function(e) {
+            if (e.button !== 0) return;
+            updateMouseFromEvent(e);
+            mouseDown = true;
+            e.preventDefault();
+        });
+        // Release globally so dragging off-canvas still ends the hold.
+        document.addEventListener('mouseup', function(e) {
+            if (e.button === 0) mouseDown = false;
+        });
+        // Suppress browser context menu so right-click can be reserved later.
+        canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        canvas.style.cursor = 'crosshair';
+    }
+
     function resetPlayer() {
         if (autoscrollEnabled) {
             // In autoscroll mode, respawn near current camera position
@@ -5626,9 +5664,14 @@ ${includeComments ? `        // ────────────────
             }
         }
 
-        // Check projectile fire key
-        if (PROJECTILE_ENABLED && keys[PROJECTILE_FIRE_KEY]) {
-            fireProjectile();
+        // Check projectile fire trigger: keyboard mode uses the fire key,
+        // mouse mode uses left-button-down (autofire while held, cooldown gates).
+        if (PROJECTILE_ENABLED) {
+            if (PROJECTILE_AIM_MODE === 'mouse') {
+                if (mouseDown) fireProjectile();
+            } else if (keys[PROJECTILE_FIRE_KEY]) {
+                fireProjectile();
+            }
         }
 
         // Update game objects
@@ -7340,12 +7383,24 @@ ${includeComments ? `        // ────────────────
         lastFireTime = now;
         if (PROJECTILE_MODE === 'ammo') currentAmmo--;
 
-        // Determine projectile direction based on game mode
+        // Determine projectile direction based on game mode and aim mode
         var projSpeedX = 0;
         var projSpeedY = 0;
         var projDirection = player.facingRight ? 1 : -1;
 
-        if (IS_TOPDOWN) {
+        if (PROJECTILE_AIM_MODE === 'mouse') {
+            // Aim from player center toward mouse world coords (canvas + camera)
+            var pcx = player.x + player.width / 2;
+            var pcy = player.y + player.height / 2;
+            var tx = mouseCanvasX + cameraX;
+            var ty = mouseCanvasY + cameraY;
+            var ax = tx - pcx;
+            var ay = ty - pcy;
+            var mag = Math.sqrt(ax * ax + ay * ay) || 1;
+            projSpeedX = (ax / mag) * PROJECTILE_SPEED;
+            projSpeedY = (ay / mag) * PROJECTILE_SPEED;
+            projDirection = ax < 0 ? -1 : 1;
+        } else if (IS_TOPDOWN) {
             // Top-down mode: shoot in facing direction
             switch (player.facingDirection) {
                 case 'up':

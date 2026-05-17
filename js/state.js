@@ -225,6 +225,7 @@ let gameSettings = {
     // Projectile system settings
     projectileEnabled: false,          // Master toggle for projectile system
     projectileFireKey: 'KeyX',         // KeyX, KeyZ, KeyC, ShiftLeft, ControlLeft, Enter
+    projectileAimMode: 'keyboard',     // 'keyboard' (fire-key + facing direction) or 'mouse' (cursor aim, click to fire)
     projectileMode: 'cooldown',        // 'cooldown' (unlimited with cooldown) or 'ammo' (limited ammo)
     projectileCooldown: 500,           // Milliseconds between shots
     projectileStartAmmo: 10,           // Starting ammo (for 'ammo' mode)
