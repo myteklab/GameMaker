@@ -2823,9 +2823,14 @@ ${includeComments ? `    // ═════════════════�
         socket.on('gm_projectile_spawned', function(data) {
             if (data.playerId === myPlayerId) return; // Ignore our own projectiles
             var playerColor = remotePlayers[data.playerId] ? remotePlayers[data.playerId].color : '#00d9ff';
-            // Calculate speed from direction (server sends direction, not speed)
+            // Prefer the sender's exact velocity (mouse aim sends free angles).
+            // Fall back to deriving from facingDirection for keyboard-aim or
+            // older clients that did not send speedX/speedY.
             var speedX = 0, speedY = 0;
-            if (data.facingDirection === 'up') speedY = -PROJECTILE_SPEED;
+            if (typeof data.speedX === 'number' && typeof data.speedY === 'number') {
+                speedX = data.speedX;
+                speedY = data.speedY;
+            } else if (data.facingDirection === 'up') speedY = -PROJECTILE_SPEED;
             else if (data.facingDirection === 'down') speedY = PROJECTILE_SPEED;
             else if (data.facingDirection === 'left') speedX = -PROJECTILE_SPEED;
             else if (data.facingDirection === 'right') speedX = PROJECTILE_SPEED;
@@ -2857,10 +2862,14 @@ ${includeComments ? `    // ═════════════════�
             if (data.targetId === myPlayerId) {
                 // Take damage
                 myPvPLives -= data.damage;
-                triggerScreenShake(6, 12); // Quick shake (~0.2s at 60fps)
+                triggerScreenShake(10, 14); // Stronger shake
                 vibrate([100, 50, 100]);
                 player.invincibleUntil = Date.now() + 1500; // Brief invincibility
                 showChatMessage('System', '💥 Hit by ' + data.attackerName + '!');
+                // Unmistakable visual: brief red flash over the canvas so the
+                // player can't miss that they took damage even if the remote
+                // projectile's interpolated path appeared to fly past them.
+                showHitFlash();
 
                 // Check for elimination
                 if (myPvPLives <= 0) {
@@ -2949,6 +2958,25 @@ ${includeComments ? `    // ═════════════════�
         requestAnimationFrame(gameLoop);
     }
 
+    // Brief full-screen red flash so the player knows a hit landed,
+    // independent of where the remote projectile visually appeared on
+    // their screen (which lags A's local hit detection).
+    function showHitFlash() {
+        var prev = document.getElementById('mp-hit-flash');
+        if (prev) prev.remove();
+        var el = document.createElement('div');
+        el.id = 'mp-hit-flash';
+        el.style.cssText = 'position:fixed;inset:0;background:rgba(255,40,40,0.35);z-index:99998;pointer-events:none;transition:opacity 0.25s ease-out;';
+        document.body.appendChild(el);
+        // Force reflow then fade out
+        // eslint-disable-next-line no-unused-expressions
+        el.offsetWidth;
+        el.style.opacity = '0';
+        setTimeout(function() {
+            if (el && el.parentNode) el.parentNode.removeChild(el);
+        }, 300);
+    }
+
     // Full-screen overlay shown for the PvP respawn delay so the player
     // unambiguously knows they died and how long until they respawn.
     function showEliminationOverlay(killerName, respawnMs) {
@@ -2969,7 +2997,6 @@ ${includeComments ? `    // ═════════════════�
 
         var safeName = String(killerName || 'someone').replace(/[<>&"]/g, '');
         overlay.innerHTML =
-            '<div style="font-size: 80px; line-height: 1; margin-bottom: 12px;">💀</div>' +
             '<div style="font-size: 36px; font-weight: 900; letter-spacing: 2px; text-shadow: 3px 3px 0 #000, 0 0 16px rgba(255,80,80,0.7);">ELIMINATED</div>' +
             '<div style="font-size: 18px; margin-top: 14px; opacity: 0.9; text-shadow: 1px 1px 0 #000;">by ' + safeName + '</div>' +
             '<div id="mp-elim-countdown" style="font-size: 15px; margin-top: 22px; opacity: 0.85;">Respawning in ' + Math.ceil(respawnMs / 1000) + 's...</div>';
@@ -7496,11 +7523,18 @@ ${includeComments ? `        // ────────────────
         projectiles.push(projectile);
         if (SOUND_SHOOT) playSound(SOUND_SHOOT);
 
-        // Broadcast projectile to other players in multiplayer
+        // Broadcast projectile to other players in multiplayer. We include
+        // the actual speedX/speedY (not just a cardinal direction) so remote
+        // clients can reproduce the trajectory exactly. Mouse-aim shots have
+        // free angles that the up/down/left/right enum cannot represent;
+        // without this, other players would see a projectile fly the wrong
+        // way while still taking damage from it.
         if (MULTIPLAYER_ENABLED && socket && socket.connected) {
             socket.emit('gm_shoot', {
                 x: projectile.x,
                 y: projectile.y,
+                speedX: projectile.speedX,
+                speedY: projectile.speedY,
                 direction: projectile.direction,
                 facingDirection: projectile.facingDirection
             });
