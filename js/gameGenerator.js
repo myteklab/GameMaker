@@ -2625,6 +2625,11 @@ ${includeComments ? `    // ═════════════════�
         // for them to move.
         socket.on('gm_existing_players', function(data) {
             if (!data || !Array.isArray(data.players)) return;
+            // Server is sending the authoritative roster for our current level
+            // (initial join or after a level change). Wipe any stale entries
+            // that may have raced in from the old level's sub-room before our
+            // socket finished leaving it.
+            remotePlayers = {};
             data.players.forEach(function(p, i) {
                 if (!p || !p.playerId) return;
                 var pos = p.position || { x: 0, y: 0 };
@@ -2683,14 +2688,12 @@ ${includeComments ? `    // ═════════════════�
 
         socket.on('gm_player_moved', function(data) {
             if (data.playerId === myPlayerId) return;
-            if (!remotePlayers[data.playerId]) {
-                remotePlayers[data.playerId] = {
-                    color: getPlayerColor(Object.keys(remotePlayers).length),
-                    // Initialize position directly on first receive (no interpolation needed)
-                    x: data.x,
-                    y: data.y
-                };
-            }
+            // Only update known players. Auto-creating an entry here used to
+            // be a fallback for out-of-order events, but it also created
+            // nameless "Player" ghosts when stale events leaked across a
+            // level transition. Players are introduced via gm_player_joined
+            // or gm_existing_players; ignore moves for unknown IDs.
+            if (!remotePlayers[data.playerId]) return;
             // Set target position for interpolation (smooth movement)
             remotePlayers[data.playerId].targetX = data.x;
             remotePlayers[data.playerId].targetY = data.y;
@@ -6427,8 +6430,10 @@ ${includeComments ? `        // ────────────────
             }
         }
 
-        // Check remote players with greeting messages (multiplayer only)
-        if (MULTIPLAYER_ENABLED && socket && socket.connected) {
+        // Check remote players with greeting messages (multiplayer only).
+        // Doors and NPCs always win when in range. Greetings are flavor;
+        // only fall back to them if no game object is interactable here.
+        if (!nearestInteractable && MULTIPLAYER_ENABLED && socket && socket.connected) {
             var PLAYER_INTERACTION_RADIUS = 64; // Distance to interact with other players
             for (var playerId in remotePlayers) {
                 if (!remotePlayers.hasOwnProperty(playerId)) continue;
