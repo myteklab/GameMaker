@@ -2650,7 +2650,7 @@ ${includeComments ? `    // ═════════════════�
                     targetY: pos.y,
                     name: p.name || 'Player',
                     facingDirection: 'down',
-                    color: getPlayerColor(Object.keys(remotePlayers).length),
+                    color: getPlayerColor(p.playerId),
                     customSprite: p.customSprite || null,
                     customSpriteImage: null,
                     customSpriteLoaded: false,
@@ -2672,7 +2672,7 @@ ${includeComments ? `    // ═════════════════�
                 targetY: data.position.y,
                 name: data.name,
                 facingDirection: 'down',
-                color: getPlayerColor(Object.keys(remotePlayers).length),
+                color: getPlayerColor(data.playerId),
                 // Custom sprite support
                 customSprite: data.customSprite || null,
                 customSpriteImage: null,
@@ -3251,7 +3251,7 @@ ${includeComments ? `    // ═════════════════�
         lbDiv.innerHTML = html;
     }
 
-    function getPlayerColor(index) {
+    function getPlayerColor(seed) {
         // 30 visually distinct colors, ordered so the first 8 stay vivid for
         // small rooms. After 30 we wrap around (cap matches the player limit).
         var colors = [
@@ -3260,7 +3260,23 @@ ${includeComments ? `    // ═════════════════�
             '#6c5ce7', '#fd79a8', '#55efc4', '#fab1a0', '#74b9ff', '#b2bec3', '#e17055', '#81ecec',
             '#ffeaa7', '#dfe6e9', '#2d3436', '#e84118', '#7bed9f', '#ff7675'
         ];
-        return colors[index % colors.length];
+        // Accept either a numeric index (legacy) or a player-id string.
+        // For strings we hash so the color stays stable across respawns
+        // and level changes (was previously keyed off Object.keys.length
+        // which drifted whenever remotePlayers was rebuilt).
+        var idx;
+        if (typeof seed === 'number') {
+            idx = seed;
+        } else {
+            var s = String(seed || '');
+            var h = 0;
+            for (var i = 0; i < s.length; i++) {
+                h = ((h << 5) - h) + s.charCodeAt(i);
+                h |= 0;
+            }
+            idx = Math.abs(h);
+        }
+        return colors[idx % colors.length];
     }
 
     // Truncate player names to prevent UI overflow
