@@ -154,6 +154,15 @@ function confirmGameTypeSwitch() {
 
 function applyGameTypeSwitch(type) {
     gameSettings.gameType = type;
+    // Game-type-aware projectile fire key: Space for top-down (Space is unused
+    // there), KeyX for platformer (Space is already jump). Only flip if the
+    // current binding still matches the other mode's default — preserves any
+    // explicit choice the author made (KeyZ, KeyC, etc.).
+    if (type === 'topdown' && gameSettings.projectileFireKey === 'KeyX') {
+        gameSettings.projectileFireKey = 'Space';
+    } else if (type === 'platformer' && gameSettings.projectileFireKey === 'Space') {
+        gameSettings.projectileFireKey = 'KeyX';
+    }
     updateGameTypeUI();
     markDirty();
     showToast(`Switched to ${type === 'topdown' ? 'Top-Down RPG' : 'Platformer'} mode`, 'success');
