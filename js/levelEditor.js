@@ -32,6 +32,130 @@ function setTileAt(tileX, tileY, key, layer) {
 }
 
 // ============================================
+// STAMP BRUSH (multi-cell paint from a tileset selection)
+// ============================================
+
+// Paint a single Draw-tool action at (tx, ty). If a multi-cell brush is active,
+// stamp the whole pattern; otherwise paint a single selectedTileKey.
+// Returns true if anything was painted.
+function drawAtTile(tx, ty) {
+    if (tileBrush) {
+        for (let by = 0; by < tileBrush.h; by++) {
+            const row = tileBrush.tiles[by];
+            for (let bx = 0; bx < tileBrush.w; bx++) {
+                setTileAt(tx + bx, ty + by, row[bx]);
+            }
+        }
+        return true;
+    }
+    setTileAt(tx, ty, selectedTileKey);
+    return true;
+}
+
+// ============================================
+// CLIPBOARD / SELECTION COPY-PASTE
+// ============================================
+
+// Capture the current selection rect into tileClipboard. Pulls from BOTH
+// terrain and decoration layers so paste preserves stacking.
+function copySelectionToClipboard() {
+    if (!selection) return false;
+    const x1 = selection.x1, y1 = selection.y1, x2 = selection.x2, y2 = selection.y2;
+    const w = x2 - x1 + 1, h = y2 - y1 + 1;
+    const terrain = [], decor = [];
+    for (let y = y1; y <= y2; y++) {
+        let trow = '', drow = '';
+        for (let x = x1; x <= x2; x++) {
+            trow += (level[y] && level[y][x]) || '.';
+            drow += (decorLevel[y] && decorLevel[y][x]) || '.';
+        }
+        terrain.push(trow);
+        decor.push(drow);
+    }
+    tileClipboard = { tiles: terrain, decorTiles: decor, w: w, h: h };
+    return true;
+}
+
+// Stamp clipboard contents at (originX, originY), top-left aligned. If
+// `transparent` is true, '.' cells in the clipboard leave existing tiles
+// alone (so you can paste a tree shape over an existing snow base).
+function pasteClipboardAt(originX, originY, transparent) {
+    if (!tileClipboard) return false;
+    const w = tileClipboard.w, h = tileClipboard.h;
+    saveUndoState('Paste');
+    for (let dy = 0; dy < h; dy++) {
+        const ty = originY + dy;
+        if (ty < 0 || ty >= level.length) continue;
+        for (let dx = 0; dx < w; dx++) {
+            const tx = originX + dx;
+            if (tx < 0 || tx >= level[ty].length) continue;
+            const tCh = tileClipboard.tiles[dy][dx];
+            const dCh = tileClipboard.decorTiles[dy][dx];
+            if (!transparent || tCh !== '.') setTileAt(tx, ty, tCh, 'terrain');
+            if (!transparent || dCh !== '.') setTileAt(tx, ty, dCh, 'decor');
+        }
+    }
+    markDirty();
+    return true;
+}
+
+// Erase a rectangle on both layers
+function eraseRect(x1, y1, x2, y2) {
+    for (let y = y1; y <= y2; y++) {
+        for (let x = x1; x <= x2; x++) {
+            setTileAt(x, y, '.', 'terrain');
+            setTileAt(x, y, '.', 'decor');
+        }
+    }
+}
+
+function cutSelection() {
+    if (!selection) return;
+    if (!copySelectionToClipboard()) return;
+    saveUndoState('Cut');
+    eraseRect(selection.x1, selection.y1, selection.x2, selection.y2);
+    markDirty();
+    showToast('Cut ' + tileClipboard.w + '×' + tileClipboard.h);
+}
+
+function copySelection() {
+    if (!selection) return;
+    if (copySelectionToClipboard()) {
+        showToast('Copied ' + tileClipboard.w + '×' + tileClipboard.h);
+    }
+}
+
+function pasteClipboard() {
+    if (!tileClipboard) {
+        showToast('Clipboard empty', 'warning');
+        return;
+    }
+    // Anchor: current hover tile if known, else original selection top-left,
+    // else top-left of viewport. Hover is set by mousemove → hoverX/hoverY.
+    let ox, oy;
+    if (typeof hoverX === 'number' && hoverX >= 0 && typeof hoverY === 'number' && hoverY >= 0) {
+        ox = hoverX;
+        oy = hoverY;
+    } else if (selection) {
+        ox = selection.x1;
+        oy = selection.y1;
+    } else {
+        ox = Math.floor(cameraX / tileSize);
+        oy = Math.floor(cameraY / tileSize);
+    }
+    pasteClipboardAt(ox, oy, /* transparent */ true);
+    showToast('Pasted at ' + ox + ',' + oy);
+}
+
+function duplicateSelection() {
+    if (!selection) return;
+    if (!copySelectionToClipboard()) return;
+    // Paste immediately to the right of the original selection
+    pasteClipboardAt(selection.x2 + 1, selection.y1, /* transparent */ false);
+    showToast('Duplicated ' + tileClipboard.w + '×' + tileClipboard.h);
+}
+
+// ============================================
 // TILE LAYER (terrain / decoration)
 // ============================================
 

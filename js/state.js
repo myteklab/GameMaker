@@ -151,6 +151,13 @@ let selectedTileKey = '.';
 let currentTileLayer = 'terrain';
 // Whether the decoration layer is visible in the editor (always rendered in exports)
 let decorLayerVisible = true;
+// Clipboard for level rectangle copy/paste: { tiles, decorTiles, w, h }
+let tileClipboard = null;
+// Multi-cell brush built from a tileset selection: { tiles: rows[], w, h }
+// When set, Draw tool stamps the whole pattern instead of a single tile.
+let tileBrush = null;
+// Rect of the current tileset-canvas selection in tile coords (for visual outline)
+let tilesetSelectionRect = null;
 let cameraX = 0;
 let cameraY = 0;
 let zoom = 2;

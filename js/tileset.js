@@ -275,6 +275,20 @@ function renderTilesetPreview() {
         tctx.fillStyle = 'rgba(74, 222, 128, 0.3)';
         tctx.fillRect(tile.x * scale, tile.y * scale, tileSize * scale, tileSize * scale);
     }
+
+    // Brush / drag-selection outline
+    if (tilesetSelectionRect) {
+        const r = tilesetSelectionRect;
+        const x = Math.min(r.x1, r.x2) * scaledTileSize;
+        const y = Math.min(r.y1, r.y2) * scaledTileSize;
+        const w = (Math.abs(r.x2 - r.x1) + 1) * scaledTileSize;
+        const h = (Math.abs(r.y2 - r.y1) + 1) * scaledTileSize;
+        tctx.fillStyle = 'rgba(155, 89, 182, 0.25)';
+        tctx.fillRect(x, y, w, h);
+        tctx.strokeStyle = '#9b59b6';
+        tctx.lineWidth = 2;
+        tctx.strokeRect(x, y, w, h);
+    }
 }
 
 function clearTileset() {
@@ -419,27 +433,115 @@ function refreshTileset() {
     });
 }
 
-// Tileset click handler - attached after DOM loads
+// Tileset mouse handlers - attached after DOM loads.
+// Single click: pick (or add) a single tile (legacy behavior, clears brush)
+// Shift+drag: build a multi-cell stamp brush from the dragged rect
 function initTilesetClickHandler() {
-    document.getElementById('tileset-canvas').addEventListener('click', (e) => {
-        if (!tilesetImage) return;
+    const tc = document.getElementById('tileset-canvas');
+    if (!tc) return;
+    const scale = 2;
+    let dragStart = null;
+    let isShiftDrag = false;
 
-        const rect = e.target.getBoundingClientRect();
-        const scale = 2;
-        const x = Math.floor((e.clientX - rect.left) / scale / tileSize) * tileSize;
-        const y = Math.floor((e.clientY - rect.top) / scale / tileSize) * tileSize;
+    function cellAt(e) {
+        const rect = tc.getBoundingClientRect();
+        return {
+            cx: Math.floor((e.clientX - rect.left) / scale / tileSize),
+            cy: Math.floor((e.clientY - rect.top) / scale / tileSize),
+        };
+    }
 
-        // Check if this tile already exists
-        for (const key in tiles) {
-            if (tiles[key].x === x && tiles[key].y === y) {
-                selectTile(key);
-                return;
-            }
+    tc.addEventListener('mousedown', (e) => {
+        if (!tilesetImage || e.button !== 0) return;
+        const c = cellAt(e);
+        dragStart = c;
+        isShiftDrag = e.shiftKey;
+        if (isShiftDrag) {
+            tilesetSelectionRect = { x1: c.cx, y1: c.cy, x2: c.cx, y2: c.cy };
+            renderTilesetPreview();
+            e.preventDefault();
         }
-
-        // Add new tile
-        addTileFromTileset(x, y);
     });
+
+    tc.addEventListener('mousemove', (e) => {
+        if (!isShiftDrag || !dragStart) return;
+        const c = cellAt(e);
+        tilesetSelectionRect = { x1: dragStart.cx, y1: dragStart.cy, x2: c.cx, y2: c.cy };
+        renderTilesetPreview();
+    });
+
+    tc.addEventListener('mouseup', (e) => {
+        if (!tilesetImage || !dragStart) return;
+        const c = cellAt(e);
+        const sameCell = (c.cx === dragStart.cx && c.cy === dragStart.cy);
+
+        if (isShiftDrag && !sameCell) {
+            buildBrushFromTilesetRect(dragStart.cx, dragStart.cy, c.cx, c.cy);
+        } else if (sameCell) {
+            // Treat as single-click: pick or add the tile, clear any brush
+            tileBrush = null;
+            tilesetSelectionRect = null;
+            const px = c.cx * tileSize, py = c.cy * tileSize;
+            let foundKey = null;
+            for (const key in tiles) {
+                if (tiles[key].x === px && tiles[key].y === py) { foundKey = key; break; }
+            }
+            if (foundKey) selectTile(foundKey);
+            else addTileFromTileset(px, py);
+            renderTilesetPreview();
+            updateBrushIndicator();
+        }
+        dragStart = null;
+        isShiftDrag = false;
+    });
+}
+
+// Given two corners of a drag in tileset cell coords, ensure tile keys exist
+// for every cell in the rect, then build tileBrush from them.
+function buildBrushFromTilesetRect(x1, y1, x2, y2) {
+    const lo = (a, b) => Math.min(a, b), hi = (a, b) => Math.max(a, b);
+    const cx1 = lo(x1, x2), cy1 = lo(y1, y2), cx2 = hi(x1, x2), cy2 = hi(y1, y2);
+    const w = cx2 - cx1 + 1, h = cy2 - cy1 + 1;
+    const rows = [];
+    let added = 0;
+    for (let cy = cy1; cy <= cy2; cy++) {
+        let row = '';
+        for (let cx = cx1; cx <= cx2; cx++) {
+            const px = cx * tileSize, py = cy * tileSize;
+            let foundKey = null;
+            for (const k in tiles) {
+                if (tiles[k].x === px && tiles[k].y === py) { foundKey = k; break; }
+            }
+            if (!foundKey) {
+                foundKey = getNextTileKey();
+                tiles[foundKey] = { x: px, y: py, solid: true, name: 'Tile ' + foundKey };
+                added++;
+            }
+            row += foundKey;
+        }
+        rows.push(row);
+    }
+    tileBrush = { tiles: rows, w: w, h: h };
+    tilesetSelectionRect = { x1: cx1, y1: cy1, x2: cx2, y2: cy2 };
+    if (added > 0) {
+        markDirty();
+        renderTilePalette();
+    }
+    renderTilesetPreview();
+    updateBrushIndicator();
+    showToast('Brush: ' + w + '×' + h + (added > 0 ? ' (+' + added + ' new tile' + (added > 1 ? 's' : '') + ')' : ''));
+}
+
+// Lightweight UI hint that a multi-cell brush is active
+function updateBrushIndicator() {
+    const el = document.getElementById('brush-indicator');
+    if (!el) return;
+    if (tileBrush) {
+        el.style.display = '';
+        el.textContent = '🖌 ' + tileBrush.w + '×' + tileBrush.h + ' brush';
+    } else {
+        el.style.display = 'none';
+    }
 }
 
 function addTileFromTileset(x, y) {
@@ -629,6 +731,14 @@ function getTileKeyByShortcut(shortcutNum) {
 
 function selectTile(key) {
     selectedTileKey = key;
+
+    // Picking a single tile cancels any multi-cell stamp brush
+    if (typeof tileBrush !== 'undefined' && tileBrush !== null) {
+        tileBrush = null;
+        tilesetSelectionRect = null;
+        if (typeof updateBrushIndicator === 'function') updateBrushIndicator();
+        if (typeof renderTilesetPreview === 'function') renderTilesetPreview();
+    }
 
     // Clear any selected object when selecting a tile (mutual exclusivity)
     if (typeof clearObjectSelection === 'function') {
@@ -870,4 +980,13 @@ function deleteCustomTile(key) {
             showToast(`Deleted custom tile "${tileName}"`, 'info');
         }
     });
+}
+
+// Clear the multi-cell stamp brush (called from the brush-indicator chip)
+function clearTileBrush() {
+    tileBrush = null;
+    tilesetSelectionRect = null;
+    if (typeof updateBrushIndicator === 'function') updateBrushIndicator();
+    if (typeof renderTilesetPreview === 'function') renderTilesetPreview();
+    showToast('Brush cleared');
 }

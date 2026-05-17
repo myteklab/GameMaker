@@ -231,7 +231,7 @@ function onCanvasMouseMove(e) {
     // Paint while dragging (only for draw/erase tools, not fill)
     if (e.buttons === 1 && !isDragging && !isDraggingObject && currentTool !== 'fill') {
         if (currentTool === 'draw') {
-            setTileAt(tile.x, tile.y, selectedTileKey);
+            drawAtTile(tile.x, tile.y);
         } else if (currentTool === 'erase') {
             setTileAt(tile.x, tile.y, '.');
             removeGameObjectAt(tile.x, tile.y); // Also remove any game object
@@ -554,10 +554,10 @@ function onCanvasMouseDown(e) {
             case 'draw':
                 // Save state at start of drawing stroke
                 if (!isDrawingStroke) {
-                    saveUndoState('Draw');
+                    saveUndoState(tileBrush ? 'Stamp' : 'Draw');
                     isDrawingStroke = true;
                 }
-                setTileAt(tile.x, tile.y, selectedTileKey);
+                drawAtTile(tile.x, tile.y);
                 break;
             case 'fill':
                 // Save state before fill (fill is a single operation)
@@ -1202,6 +1202,39 @@ function onKeyDown(e) {
     if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey) || (e.key === 'Z' && e.shiftKey))) {
         e.preventDefault();
         redo();
+    }
+
+    // Selection clipboard: Ctrl+C copy, Ctrl+X cut, Ctrl+V paste, Ctrl+D duplicate
+    if ((e.ctrlKey || e.metaKey) && !isTyping) {
+        if (e.key === 'c' || e.key === 'C') {
+            if (selection) {
+                e.preventDefault();
+                copySelection();
+                return;
+            }
+        } else if (e.key === 'x' || e.key === 'X') {
+            if (selection) {
+                e.preventDefault();
+                cutSelection();
+                selection = null;
+                draw();
+                return;
+            }
+        } else if (e.key === 'v' || e.key === 'V') {
+            if (tileClipboard) {
+                e.preventDefault();
+                pasteClipboard();
+                draw();
+                return;
+            }
+        } else if (e.key === 'd' || e.key === 'D') {
+            if (selection) {
+                e.preventDefault();
+                duplicateSelection();
+                draw();
+                return;
+            }
+        }
     }
 
     // Arrow keys to pan

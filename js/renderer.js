@@ -1090,6 +1090,33 @@ function drawHoverHighlight() {
     const screenX = (hoverX * tileSize - cameraX) * zoom;
     const screenY = (hoverY * tileSize - cameraY) * zoom;
 
+    // Multi-cell stamp brush preview: outline rect + ghost of each tile
+    if (tileBrush && currentTool === 'draw' && tilesetImage) {
+        const bw = tileBrush.w * scaledTileSize;
+        const bh = tileBrush.h * scaledTileSize;
+        ctx.globalAlpha = 0.55;
+        ctx.imageSmoothingEnabled = false;
+        for (let by = 0; by < tileBrush.h; by++) {
+            const row = tileBrush.tiles[by];
+            for (let bx = 0; bx < tileBrush.w; bx++) {
+                const ch = row[bx];
+                const t = tiles[ch];
+                if (!t) continue;
+                ctx.drawImage(
+                    tilesetImage,
+                    t.x, t.y, tileSize, tileSize,
+                    screenX + bx * scaledTileSize, screenY + by * scaledTileSize,
+                    scaledTileSize, scaledTileSize
+                );
+            }
+        }
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#9b59b6';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(screenX, screenY, bw, bh);
+        return;
+    }
+
     ctx.strokeStyle = '#e94560';
     ctx.lineWidth = 2;
     ctx.strokeRect(screenX, screenY, scaledTileSize, scaledTileSize);
