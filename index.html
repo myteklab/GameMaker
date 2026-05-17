@@ -877,6 +877,32 @@
                 <input type="checkbox" id="tile-solid-checkbox" onchange="updateSelectedTileSolid()">
                 <label for="tile-solid-checkbox">Solid (player can stand on it)</label>
             </div>
+            <!-- Motion effect (sway/pulse/bounce/etc.) -->
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #2d3748;">
+                <label style="font-size: 11px; color: #aaa; display: block; margin-bottom: 4px;">Motion effect</label>
+                <select id="tile-effect-type" onchange="updateSelectedTileEffect()" style="width: 100%; padding: 4px 6px; background: #16213e; border: 1px solid #444; border-radius: 3px; color: #fff; font-size: 11px; margin-bottom: 6px;">
+                    <option value="none">None</option>
+                    <option value="sway">Sway (rotate)</option>
+                    <option value="pulse">Pulse (scale)</option>
+                    <option value="bounce">Bounce (up/down)</option>
+                    <option value="float">Float (gentle drift)</option>
+                    <option value="shimmer">Shimmer (subtle scale)</option>
+                    <option value="wave">Wave (horizontal)</option>
+                    <option value="shake">Shake (jitter)</option>
+                </select>
+                <div id="tile-effect-params" style="display: none;">
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                        <label style="font-size: 10px; color: #888; width: 60px;">Intensity</label>
+                        <input type="range" id="tile-effect-intensity" min="1" max="10" value="5" oninput="updateSelectedTileEffect()" style="flex: 1;">
+                        <span id="tile-effect-intensity-value" style="font-size: 10px; color: #aaa; width: 18px; text-align: right;">5</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <label style="font-size: 10px; color: #888; width: 60px;">Speed</label>
+                        <input type="range" id="tile-effect-speed" min="1" max="10" value="5" oninput="updateSelectedTileEffect()" style="flex: 1;">
+                        <span id="tile-effect-speed-value" style="font-size: 10px; color: #aaa; width: 18px; text-align: right;">5</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Tiles Container (resizable sections) -->

@@ -777,6 +777,7 @@ function selectTile(key) {
         document.getElementById('tile-key-input').value = customTiles[key].name || key;
         document.getElementById('tile-key-input').disabled = true; // Can't change custom tile key directly
         document.getElementById('tile-solid-checkbox').checked = customTiles[key].solid !== false;
+        populateTileEffectControls(customTiles[key]);
     } else if (tiles[key]) {
         // Regular tileset tile selected
         infoPanel.classList.add('visible');
@@ -794,6 +795,7 @@ function selectTile(key) {
         document.getElementById('tile-key-input').value = key;
         document.getElementById('tile-key-input').disabled = false;
         document.getElementById('tile-solid-checkbox').checked = tiles[key].solid;
+        populateTileEffectControls(tiles[key]);
     }
 }
 
@@ -832,6 +834,62 @@ function updateSelectedTileSolid() {
         tiles[selectedTileKey].solid = isSolid;
         markDirty();
     }
+}
+
+// Populate the motion-effect controls from a tile object (custom or tileset).
+function populateTileEffectControls(t) {
+    const sel = document.getElementById('tile-effect-type');
+    const intens = document.getElementById('tile-effect-intensity');
+    const speed = document.getElementById('tile-effect-speed');
+    const intensV = document.getElementById('tile-effect-intensity-value');
+    const speedV = document.getElementById('tile-effect-speed-value');
+    const params = document.getElementById('tile-effect-params');
+    if (!sel) return;
+    const eff = (t && t.effect) || 'none';
+    sel.value = eff;
+    const i = (t && t.effectIntensity) || 5;
+    const s = (t && t.effectSpeed) || 5;
+    if (intens) intens.value = i;
+    if (speed) speed.value = s;
+    if (intensV) intensV.textContent = i;
+    if (speedV) speedV.textContent = s;
+    if (params) params.style.display = eff === 'none' ? 'none' : '';
+}
+
+// Read motion-effect controls and write to the currently selected tile.
+function updateSelectedTileEffect() {
+    const effEl = document.getElementById('tile-effect-type');
+    const intensEl = document.getElementById('tile-effect-intensity');
+    const speedEl = document.getElementById('tile-effect-speed');
+    if (!effEl) return;
+    const effect = effEl.value;
+    const intensity = parseInt(intensEl && intensEl.value) || 5;
+    const speed = parseInt(speedEl && speedEl.value) || 5;
+    const intensV = document.getElementById('tile-effect-intensity-value');
+    const speedV = document.getElementById('tile-effect-speed-value');
+    if (intensV) intensV.textContent = intensity;
+    if (speedV) speedV.textContent = speed;
+    const params = document.getElementById('tile-effect-params');
+    if (params) params.style.display = effect === 'none' ? 'none' : '';
+
+    let target = null;
+    if (isCustomTile(selectedTileKey) && customTiles[selectedTileKey]) {
+        target = customTiles[selectedTileKey];
+    } else if (tiles[selectedTileKey]) {
+        target = tiles[selectedTileKey];
+    }
+    if (!target) return;
+
+    if (effect === 'none') {
+        delete target.effect;
+        delete target.effectIntensity;
+        delete target.effectSpeed;
+    } else {
+        target.effect = effect;
+        target.effectIntensity = intensity;
+        target.effectSpeed = speed;
+    }
+    markDirty();
 }
 
 // ============================================

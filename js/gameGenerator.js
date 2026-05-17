@@ -374,7 +374,7 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
 `;
         }
 
-        // Generate tile effect data
+        // Generate tile effect data (from custom tiles + tileset tiles)
         let hasTileEffects = false;
         let tileEffectsCode = '    var tileEffects = {};\n';
         for (const key of customTileKeys) {
@@ -385,11 +385,73 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
                 tileEffectsCode += `    tileEffects['${escapedKey}'] = { effect: '${tile.effect}', intensity: ${tile.effectIntensity || 5}, speed: ${tile.effectSpeed || 5} };\n`;
             }
         }
+        // Tileset tile effects (set via the Selected Tile Info panel)
+        for (const key in tiles) {
+            const tile = tiles[key];
+            if (tile && tile.effect && tile.effect !== 'none') {
+                hasTileEffects = true;
+                const escapedKey = escapeKeyForJS(key);
+                tileEffectsCode += `    tileEffects['${escapedKey}'] = { effect: '${tile.effect}', intensity: ${tile.effectIntensity || 5}, speed: ${tile.effectSpeed || 5} };\n`;
+            }
+        }
         if (hasTileEffects) {
             customTileImagesCode += tileEffectsCode;
             customTileImagesCode += `
     // Tile effect timing
     var tileEffectTime = 0;
+
+    // Apply the tile-effect transform (sway/pulse/bounce/etc.) for the tile at
+    // (x, y) drawing into (screenX, screenY). Returns true if a ctx.save() was
+    // performed; caller must ctx.restore() after drawing. Used by both terrain
+    // and decoration render loops, for both tileset and custom-tile draws.
+    function applyTileEffect(ch, x, y, screenX, screenY) {
+        var fx = tileEffects[ch];
+        if (!fx) return false;
+        ctx.save();
+        var intensity = fx.intensity / 10;
+        var speed = fx.speed / 5;
+        var t = tileEffectTime * speed / 1000;
+        var centerX = screenX + RENDER_SIZE / 2;
+        var centerY = screenY + RENDER_SIZE / 2;
+        var phase = (x * 0.5 + y * 0.3) * Math.PI;
+        switch (fx.effect) {
+            case 'sway':
+                var swayAngle = Math.sin(t * 2 + phase) * intensity * 0.15;
+                ctx.translate(centerX, screenY + RENDER_SIZE);
+                ctx.rotate(swayAngle);
+                ctx.translate(-centerX, -(screenY + RENDER_SIZE));
+                break;
+            case 'pulse':
+                var pulseScale = 1 + Math.sin(t * 3 + phase) * intensity * 0.1;
+                ctx.translate(centerX, centerY);
+                ctx.scale(pulseScale, pulseScale);
+                ctx.translate(-centerX, -centerY);
+                break;
+            case 'bounce':
+                ctx.translate(0, -Math.abs(Math.sin(t * 4 + phase)) * intensity * RENDER_SIZE * 0.1);
+                break;
+            case 'float':
+                ctx.translate(0, Math.sin(t * 1.5 + phase) * intensity * RENDER_SIZE * 0.08);
+                break;
+            case 'shimmer':
+                var sX = 1 + Math.sin(t * 5 + phase) * intensity * 0.05;
+                var sY = 1 + Math.cos(t * 4 + phase * 1.3) * intensity * 0.05;
+                ctx.translate(centerX, centerY);
+                ctx.scale(sX, sY);
+                ctx.translate(-centerX, -centerY);
+                break;
+            case 'wave':
+                ctx.translate(Math.sin(t * 3 + y * 0.5) * intensity * RENDER_SIZE * 0.08, 0);
+                break;
+            case 'shake':
+                ctx.translate(
+                    Math.sin(t * 15 + phase) * intensity * RENDER_SIZE * 0.05,
+                    Math.cos(t * 12 + phase * 1.2) * intensity * RENDER_SIZE * 0.05
+                );
+                break;
+        }
+        return true;
+    }
 `;
         }
     }
@@ -8079,81 +8141,17 @@ ${includeComments ? `        // ────────────────
                             ctImg = customTileImages[char];
                         }
                         if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
-
-                            // Check for tile effects
-                            var tileEffect = hasTileEffects ? tileEffects[char] : null;
-                            if (tileEffect && typeof tileEffectTime !== 'undefined') {
-                                ctx.save();
-
-                                // Calculate effect values based on type
-                                var intensity = tileEffect.intensity / 10; // 0-1 range
-                                var speed = tileEffect.speed / 5; // Speed multiplier
-                                var t = tileEffectTime * speed / 1000; // Time in seconds
-                                var centerX = screenX + RENDER_SIZE / 2;
-                                var centerY = screenY + RENDER_SIZE / 2;
-
-                                // Add position-based phase offset for natural variation
-                                var phase = (x * 0.5 + y * 0.3) * Math.PI;
-
-                                switch (tileEffect.effect) {
-                                    case 'sway':
-                                        // Gentle rotation like wind blowing trees
-                                        var swayAngle = Math.sin(t * 2 + phase) * intensity * 0.15;
-                                        ctx.translate(centerX, screenY + RENDER_SIZE);
-                                        ctx.rotate(swayAngle);
-                                        ctx.translate(-centerX, -(screenY + RENDER_SIZE));
-                                        break;
-                                    case 'pulse':
-                                        // Scale up and down like breathing/glowing
-                                        var pulseScale = 1 + Math.sin(t * 3 + phase) * intensity * 0.1;
-                                        ctx.translate(centerX, centerY);
-                                        ctx.scale(pulseScale, pulseScale);
-                                        ctx.translate(-centerX, -centerY);
-                                        break;
-                                    case 'bounce':
-                                        // Subtle up/down bounce
-                                        var bounceY = Math.abs(Math.sin(t * 4 + phase)) * intensity * RENDER_SIZE * 0.1;
-                                        ctx.translate(0, -bounceY);
-                                        break;
-                                    case 'float':
-                                        // Slow floating up and down
-                                        var floatY = Math.sin(t * 1.5 + phase) * intensity * RENDER_SIZE * 0.08;
-                                        ctx.translate(0, floatY);
-                                        break;
-                                    case 'shimmer':
-                                        // Random-looking scale variation
-                                        var shimmerX = 1 + Math.sin(t * 5 + phase) * intensity * 0.05;
-                                        var shimmerY = 1 + Math.cos(t * 4 + phase * 1.3) * intensity * 0.05;
-                                        ctx.translate(centerX, centerY);
-                                        ctx.scale(shimmerX, shimmerY);
-                                        ctx.translate(-centerX, -centerY);
-                                        break;
-                                    case 'wave':
-                                        // Horizontal wave distortion
-                                        var waveX = Math.sin(t * 3 + y * 0.5) * intensity * RENDER_SIZE * 0.08;
-                                        ctx.translate(waveX, 0);
-                                        break;
-                                    case 'shake':
-                                        // Quick random-ish shake
-                                        var shakeX = Math.sin(t * 15 + phase) * intensity * RENDER_SIZE * 0.05;
-                                        var shakeY = Math.cos(t * 12 + phase * 1.2) * intensity * RENDER_SIZE * 0.05;
-                                        ctx.translate(shakeX, shakeY);
-                                        break;
-                                }
-
-                                ctx.drawImage(ctImg, 0, 0, TILE_SIZE, TILE_SIZE,
-                                    screenX, screenY, RENDER_SIZE, RENDER_SIZE);
-                                ctx.restore();
-                            } else {
-                                ctx.drawImage(ctImg, 0, 0, TILE_SIZE, TILE_SIZE,
-                                    screenX, screenY, RENDER_SIZE, RENDER_SIZE);
-                            }
+                            var didSave = hasTileEffects && typeof applyTileEffect === 'function' && applyTileEffect(char, x, y, screenX, screenY);
+                            ctx.drawImage(ctImg, 0, 0, TILE_SIZE, TILE_SIZE,
+                                screenX, screenY, RENDER_SIZE, RENDER_SIZE);
+                            if (didSave) ctx.restore();
                         } else {
                             // Fallback while loading
                             ctx.fillStyle = '#6b5b95';
                             ctx.fillRect(screenX, screenY, RENDER_SIZE, RENDER_SIZE);
                         }
                     } else if (tileset.complete && tileset.naturalWidth > 0) {
+                        var didSaveT = hasTileEffects && typeof applyTileEffect === 'function' && applyTileEffect(char, x, y, screenX, screenY);
                         ctx.drawImage(
                             tileset,
                             tile.col * TILE_SIZE, tile.row * TILE_SIZE,
@@ -8161,6 +8159,7 @@ ${includeComments ? `        // ────────────────
                             screenX, screenY,
                             RENDER_SIZE, RENDER_SIZE
                         );
+                        if (didSaveT) ctx.restore();
                     } else {
                         ctx.fillStyle = tile.solid ? '#4a5568' : '#2d3748';
                         ctx.fillRect(screenX, screenY, RENDER_SIZE, RENDER_SIZE);
@@ -8171,7 +8170,7 @@ ${includeComments ? `        // ────────────────
 
         // Decoration overlay (visual only, no collision). Painted above terrain
         // and below game objects so a player can walk in front of trees, signs,
-        // etc. Uses the same tile definitions as terrain.
+        // etc. Uses the same tile definitions and tile-effects as terrain.
         if (decorLevel && decorLevel.length > 0) {
             for (var dy = Math.max(0, startRow); dy < Math.min(decorLevel.length, endRow); dy++) {
                 var drow = decorLevel[dy];
@@ -8192,10 +8191,13 @@ ${includeComments ? `        // ────────────────
                             dctImg = customTileImages[dchar];
                         }
                         if (dctImg && dctImg.complete && dctImg.naturalWidth > 0) {
+                            var dSaved = hasTileEffects && typeof applyTileEffect === 'function' && applyTileEffect(dchar, dx, dy, dScreenX, dScreenY);
                             ctx.drawImage(dctImg, 0, 0, TILE_SIZE, TILE_SIZE,
                                 dScreenX, dScreenY, RENDER_SIZE, RENDER_SIZE);
+                            if (dSaved) ctx.restore();
                         }
                     } else if (tileset.complete && tileset.naturalWidth > 0) {
+                        var dSavedT = hasTileEffects && typeof applyTileEffect === 'function' && applyTileEffect(dchar, dx, dy, dScreenX, dScreenY);
                         ctx.drawImage(
                             tileset,
                             dtile.col * TILE_SIZE, dtile.row * TILE_SIZE,
@@ -8203,6 +8205,7 @@ ${includeComments ? `        // ────────────────
                             dScreenX, dScreenY,
                             RENDER_SIZE, RENDER_SIZE
                         );
+                        if (dSavedT) ctx.restore();
                     }
                 }
             }
