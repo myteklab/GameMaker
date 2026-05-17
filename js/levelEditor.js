@@ -55,16 +55,17 @@ function updateTileLayerUI() {
     const visBtn = document.getElementById('layer-btn-vis');
     if (terrainBtn && decorBtn) {
         const onTerrain = currentTileLayer === 'terrain';
-        terrainBtn.style.background = onTerrain ? '#667eea' : 'transparent';
+        terrainBtn.style.background = onTerrain ? '#667eea' : '#1a1a2e';
         terrainBtn.style.color = onTerrain ? '#fff' : '#888';
         terrainBtn.style.borderColor = onTerrain ? '#667eea' : '#444';
-        decorBtn.style.background = !onTerrain ? '#9b59b6' : 'transparent';
+        decorBtn.style.background = !onTerrain ? '#9b59b6' : '#1a1a2e';
         decorBtn.style.color = !onTerrain ? '#fff' : '#888';
         decorBtn.style.borderColor = !onTerrain ? '#9b59b6' : '#444';
     }
     if (visBtn) {
         visBtn.style.color = decorLayerVisible ? '#fff' : '#666';
         visBtn.style.borderColor = decorLayerVisible ? '#888' : '#444';
+        visBtn.style.opacity = decorLayerVisible ? '1' : '0.5';
         visBtn.title = decorLayerVisible
             ? 'Hide decoration layer in editor'
             : 'Show decoration layer in editor';

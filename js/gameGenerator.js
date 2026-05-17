@@ -4972,7 +4972,19 @@ ${includeComments ? `    // ═════════════════�
         var ty = Math.floor(py / RENDER_SIZE);
         if (ty < 0 || ty >= level.length) return null;
         if (tx < 0 || tx >= level[ty].length) return null;
-        return tileTypes[level[ty][tx]] || null;
+        var terrainTile = tileTypes[level[ty][tx]] || null;
+        // If terrain is solid here, that's the collision tile
+        if (terrainTile && terrainTile.solid) return terrainTile;
+        // Otherwise check the decoration overlay: a tile marked solid blocks
+        // movement regardless of which layer the user painted it on.
+        if (decorLevel && decorLevel[ty]) {
+            var dch = decorLevel[ty][tx];
+            if (dch && dch !== '.') {
+                var decorTile = tileTypes[dch] || null;
+                if (decorTile && decorTile.solid) return decorTile;
+            }
+        }
+        return terrainTile;
     }
 
     // Hitbox presets for custom tiles (normalized coordinates 0-1)
