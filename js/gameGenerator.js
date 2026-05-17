@@ -7481,11 +7481,11 @@ ${includeComments ? `        // ────────────────
                         break;
                     }
                 }
-                if (hitPlayer) continue;
+                if (remove) continue;
             }
 
             // Check collectible collision (projectiles pass through but collect items)
-            if (!hitEnemy && PROJECTILE_COLLECTS_ITEMS) {
+            if (!remove && PROJECTILE_COLLECTS_ITEMS) {
                 for (var k = 0; k < activeObjects.length; k++) {
                     var cobj = activeObjects[k];
                     if (!cobj.active || cobj.type !== 'collectible') continue;
