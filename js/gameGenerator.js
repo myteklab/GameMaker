@@ -6551,6 +6551,11 @@ ${includeComments ? `        // ────────────────
     function setKeyboardControlsVisible(visible) {
         var controls = document.getElementById('keyboard-controls');
         if (controls && !IS_TOUCH_DEVICE && !keyboardControlsUserHidden) {
+            // If the auto-dismiss already fired (player has used WASD/arrows
+            // at least once), don't pop the hint back up just because a
+            // dialogue or greeting closed. The panel stays gone for the
+            // rest of the session.
+            if (visible && controlsHintHidden) return;
             keyboardControlsVisible = visible;
             if (visible) {
                 controls.classList.remove('hidden');
