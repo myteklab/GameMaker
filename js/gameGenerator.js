@@ -5240,6 +5240,18 @@ ${includeComments ? `    // ═════════════════�
     }
 
     function restartGame() {
+        // PvP guard: R must not become a free full reset. The 2s elimination
+        // respawn already handles death; if the player presses R mid-fight
+        // we'd be giving them lives, score, and brief invincibility on
+        // demand. No-op instead. (Solo and non-PvP coop still benefit from
+        // restart.)
+        if (MULTIPLAYER_ENABLED && multiplayerReady && PVP_ENABLED) {
+            if (typeof showChatMessage === 'function') {
+                showChatMessage('System', 'ℹ️ Restart is disabled in PvP. Respawn happens after elimination.');
+            }
+            return;
+        }
+
         cameraX = 0;
         cameraY = 0;
         autoscrollX = 0; // Reset autoscroll position
@@ -5256,23 +5268,16 @@ ${includeComments ? `    // ═════════════════�
         // Reset cheat effects (all including permanent)
         resetCheatEffects(false);
 
-        // Reset PvP state for multiplayer
-        if (PVP_ENABLED && MULTIPLAYER_ENABLED) {
-            myPvPLives = PVP_STARTING_LIVES;
-            pvpEliminated = false;
-            updateMpLeaderboard();
-        }
-
         // Notify other players that we respawned
         if (MULTIPLAYER_ENABLED && socket && socket.connected) {
             socket.emit('gm_player_respawn', { roomCode: roomCode });
         }
 
-        // In multiplayer, restart respawns the player at the current level's
-        // spawn point without jumping back to level 0. Jumping to level 0
-        // would teleport the player out of the session their friends are in,
-        // making it feel like they got dropped to solo. In solo mode, R
-        // keeps its original "restart from level 1" behavior.
+        // In non-PvP multiplayer, respawn at the current level's spawn point
+        // without jumping back to level 0. Jumping to level 0 would teleport
+        // the player out of their friends' visibility. Score/lives are
+        // local-only here so reset is harmless. Solo keeps the original
+        // "restart from level 1" behavior.
         if (MULTIPLAYER_ENABLED && multiplayerReady) {
             findStartPosition();
             player.speedX = 0;
