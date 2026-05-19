@@ -3018,6 +3018,19 @@ ${includeComments ? `    // ═════════════════�
 
     function startSinglePlayer() {
         MULTIPLAYER_ENABLED = false;
+        // If the player picked a character in the modal before clicking Play
+        // Solo, apply that sprite to the local player. The render path uses
+        // myCustomSpriteImage/myCustomSpriteLoaded just like in multiplayer.
+        if (PLAYER_SPRITES.length > 0 && myCustomSpriteIdx >= 0 && myCustomSpriteIdx < PLAYER_SPRITES.length) {
+            var chosen = PLAYER_SPRITES[myCustomSpriteIdx];
+            myCustomSpriteImage = new Image();
+            myCustomSpriteImage.onload = function() { myCustomSpriteLoaded = true; };
+            myCustomSpriteImage.onerror = function() {
+                myCustomSpriteLoaded = false;
+                myCustomSpriteImage = null;
+            };
+            myCustomSpriteImage.src = chosen.data;
+        }
         var overlay = document.getElementById('mp-join-overlay');
         if (overlay) overlay.remove();
         requestAnimationFrame(gameLoop);
