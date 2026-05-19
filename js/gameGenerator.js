@@ -1183,6 +1183,7 @@ ${includeComments ? `    // ═════════════════�
 
     // RPG Progress Saving (localStorage)
     var SAVE_RPG_PROGRESS = IS_TOPDOWN && ${gameSettings.saveRPGProgress !== false};
+    var MINI_MAP_ENABLED = IS_TOPDOWN && ${gameSettings.miniMapEnabled === true};
     var STORAGE_KEY = 'gamemaker_rpg_' + '${(projectName || 'game').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}';
 
     // Physics (gravity disabled in top-down mode)
@@ -4478,7 +4479,136 @@ ${includeComments ? `    // ═════════════════�
             });
         }
 
+        // Rebuild the mini-map terrain bitmap for the new level. Cheap.
+        if (MINI_MAP_ENABLED) miniMapBuildTerrain();
+
         return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MINI-MAP (top-down only)
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Pre-rendered terrain bitmap + per-frame composite. Solid tiles render
+    // dark, non-solid empty. Player and any same-level remote players are
+    // drawn as colored dots over it.
+
+    var miniMapCanvas = null; // offscreen terrain bitmap
+    var miniMapW = 0;
+    var miniMapH = 0;
+    // Target box (in canvas-pixel coords). Bottom-left corner so it doesn't
+    // collide with the items / health HUD (top-left) or multiplayer panel
+    // (top-right).
+    var MINI_MAP_MAX_W = 150;
+    var MINI_MAP_MAX_H = 100;
+
+    function miniMapBuildTerrain() {
+        if (!MINI_MAP_ENABLED) return;
+        if (!level || level.length === 0) return;
+        var rows = level.length;
+        var cols = level[0] ? level[0].length : 0;
+        if (cols === 0) return;
+        // Fit cols/rows into the max box while preserving aspect.
+        var scale = Math.min(MINI_MAP_MAX_W / cols, MINI_MAP_MAX_H / rows);
+        miniMapW = Math.max(1, Math.round(cols * scale));
+        miniMapH = Math.max(1, Math.round(rows * scale));
+        miniMapCanvas = document.createElement('canvas');
+        miniMapCanvas.width = miniMapW;
+        miniMapCanvas.height = miniMapH;
+        var mctx = miniMapCanvas.getContext('2d');
+        // Background (non-solid tiles)
+        mctx.fillStyle = 'rgba(120, 120, 140, 0.35)';
+        mctx.fillRect(0, 0, miniMapW, miniMapH);
+        // Solid tiles in darker shade
+        mctx.fillStyle = '#1c1f33';
+        for (var y = 0; y < rows; y++) {
+            var row = level[y];
+            if (!row) continue;
+            for (var x = 0; x < cols; x++) {
+                var ch = row[x];
+                if (ch === '.') continue;
+                var t = tileTypes[ch];
+                if (t && t.solid) {
+                    var px = Math.floor(x * scale);
+                    var py = Math.floor(y * scale);
+                    var pw = Math.max(1, Math.ceil(scale));
+                    var ph = Math.max(1, Math.ceil(scale));
+                    mctx.fillRect(px, py, pw, ph);
+                }
+            }
+        }
+    }
+
+    function drawMiniMap() {
+        if (!MINI_MAP_ENABLED || !miniMapCanvas) return;
+        if (!level || level.length === 0 || !level[0]) return;
+        var cols = level[0].length;
+        var rows = level.length;
+        if (cols === 0 || rows === 0) return;
+
+        var pad = 10;
+        var x = pad;
+        var y = CANVAS_HEIGHT - miniMapH - pad - 20; // 20px above bottom edge for safety
+        if (y < 0) y = pad;
+
+        // Backdrop + border
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+        ctx.fillRect(x - 4, y - 4, miniMapW + 8, miniMapH + 8);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x - 4 + 0.5, y - 4 + 0.5, miniMapW + 8 - 1, miniMapH + 8 - 1);
+
+        // Terrain bitmap
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(miniMapCanvas, x, y);
+
+        // Helper: world coords -> mini-map coords
+        var levelPxW = cols * RENDER_SIZE;
+        var levelPxH = rows * RENDER_SIZE;
+        function worldToMini(wx, wy) {
+            return {
+                x: x + (wx / levelPxW) * miniMapW,
+                y: y + (wy / levelPxH) * miniMapH
+            };
+        }
+
+        // Camera viewport rectangle (use unshaken camera so mini-map stays steady)
+        var vTL = worldToMini(cameraX, cameraY);
+        var vBR = worldToMini(cameraX + CANVAS_WIDTH, cameraY + CANVAS_HEIGHT);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(vTL.x + 0.5, vTL.y + 0.5, vBR.x - vTL.x - 1, vBR.y - vTL.y - 1);
+
+        // Remote players (multiplayer, same level only — remotePlayers is
+        // already level-filtered by the relay).
+        if (typeof remotePlayers !== 'undefined') {
+            for (var pid in remotePlayers) {
+                if (!remotePlayers.hasOwnProperty(pid)) continue;
+                var rp = remotePlayers[pid];
+                if (!rp || rp.isDead) continue;
+                var rpos = worldToMini(rp.x, rp.y);
+                ctx.fillStyle = rp.color || '#ffeaa7';
+                ctx.beginPath();
+                ctx.arc(rpos.x, rpos.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+
+        // Local player dot (on top, slightly larger). Use red so it's easy
+        // to find at a glance among teammates.
+        var ppos = worldToMini(player.x + player.width / 2, player.y + player.height / 2);
+        ctx.fillStyle = '#ff5252';
+        ctx.beginPath();
+        ctx.arc(ppos.x, ppos.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.restore();
     }
 
     // Find next level by ID
@@ -9081,6 +9211,11 @@ ${includeComments ? `        // ────────────────
 
         // Draw UI (score, lives)
         drawUI();
+
+        // Draw mini-map overlay (top-down only, opt-in via game settings)
+        if (MINI_MAP_ENABLED) {
+            drawMiniMap();
+        }
     }
 
     // Cache for terrain zone images

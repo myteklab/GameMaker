@@ -284,6 +284,7 @@ function updateGameSetting(key, value) {
              key === 'screenShakeEnabled' || key === 'vibrationEnabled' ||
              key === 'hitPauseEnabled' || key === 'squashStretchEnabled' ||
              key === 'projectileCollectsItems' || key === 'saveRPGProgress' ||
+             key === 'miniMapEnabled' ||
              key === 'multiplayerEnabled' || key === 'multiplayerShowChat' ||
              key === 'multiplayerSyncItems' || key === 'multiplayerSyncEnemies' ||
              key === 'multiplayerPvPEnabled' ||
@@ -500,6 +501,12 @@ function updateGameSettingsUI() {
     const saveRPGProgressCheckbox = document.getElementById('setting-save-rpg-progress');
     if (saveRPGProgressCheckbox) {
         saveRPGProgressCheckbox.checked = gameSettings.saveRPGProgress !== false; // Default true
+    }
+
+    // Mini-Map (Top-Down only)
+    const miniMapCheckbox = document.getElementById('setting-minimap');
+    if (miniMapCheckbox) {
+        miniMapCheckbox.checked = gameSettings.miniMapEnabled === true;
     }
 
     // Hit pause settings

@@ -4100,6 +4100,15 @@
                         <small style="color: #9b59b6; font-size: 9px;">Inventory & checkpoints persist between sessions</small>
                     </div>
 
+                    <!-- Mini-Map (Top-Down only) -->
+                    <div class="form-group topdown-only" style="margin-top: 12px; padding: 12px; background: rgba(46, 204, 113, 0.1); border-radius: 8px; border: 1px solid rgba(46, 204, 113, 0.3);">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="setting-minimap" onchange="updateGameSetting('miniMapEnabled', this.checked)">
+                            <span style="margin-left: 8px;">🗺️ Show Mini-Map</span>
+                        </label>
+                        <small style="color: #2ecc71; font-size: 9px;">Top-left overlay showing level layout, your player, and teammates in multiplayer</small>
+                    </div>
+
                     <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 18px; padding-top: 15px;">
                         <div class="form-group">
                             <label style="display: flex; align-items: center; cursor: pointer;">
