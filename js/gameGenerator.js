@@ -2377,24 +2377,6 @@ ${includeComments ? `    // ═════════════════�
         var overlay = document.createElement('div');
         overlay.id = 'mp-join-overlay';
 
-        var spriteStripHTML = '';
-        if (PLAYER_SPRITES.length > 0) {
-            spriteStripHTML =
-                '<div style="margin: 15px 0; padding: 12px; background: rgba(155, 89, 182, 0.1); border: 1px solid rgba(155, 89, 182, 0.3); border-radius: 8px;">' +
-                '<div style="color: #9b59b6; font-size: 11px; font-weight: bold; margin-bottom: 8px; text-align: left;">🎮 Choose your character</div>' +
-                '<div id="mp-sprite-strip" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;"></div>' +
-                '</div>';
-        }
-
-        // Greeting message section - allows players to set a message others can read
-        var greetingHTML =
-            '<div style="margin: 15px 0; padding: 12px; background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 8px; text-align: left;">' +
-            '<div style="color: #2ecc71; font-size: 11px; font-weight: bold; margin-bottom: 8px;">💬 Greeting Message (optional)</div>' +
-            '<input type="text" id="mp-greeting-message" placeholder="Say hi to other players!" maxlength="200" ' +
-            'style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #2ecc71; border-radius: 6px; color: #fff; font-size: 12px; box-sizing: border-box;">' +
-            '<div style="color: #666; font-size: 10px; margin-top: 6px;">Other players can approach you and press E to read this message</div>' +
-            '</div>';
-
         // Prefer the platform's logged-in user name (set by preview.html) over
         // the author's baked-in default. Skip values containing "@" so emails
         // don't leak into the multiplayer chat.
@@ -2402,24 +2384,63 @@ ${includeComments ? `    // ═════════════════�
         if (window.MP_DEFAULT_PLAYER_NAME && String(window.MP_DEFAULT_PLAYER_NAME).indexOf('@') === -1) {
             defaultName = String(window.MP_DEFAULT_PLAYER_NAME).slice(0, 20);
         }
-        // Escape for an HTML attribute
         var defaultNameAttr = String(defaultName).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-        overlay.innerHTML = '<div style="background: rgba(0,0,0,0.95); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 9999;">' +
-            '<div style="background: #1a1a2e; padding: 30px; border-radius: 15px; border: 2px solid #667eea; max-width: 400px; text-align: center; max-height: 90vh; overflow-y: auto;">' +
-            '<div style="font-size: 24px; margin-bottom: 10px; color: #fff;">🌐 Multiplayer</div>' +
-            '<div style="color: #888; font-size: 12px; margin-bottom: 20px;">' +
-            '<span style="background: #f39c12; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px;">EXPERIMENTAL</span>' +
-            '</div>' +
-            '<input type="text" id="mp-player-name" placeholder="Your Name" value="' + defaultNameAttr + '" maxlength="20" ' +
-            'style="width: 100%; padding: 12px; margin-bottom: 10px; background: #16213e; border: 1px solid #667eea; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box;">' +
-            '<input type="text" id="mp-room-code" placeholder="Room Code (leave empty to create)" maxlength="20" ' +
-            'style="width: 100%; padding: 12px; background: #16213e; border: 1px solid #667eea; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box;">' +
-            greetingHTML +
-            spriteStripHTML +
-            '<button onclick="connectMultiplayer()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 8px; color: #fff; font-size: 14px; cursor: pointer; font-weight: bold; margin-top: 15px;">🎮 Join Game</button>' +
-            '<button onclick="startSinglePlayer()" style="width: 100%; padding: 10px; background: transparent; border: 1px solid #444; border-radius: 8px; color: #888; font-size: 12px; cursor: pointer; margin-top: 10px;">Play Solo Instead</button>' +
-            '</div></div>';
+        // Inputs share these styles
+        var inputStyle = 'width: 100%; padding: 12px; background: #16213e; border: 1px solid #667eea; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box;';
+
+        // Identity column (left): name + room + greeting
+        var identityHTML =
+            '<div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">' +
+                '<div>' +
+                    '<label style="display:block; font-size: 11px; color: #888; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Your Name</label>' +
+                    '<input type="text" id="mp-player-name" placeholder="Your Name" value="' + defaultNameAttr + '" maxlength="20" style="' + inputStyle + '">' +
+                '</div>' +
+                '<div>' +
+                    '<label style="display:block; font-size: 11px; color: #888; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Room Code</label>' +
+                    '<input type="text" id="mp-room-code" placeholder="Leave empty to create" maxlength="20" style="' + inputStyle + '">' +
+                '</div>' +
+                '<div style="padding: 12px; background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 8px;">' +
+                    '<label style="display:block; color: #2ecc71; font-size: 11px; font-weight: bold; margin-bottom: 6px;">💬 Greeting (optional)</label>' +
+                    '<input type="text" id="mp-greeting-message" placeholder="Say hi to other players!" maxlength="200" ' +
+                        'style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #2ecc71; border-radius: 6px; color: #fff; font-size: 12px; box-sizing: border-box;">' +
+                    '<div style="color: #666; font-size: 10px; margin-top: 6px;">Other players approach and press E to read.</div>' +
+                '</div>' +
+            '</div>';
+
+        // Character column (right): grid of animated thumbnails
+        var characterHTML = '';
+        if (PLAYER_SPRITES.length > 0) {
+            characterHTML =
+                '<div style="display: flex; flex-direction: column; text-align: left;">' +
+                    '<label style="display:block; color: #9b59b6; font-size: 11px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎮 Choose your character</label>' +
+                    '<div style="flex: 1; padding: 10px; background: rgba(155, 89, 182, 0.08); border: 1px solid rgba(155, 89, 182, 0.25); border-radius: 8px; max-height: 320px; overflow-y: auto;">' +
+                        '<div id="mp-sprite-strip" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;"></div>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        // Two-column body; flex-wraps to single column when there isn't room
+        var bodyHTML =
+            '<div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px;">' +
+                '<div style="flex: 1 1 260px; min-width: 0;">' + identityHTML + '</div>' +
+                (characterHTML ? '<div style="flex: 1 1 320px; min-width: 0;">' + characterHTML + '</div>' : '') +
+            '</div>';
+
+        overlay.innerHTML =
+            '<div style="background: rgba(0,0,0,0.95); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; box-sizing: border-box;">' +
+                '<div style="background: #1a1a2e; padding: 24px 28px; border-radius: 15px; border: 2px solid #667eea; width: 100%; max-width: 720px; text-align: center; max-height: 92vh; overflow-y: auto; box-sizing: border-box;">' +
+                    '<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">' +
+                        '<div style="font-size: 22px; color: #fff;">🌐 Multiplayer</div>' +
+                        '<span style="background: #f39c12; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">EXPERIMENTAL</span>' +
+                    '</div>' +
+                    bodyHTML +
+                    '<div style="display: flex; gap: 10px; margin-top: 20px;">' +
+                        '<button onclick="startSinglePlayer()" style="flex: 0 0 auto; padding: 12px 18px; background: transparent; border: 1px solid #444; border-radius: 8px; color: #888; font-size: 13px; cursor: pointer;">Play Solo</button>' +
+                        '<button onclick="connectMultiplayer()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 8px; color: #fff; font-size: 15px; cursor: pointer; font-weight: bold;">🎮 Join Game</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
         document.body.appendChild(overlay);
         populateSpriteStrip();
     }
