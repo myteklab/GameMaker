@@ -314,6 +314,7 @@ function showAddEnemyTemplate() {
     toggleStompOptions();
     updateEnemyHitboxPreview();
     document.getElementById('enemy-template-editor').classList.add('visible');
+    if (typeof updateEnemySpritePreview === 'function') updateEnemySpritePreview();
 }
 
 function editEnemyTemplate(id) {
@@ -372,6 +373,7 @@ function editEnemyTemplate(id) {
     toggleStompOptions();
     updateEnemyHitboxPreview();
     document.getElementById('enemy-template-editor').classList.add('visible');
+    if (typeof updateEnemySpritePreview === 'function') updateEnemySpritePreview();
 }
 
 function updateEnemyBehaviorOptions() {
@@ -581,6 +583,7 @@ function saveEnemyTemplate() {
 function closeEnemyTemplateEditor() {
     document.getElementById('enemy-template-editor').classList.remove('visible');
     editingTemplateId = null;
+    if (typeof stopEnemySpriteAnimation === 'function') stopEnemySpriteAnimation();
 }
 
 function deleteEnemyTemplate(id) {
@@ -3507,6 +3510,149 @@ function pickNpcSprite() {
             updateNpcSpritePreview();
         };
         img.onerror = function() { updateNpcSpritePreview(); };
+        img.src = url;
+    }, 'sprites');
+}
+
+// ============================================
+// ENEMY SPRITE PREVIEW + LIBRARY PICKER
+// Mirrors the NPC implementation; kept as a separate function pair so the
+// onchange wiring in the modal is unambiguous.
+// ============================================
+
+var enemyPreviewImage = null;
+var enemyPreviewFrame = 0;
+var enemyPreviewInterval = null;
+
+function stopEnemySpriteAnimation() {
+    if (enemyPreviewInterval) {
+        clearInterval(enemyPreviewInterval);
+        enemyPreviewInterval = null;
+    }
+}
+
+function updateEnemySpritePreview() {
+    var container = document.getElementById('enemy-template-sprite-preview');
+    if (!container) return;
+    var urlInput = document.getElementById('enemy-template-sprite');
+    var colsInput = document.getElementById('enemy-template-cols');
+    var rowsInput = document.getElementById('enemy-template-rows');
+    var widthInput = document.getElementById('enemy-template-width');
+    var heightInput = document.getElementById('enemy-template-height');
+    if (!urlInput) return;
+
+    var spriteUrl = urlInput.value.trim();
+    var cols = parseInt(colsInput && colsInput.value) || 1;
+    var rows = parseInt(rowsInput && rowsInput.value) || 1;
+    var targetW = parseInt(widthInput && widthInput.value) || 32;
+    var targetH = parseInt(heightInput && heightInput.value) || 32;
+
+    stopEnemySpriteAnimation();
+
+    if (!spriteUrl) {
+        container.innerHTML = '<span style="color: #555; font-size: 10px;">No sprite</span>';
+        return;
+    }
+
+    container.innerHTML = '<span style="color: #888; font-size: 10px;">Loading...</span>';
+
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+        enemyPreviewImage = img;
+        var frameW = img.naturalWidth / cols;
+        var frameH = img.naturalHeight / rows;
+        var maxSize = 76;
+        var fitScale = Math.min(maxSize / targetW, maxSize / targetH, 1);
+        var displayW = Math.max(8, Math.round(targetW * fitScale));
+        var displayH = Math.max(8, Math.round(targetH * fitScale));
+
+        var canvas = document.createElement('canvas');
+        canvas.width = displayW;
+        canvas.height = displayH;
+        canvas.style.imageRendering = 'pixelated';
+        canvas.style.imageRendering = 'crisp-edges';
+        var ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        container.innerHTML = '';
+        container.appendChild(canvas);
+
+        var sizeHint = document.createElement('div');
+        sizeHint.style.cssText = 'position: absolute; top: 2px; left: 4px; font-size: 9px; color: #888;';
+        sizeHint.textContent = fitScale < 1
+            ? targetW + 'x' + targetH + ' (fit)'
+            : targetW + 'x' + targetH;
+        container.appendChild(sizeHint);
+
+        if (cols > 1) {
+            var indicator = document.createElement('div');
+            indicator.id = 'enemy-template-sprite-frame-indicator';
+            indicator.style.cssText = 'position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: #888;';
+            indicator.textContent = '1/' + cols;
+            container.appendChild(indicator);
+        }
+
+        enemyPreviewFrame = 0;
+        var draw = function() {
+            ctx.clearRect(0, 0, displayW, displayH);
+            ctx.drawImage(img,
+                enemyPreviewFrame * frameW, 0, frameW, frameH,
+                0, 0, displayW, displayH);
+        };
+        draw();
+        if (cols > 1) {
+            enemyPreviewInterval = setInterval(function() {
+                enemyPreviewFrame = (enemyPreviewFrame + 1) % cols;
+                draw();
+                var ind = document.getElementById('enemy-template-sprite-frame-indicator');
+                if (ind) ind.textContent = (enemyPreviewFrame + 1) + '/' + cols;
+            }, 150);
+        }
+    };
+    img.onerror = function() {
+        container.innerHTML = '<span style="color: #f66; font-size: 10px;">Failed to load</span>';
+    };
+    img.src = spriteUrl;
+}
+
+function pickEnemySprite() {
+    var opener = window.openAssetPickerWithCallback ||
+        (window.parent && window.parent !== window && window.parent.openAssetPickerWithCallback);
+    if (!opener) {
+        showToast('Asset picker unavailable', 'warning');
+        return;
+    }
+    opener(function(url) {
+        if (!url) return;
+        var urlInput = document.getElementById('enemy-template-sprite');
+        if (urlInput) urlInput.value = url;
+
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+            var w = img.naturalWidth;
+            var h = img.naturalHeight;
+            if (w % 3 === 0 && h % 4 === 0) {
+                var cellW = w / 3;
+                var cellH = h / 4;
+                if (Math.abs(cellW - cellH) <= 4) {
+                    var colsEl = document.getElementById('enemy-template-cols');
+                    var rowsEl = document.getElementById('enemy-template-rows');
+                    var widthEl = document.getElementById('enemy-template-width');
+                    var heightEl = document.getElementById('enemy-template-height');
+                    if (colsEl) colsEl.value = '3';
+                    if (rowsEl) rowsEl.value = '4';
+                    if (widthEl) widthEl.value = String(cellW * 2);
+                    if (heightEl) heightEl.value = String(cellH * 2);
+                    showToast('Detected 3x4 character sheet. Set cols/rows automatically.', 'info');
+                }
+            }
+            updateEnemySpritePreview();
+            // Also refresh the hitbox preview since width/height may have changed.
+            if (typeof updateEnemyHitboxPreview === 'function') updateEnemyHitboxPreview();
+        };
+        img.onerror = function() { updateEnemySpritePreview(); };
         img.src = url;
     }, 'sprites');
 }
