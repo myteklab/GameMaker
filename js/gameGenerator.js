@@ -4870,8 +4870,10 @@ ${includeComments ? `    // ═════════════════�
                 if (obj.type === 'door') {
                     gameObj.destinationType = template.destinationType || 'position';
                     gameObj.destinationLevelId = template.destinationLevelId || null;
-                    gameObj.destinationX = template.destinationX || null;
-                    gameObj.destinationY = template.destinationY || null;
+                    // Use null-coalescing semantics: a valid spawn at tile 0
+                    // must not be treated as falsy and reset to null.
+                    gameObj.destinationX = (template.destinationX === null || template.destinationX === undefined) ? null : template.destinationX;
+                    gameObj.destinationY = (template.destinationY === null || template.destinationY === undefined) ? null : template.destinationY;
                     gameObj.interactionRadius = template.interactionRadius || 48;
                     gameObj.interactSound = template.interactSound || '';
                     gameObj.particleEffect = template.particleEffect || '';
@@ -6939,6 +6941,7 @@ ${includeComments ? `        // ────────────────
                 // level's default spawn point). Both X and Y must be set.
                 var overrideX = door.destinationX;
                 var overrideY = door.destinationY;
+                console.log('[Door] level transition to', door.destinationLevelId, 'override spawn:', overrideX, overrideY);
                 setTimeout(function() {
                     loadLevel(nextIndex);
                     if (overrideX !== null && overrideX !== undefined &&
