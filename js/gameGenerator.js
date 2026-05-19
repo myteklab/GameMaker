@@ -6753,7 +6753,14 @@ ${includeComments ? `        // ────────────────
             interactionPrompt.door = nearestInteractable.type === 'door' ? nearestInteractable : null;
             interactionPrompt.remotePlayer = nearestInteractable.type === 'remotePlayer' ? nearestInteractable : null;
         } else {
+            // Clear ALL stale interactable references. Previously only
+            // .remotePlayer was cleared, so .door and .npc could remain set
+            // from the last time the player was in range. Pressing E even
+            // far from any door triggered useDoor with the stale reference,
+            // playing the door's particles and warping the player.
             interactionPrompt.visible = false;
+            interactionPrompt.door = null;
+            interactionPrompt.npc = null;
             interactionPrompt.remotePlayer = null;
         }
     }
