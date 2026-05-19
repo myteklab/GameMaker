@@ -2472,9 +2472,43 @@ function populateDoorLevelDropdown() {
 
     let html = '<option value="">-- Select Level --</option>';
     levels.forEach(lvl => {
-        html += `<option value="${lvl.id}">${lvl.name}</option>`;
+        // Encode level dimensions on the option so the spawn-coord help text
+        // and max attributes can update when the user picks a level.
+        html += `<option value="${lvl.id}" data-w="${lvl.width || 0}" data-h="${lvl.height || 0}">${lvl.name}</option>`;
     });
     dropdown.innerHTML = html;
+
+    // Wire (idempotently) the change handler that drives the hint text +
+    // input max attributes.
+    if (!dropdown._dimHandlerAttached) {
+        dropdown.addEventListener('change', updateDoorDestLevelHint);
+        dropdown._dimHandlerAttached = true;
+    }
+    updateDoorDestLevelHint();
+}
+
+// Update the spawn-coord hint and input bounds based on the currently
+// selected destination level. Called on dropdown change and on editor open.
+function updateDoorDestLevelHint() {
+    const dropdown = document.getElementById('door-template-dest-level');
+    const hint = document.getElementById('door-template-dest-level-hint');
+    const xInput = document.getElementById('door-template-dest-level-x');
+    const yInput = document.getElementById('door-template-dest-level-y');
+    if (!dropdown) return;
+    const opt = dropdown.options[dropdown.selectedIndex];
+    if (!opt || !opt.value) {
+        if (hint) hint.textContent = 'A tile is one grid cell. The level\'s width/height appears here once you pick a destination level.';
+        if (xInput) xInput.removeAttribute('max');
+        if (yInput) yInput.removeAttribute('max');
+        return;
+    }
+    const w = parseInt(opt.dataset.w) || 0;
+    const h = parseInt(opt.dataset.h) || 0;
+    if (hint) {
+        hint.textContent = 'A tile is one grid cell. Destination is ' + w + ' wide x ' + h + ' tall tiles. Valid X: 0 to ' + (w - 1) + ', valid Y: 0 to ' + (h - 1) + '. Leave both blank for the level\'s default spawn.';
+    }
+    if (xInput) xInput.max = String(Math.max(0, w - 1));
+    if (yInput) yInput.max = String(Math.max(0, h - 1));
 }
 
 function saveDoorTemplate() {

@@ -6943,10 +6943,22 @@ ${includeComments ? `        // ────────────────
                     loadLevel(nextIndex);
                     if (overrideX !== null && overrideX !== undefined &&
                         overrideY !== null && overrideY !== undefined) {
-                        player.x = overrideX * RENDER_SIZE;
-                        player.y = overrideY * RENDER_SIZE;
-                        player.speedX = 0;
-                        player.speedY = 0;
+                        var inBoundsX = overrideX >= 0 && overrideX < levelWidth;
+                        var inBoundsY = overrideY >= 0 && overrideY < levelHeight;
+                        if (inBoundsX && inBoundsY) {
+                            player.x = overrideX * RENDER_SIZE;
+                            player.y = overrideY * RENDER_SIZE;
+                            player.speedX = 0;
+                            player.speedY = 0;
+                        } else {
+                            // Out-of-bounds spawn coords: fall back to the
+                            // destination level's default spawn instead of
+                            // dropping the player off the map.
+                            console.warn('Door spawn (' + overrideX + ',' + overrideY +
+                                ') is out of bounds for ' + levelWidth + 'x' + levelHeight +
+                                ' level. Using default spawn.');
+                            findStartPosition();
+                        }
                     }
                     startLevelBGM();
                 }, 300);
