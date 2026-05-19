@@ -5268,9 +5268,20 @@ ${includeComments ? `    // ═════════════════�
             socket.emit('gm_player_respawn', { roomCode: roomCode });
         }
 
-        // Restart from level 1
-        loadLevel(0);
-        startLevelBGM();
+        // In multiplayer, restart respawns the player at the current level's
+        // spawn point without jumping back to level 0. Jumping to level 0
+        // would teleport the player out of the session their friends are in,
+        // making it feel like they got dropped to solo. In solo mode, R
+        // keeps its original "restart from level 1" behavior.
+        if (MULTIPLAYER_ENABLED && multiplayerReady) {
+            findStartPosition();
+            player.speedX = 0;
+            player.speedY = 0;
+            player.invincibleUntil = Date.now() + 1500;
+        } else {
+            loadLevel(0);
+            startLevelBGM();
+        }
     }
 
     function loseLife() {
