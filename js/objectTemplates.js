@@ -2443,6 +2443,11 @@ function editDoorTemplate(id) {
     setTimeout(() => {
         if (template.destinationType === 'level') {
             document.getElementById('door-template-dest-level').value = template.destinationLevelId || '';
+            // Optional spawn coords in the destination level (null/undefined = blank field)
+            document.getElementById('door-template-dest-level-x').value =
+                (template.destinationX === null || template.destinationX === undefined) ? '' : template.destinationX;
+            document.getElementById('door-template-dest-level-y').value =
+                (template.destinationY === null || template.destinationY === undefined) ? '' : template.destinationY;
         } else {
             document.getElementById('door-template-dest-x').value = template.destinationX || 0;
             document.getElementById('door-template-dest-y').value = template.destinationY || 0;
@@ -2493,8 +2498,22 @@ function saveDoorTemplate() {
         symbol: document.getElementById('door-template-symbol').value || '🚪',
         destinationType: destType,
         destinationLevelId: destType === 'level' ? document.getElementById('door-template-dest-level').value : null,
-        destinationX: destType === 'position' ? parseInt(document.getElementById('door-template-dest-x').value) || 0 : null,
-        destinationY: destType === 'position' ? parseInt(document.getElementById('door-template-dest-y').value) || 0 : null,
+        // destinationX/Y carry different meanings based on type:
+        //  - type='position': tile coords within the SAME level
+        //  - type='level': optional tile coords in the DESTINATION level
+        //    (null = use the destination level's default spawn point)
+        destinationX: destType === 'position'
+            ? (parseInt(document.getElementById('door-template-dest-x').value) || 0)
+            : (function() {
+                var v = document.getElementById('door-template-dest-level-x').value;
+                return v === '' ? null : (parseInt(v) || 0);
+            })(),
+        destinationY: destType === 'position'
+            ? (parseInt(document.getElementById('door-template-dest-y').value) || 0)
+            : (function() {
+                var v = document.getElementById('door-template-dest-level-y').value;
+                return v === '' ? null : (parseInt(v) || 0);
+            })(),
         interactSound: document.getElementById('door-template-sound').value.trim(),
         particleEffect: document.getElementById('door-template-particle').value.trim()
     };

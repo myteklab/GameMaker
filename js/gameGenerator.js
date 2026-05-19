@@ -6933,9 +6933,21 @@ ${includeComments ? `        // ────────────────
             // Level transition via door
             var nextIndex = findLevelIndexById(door.destinationLevelId);
             if (nextIndex >= 0) {
-                // Brief delay before transition for effect
+                // Brief delay before transition for effect. If the door
+                // specifies destination tile coords for this level, place
+                // the player there after loadLevel finishes (overrides the
+                // level's default spawn point). Both X and Y must be set.
+                var overrideX = door.destinationX;
+                var overrideY = door.destinationY;
                 setTimeout(function() {
                     loadLevel(nextIndex);
+                    if (overrideX !== null && overrideX !== undefined &&
+                        overrideY !== null && overrideY !== undefined) {
+                        player.x = overrideX * RENDER_SIZE;
+                        player.y = overrideY * RENDER_SIZE;
+                        player.speedX = 0;
+                        player.speedY = 0;
+                    }
                     startLevelBGM();
                 }, 300);
             } else {
