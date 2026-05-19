@@ -58,10 +58,99 @@ function draw() {
     // Draw spawn point indicator
     drawSpawnPoint();
 
+    // Draw markers for any door (in any level) that lands players in THIS
+    // level at a specific tile. Helps authors verify spawn coords without
+    // play-testing.
+    drawDoorSpawnMarkers();
+
     // Update scrollbars to reflect current camera position
     if (typeof updateScrollbars === 'function') {
         updateScrollbars();
     }
+}
+
+// Walk every level's gameObjects, find doors that target the CURRENT level
+// with explicit destinationX/Y, draw a flag at each tile.
+function drawDoorSpawnMarkers() {
+    if (typeof levels === 'undefined' || !Array.isArray(levels)) return;
+    var currentLevel = (typeof getCurrentLevel === 'function') ? getCurrentLevel() : null;
+    if (!currentLevel) return;
+    var currentId = currentLevel.id;
+
+    // Collect doors pointing here, with their source level + template name.
+    var markers = [];
+    for (var li = 0; li < levels.length; li++) {
+        var lvl = levels[li];
+        if (!lvl || !lvl.gameObjects) continue;
+        for (var oi = 0; oi < lvl.gameObjects.length; oi++) {
+            var obj = lvl.gameObjects[oi];
+            if (!obj || obj.type !== 'door') continue;
+            var tpl = (typeof doorTemplates !== 'undefined')
+                ? doorTemplates.find(function(t) { return t.id === obj.templateId; })
+                : null;
+            if (!tpl) continue;
+            if (tpl.destinationType !== 'level') continue;
+            if (tpl.destinationLevelId !== currentId) continue;
+            if (tpl.destinationX === null || tpl.destinationX === undefined) continue;
+            if (tpl.destinationY === null || tpl.destinationY === undefined) continue;
+            // Clip to bounds: out-of-bounds markers would draw off screen.
+            if (tpl.destinationX < 0 || tpl.destinationX >= levelWidth) continue;
+            if (tpl.destinationY < 0 || tpl.destinationY >= levelHeight) continue;
+            markers.push({
+                x: tpl.destinationX,
+                y: tpl.destinationY,
+                name: tpl.name || 'Door',
+                fromLevelName: lvl.name || ('Level ' + (li + 1)),
+                fromCurrentLevel: lvl.id === currentId
+            });
+        }
+    }
+    if (markers.length === 0) return;
+
+    var scaled = tileSize * zoom;
+    ctx.save();
+    for (var i = 0; i < markers.length; i++) {
+        var m = markers[i];
+        var sx = (m.x * tileSize - cameraX) * zoom;
+        var sy = (m.y * tileSize - cameraY) * zoom;
+
+        // Tile-sized translucent green box highlighting the spawn tile
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = '#2ecc71';
+        ctx.fillRect(sx, sy, scaled, scaled);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#2ecc71';
+        ctx.lineWidth = Math.max(2, zoom);
+        ctx.strokeRect(sx + 1, sy + 1, scaled - 2, scaled - 2);
+
+        // Flag pin at the tile's top-right
+        var pinX = sx + scaled * 0.55;
+        var pinY = sy + scaled * 0.05;
+        var pinH = Math.max(14, scaled * 0.55);
+        ctx.fillStyle = '#2ecc71';
+        ctx.fillRect(pinX, pinY, Math.max(1.5, zoom * 0.6), pinH);
+        ctx.beginPath();
+        ctx.moveTo(pinX + Math.max(1.5, zoom * 0.6), pinY);
+        ctx.lineTo(pinX + Math.max(10, scaled * 0.4), pinY + Math.max(4, scaled * 0.15));
+        ctx.lineTo(pinX + Math.max(1.5, zoom * 0.6), pinY + Math.max(8, scaled * 0.3));
+        ctx.closePath();
+        ctx.fillStyle = '#27ae60';
+        ctx.fill();
+
+        // Label below: door name (+ source level if cross-level)
+        var label = '🚪 ' + m.name + (m.fromCurrentLevel ? '' : ' (from ' + m.fromLevelName + ')');
+        var fontSize = Math.max(9, Math.min(14, zoom * 5));
+        ctx.font = 'bold ' + fontSize + 'px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        var labelY = sy + scaled + 2;
+        var metrics = ctx.measureText(label);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(sx, labelY, metrics.width + 6, fontSize + 4);
+        ctx.fillStyle = '#7bed9f';
+        ctx.fillText(label, sx + 3, labelY + 2);
+    }
+    ctx.restore();
 }
 
 // Draw menu level in the editor
