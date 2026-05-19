@@ -191,8 +191,8 @@ function updateTileLayerUI() {
         visBtn.style.borderColor = decorLayerVisible ? '#888' : '#444';
         visBtn.style.opacity = decorLayerVisible ? '1' : '0.5';
         visBtn.title = decorLayerVisible
-            ? 'Hide decoration layer in editor'
-            : 'Show decoration layer in editor';
+            ? 'Hide overlay layer in editor'
+            : 'Show overlay layer in editor';
     }
 }
 

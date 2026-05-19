@@ -1161,7 +1161,7 @@ function onKeyDown(e) {
             return;
         } else if (key === 'l') {
             setTileLayer(currentTileLayer === 'decor' ? 'terrain' : 'decor');
-            showToast('Layer: ' + (currentTileLayer === 'decor' ? 'Decoration' : 'Terrain'));
+            showToast('Layer: ' + (currentTileLayer === 'decor' ? 'Overlay' : 'Terrain'));
             e.preventDefault();
             return;
         } else if (key === 'p') {
