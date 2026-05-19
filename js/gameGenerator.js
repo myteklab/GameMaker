@@ -5143,6 +5143,26 @@ ${includeComments ? `    // ═════════════════�
     });
     document.addEventListener('keyup', function(e) { keys[e.code] = false; });
 
+    // Iframe focus recovery. When the player clicks outside the game (e.g.
+    // the editor chrome around the play-test iframe, or the /p/ page header
+    // above the preview iframe), keyboard focus leaves this window and
+    // keydown events stop firing here. Clicking back on the iframe content
+    // does not automatically restore keyboard focus. Force it on any
+    // pointer-down so movement keys always work as soon as the cursor is
+    // back over the game.
+    window.addEventListener('mousedown', function() {
+        try { window.focus(); } catch (e) {}
+    });
+    window.addEventListener('touchstart', function() {
+        try { window.focus(); } catch (e) {}
+    }, { passive: true });
+    // Also clear any stale "held" keys when the window loses focus, so a
+    // press whose keyup was lost during the focus loss doesn't leave the
+    // player stuck moving in one direction on return.
+    window.addEventListener('blur', function() {
+        keys = {};
+    });
+
     // Mouse aim tracking: cursor position in canvas-pixel coords (camera-relative).
     // Updated on mousemove; mouseDown is true while the left button is held.
     var mouseCanvasX = CANVAS_WIDTH / 2;
