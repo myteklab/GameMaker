@@ -5029,7 +5029,11 @@ ${includeComments ? `    // ═════════════════�
                 playSound('hurt');
                 if (lives <= 0) {
                     lives = 0;
-                    gameOver = true;
+                    if (MULTIPLAYER_ENABLED && multiplayerReady) {
+                        triggerMultiplayerKnockout();
+                    } else {
+                        gameOver = true;
+                    }
                 }
             }
         }
@@ -5331,8 +5335,9 @@ ${includeComments ? `    // ═════════════════�
     }
 
     function loseLife() {
-        // Don't lose lives during level transitions or after game over
-        if (levelComplete || gameOver) return;
+        // Don't lose lives during level transitions, after game over, or while
+        // the multiplayer knockout overlay is up
+        if (levelComplete || gameOver || mpKnockoutPending) return;
 
         lives--;
         playSound('hurt');
@@ -5344,19 +5349,93 @@ ${includeComments ? `    // ═════════════════�
         spawnParticleEffect('playerDamage', player.x + player.width/2, player.y + player.height/2, 400);
 
         if (lives <= 0) {
-            gameOver = true;
-            playGameOverSound();
-            vibrate([100, 50, 150]); // Death vibration pattern
-            stopBGM();
-            // Notify other players of death
-            if (MULTIPLAYER_ENABLED && socket && socket.connected) {
-                socket.emit('gm_player_died', { roomCode: roomCode });
+            // In multiplayer, death is not a session-ending event. Show a
+            // brief KNOCKED OUT overlay and auto-respawn at the level's spawn
+            // with full lives. The session continues; other players are
+            // unaffected. Solo mode keeps the original Game Over screen.
+            if (MULTIPLAYER_ENABLED && multiplayerReady) {
+                triggerMultiplayerKnockout();
+            } else {
+                gameOver = true;
+                playGameOverSound();
+                vibrate([100, 50, 150]);
+                stopBGM();
             }
         } else {
             resetPlayer();
             // Start invincibility period after respawn
             player.invincibleUntil = Date.now() + INVINCIBILITY_TIME;
         }
+    }
+
+    // Multiplayer knockout flow: show a 2-second overlay, then respawn at
+    // the level's spawn point with full lives and brief invincibility.
+    // Other players see the standard gm_player_died / gm_player_respawn
+    // events. mpKnockoutPending blocks further life loss during the
+    // animation so a hazard sitting under the spawn point doesn't loop.
+    var mpKnockoutPending = false;
+    function triggerMultiplayerKnockout() {
+        if (mpKnockoutPending) return;
+        mpKnockoutPending = true;
+        var RESPAWN_MS = 2000;
+        showKnockoutOverlay(RESPAWN_MS);
+        triggerScreenShake(10, 18);
+        playSound('hurt');
+        if (socket && socket.connected) {
+            socket.emit('gm_player_died', { roomCode: roomCode });
+        }
+        setTimeout(function() {
+            mpKnockoutPending = false;
+            lives = ${gameSettings.startLives || 3};
+            findStartPosition();
+            player.speedX = 0;
+            player.speedY = 0;
+            player.invincibleUntil = Date.now() + 2500;
+            recentlyRespawnedUntil = Date.now() + 2500;
+            if (socket && socket.connected) {
+                socket.emit('gm_player_respawn', { roomCode: roomCode });
+            }
+        }, RESPAWN_MS);
+    }
+
+    // Coop knockout overlay: lighter red than PvP elimination so the two
+    // feels are distinguishable. No killer name (this is enemy/hazard death).
+    function showKnockoutOverlay(respawnMs) {
+        var existing = document.getElementById('mp-knockout-overlay');
+        if (existing) existing.remove();
+        var overlay = document.createElement('div');
+        overlay.id = 'mp-knockout-overlay';
+        overlay.style.cssText = [
+            'position: fixed', 'inset: 0',
+            'background: radial-gradient(ellipse at center, rgba(150,80,30,0.55), rgba(0,0,0,0.7))',
+            'display: flex', 'flex-direction: column',
+            'align-items: center', 'justify-content: center',
+            'z-index: 99999', 'color: #fff',
+            'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+            'pointer-events: none', 'transition: opacity 0.4s ease-out'
+        ].join(';');
+        overlay.innerHTML =
+            '<div style="font-size: 32px; font-weight: 900; letter-spacing: 2px; text-shadow: 3px 3px 0 #000, 0 0 16px rgba(255,150,80,0.6);">KNOCKED OUT</div>' +
+            '<div id="mp-knockout-countdown" style="font-size: 15px; margin-top: 18px; opacity: 0.85;">Respawning in ' + Math.ceil(respawnMs / 1000) + 's...</div>';
+        document.body.appendChild(overlay);
+
+        var remaining = Math.ceil(respawnMs / 1000);
+        var countdownEl = document.getElementById('mp-knockout-countdown');
+        var interval = setInterval(function() {
+            remaining--;
+            if (remaining <= 0) { clearInterval(interval); return; }
+            if (countdownEl) countdownEl.textContent = 'Respawning in ' + remaining + 's...';
+        }, 1000);
+
+        setTimeout(function() {
+            clearInterval(interval);
+            if (overlay && overlay.parentNode) {
+                overlay.style.opacity = '0';
+                setTimeout(function() {
+                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                }, 400);
+            }
+        }, respawnMs);
     }
 
 ${includeComments ? `    // ═══════════════════════════════════════════════════════════════════════════
