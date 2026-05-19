@@ -173,15 +173,42 @@ function exportFullGame() {
     setExportFormat('platformer');
 }
 
-// Debug: Open game in new tab to test if iframe is causing the issue
-async function openGameInNewTab() {
-    // Sync current level data to levels array before generating
-    syncToCurrentLevel();
-
-    const pixelScaleRadio = document.querySelector('input[name="pixel-scale"]:checked');
-    const pixelScale = pixelScaleRadio ? parseInt(pixelScaleRadio.value) : 1;
-    const gameHTML = await generateGameHTMLAsync(false, pixelScale);
-    const blob = new Blob([gameHTML], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+// Generate / fetch the project's public /p/{token} share link, copy it to
+// the clipboard, and open it in a new tab. Replaces the old blob-URL
+// approach which only worked inside the author's browser.
+async function copyOrOpenShareLink() {
+    var projectId = window.projectId;
+    if (!projectId) {
+        showToast('Save the project first to get a share link', 'warning');
+        return;
+    }
+    if (typeof Platform === 'undefined' || !Platform.api) {
+        showToast('Share Link only works inside the platform editor', 'warning');
+        return;
+    }
+    showToast('Generating link...', 'info');
+    var res;
+    try {
+        res = await Platform.api('/projects/' + projectId + '/preview-link', { method: 'POST' });
+    } catch (e) {
+        showToast('Could not generate link: ' + e.message, 'error');
+        return;
+    }
+    if (!res || !res.ok) {
+        var msg = (res && res.data && res.data.message) || 'Could not generate link';
+        showToast(msg, 'error');
+        return;
+    }
+    var shareUrl = res.data && res.data.data && res.data.data.share_url;
+    if (!shareUrl) {
+        showToast('Link not available', 'error');
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('Link copied: ' + shareUrl, 'success');
+    } catch (e) {
+        showToast(shareUrl, 'info');
+    }
+    window.open(shareUrl, '_blank');
 }
