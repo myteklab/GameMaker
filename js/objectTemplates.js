@@ -456,8 +456,15 @@ function updateObjectHitboxPreview(prefix) {
             ctx.stroke();
             ctx.setLineDash([]);
             var cols = parseInt(document.getElementById(prefix + '-cols')?.value) || 1;
+            var rows = parseInt(document.getElementById(prefix + '-rows')?.value) || 1;
+            // Draw the FIRST frame of the FIRST row. Previously we used the
+            // full image height, which for a 3x4 walk-cycle sheet sampled
+            // a 1-column-wide strip spanning all 4 directions and stretched
+            // it into the hitbox box.
             ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(img, 0, 0, img.naturalWidth / cols, img.naturalHeight, spriteX, spriteY, scaledSpriteW, scaledSpriteH);
+            ctx.drawImage(img,
+                0, 0, img.naturalWidth / cols, img.naturalHeight / rows,
+                spriteX, spriteY, scaledSpriteW, scaledSpriteH);
             ctx.strokeStyle = '#00ff00';
             ctx.lineWidth = 2;
             ctx.strokeRect(hitboxX, hitboxY, scaledColW, scaledColH);
