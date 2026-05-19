@@ -2746,23 +2746,30 @@
             <label>Name</label>
             <input type="text" id="npc-template-name" placeholder="e.g., Shopkeeper">
         </div>
-        <div class="form-row">
+        <div class="form-row" style="align-items: flex-end;">
             <div class="form-group">
                 <label>Sprite URL (optional)</label>
                 <div class="input-with-browse">
-                    <input type="text" id="npc-template-sprite" placeholder="https://...">
-                    <button type="button" class="browse-library-btn" onclick="openAssetPicker('npc-template-sprite')">Browse</button>
+                    <input type="text" id="npc-template-sprite" placeholder="https://..." onchange="updateNpcSpritePreview()">
+                    <button type="button" class="browse-library-btn" onclick="pickNpcSprite()">Browse</button>
                 </div>
             </div>
-            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+            <div class="form-group" style="flex: 0.3; min-width: 60px;">
                 <label>Cols</label>
-                <input type="number" id="npc-template-cols" value="1" min="1" max="32" title="Frames per row">
+                <input type="number" id="npc-template-cols" value="1" min="1" max="32" title="Frames per row (3 for a standard character walk cycle)" onchange="updateNpcSpritePreview()">
             </div>
-            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+            <div class="form-group" style="flex: 0.3; min-width: 60px;">
                 <label>Rows</label>
-                <input type="number" id="npc-template-rows" value="1" min="1" max="16" title="Rows (4 for directional: down/left/right/up)">
+                <input type="number" id="npc-template-rows" value="1" min="1" max="16" title="Rows (4 for directional: down/left/right/up)" onchange="updateNpcSpritePreview()">
+            </div>
+            <div class="form-group" style="flex: 0 0 80px;">
+                <label style="font-size: 10px; color: #888;">Preview</label>
+                <div id="npc-template-sprite-preview" style="width: 80px; height: 80px; background: #16213e; border: 1px solid #444; border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                    <span style="color: #555; font-size: 10px;">No sprite</span>
+                </div>
             </div>
         </div>
+        <small style="color: #666; font-size: 10px; display: block; margin-top: -6px;">Tip: For a 3 (cols) x 4 (rows) walk-cycle sheet, the NPC walks in 4 directions just like the player.</small>
         <div class="form-row">
             <div class="form-group" style="flex: 0.4;">
                 <label>Width (px)</label>

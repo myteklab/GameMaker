@@ -2205,6 +2205,7 @@ function showAddNPCTemplate() {
     document.getElementById('npc-wander-options').style.display = 'none';
 
     document.getElementById('npc-template-editor').classList.add('visible');
+    if (typeof updateNpcSpritePreview === 'function') updateNpcSpritePreview();
 }
 
 function editNPCTemplate(id) {
@@ -2233,6 +2234,7 @@ function editNPCTemplate(id) {
         template.behavior === 'wander' ? 'block' : 'none';
 
     document.getElementById('npc-template-editor').classList.add('visible');
+    if (typeof updateNpcSpritePreview === 'function') updateNpcSpritePreview();
 }
 
 function saveNPCTemplate() {
@@ -2291,6 +2293,7 @@ function saveNPCTemplate() {
 function closeNPCTemplateEditor() {
     document.getElementById('npc-template-editor').classList.remove('visible');
     editingTemplateId = null;
+    if (typeof stopNpcSpriteAnimation === 'function') stopNpcSpriteAnimation();
 }
 
 function deleteNPCTemplate(id) {
@@ -3348,4 +3351,146 @@ function saveGoalTemplate() {
     closeGoalTemplateEditor();
     draw(); // Redraw to show updated goal appearance
     showToast('Goal settings saved', 'success');
+}
+
+// ============================================
+// NPC SPRITE PREVIEW + LIBRARY PICKER
+// ============================================
+
+var npcPreviewImage = null;
+var npcPreviewFrame = 0;
+var npcPreviewInterval = null;
+
+// Stop the NPC preview animation. Called when sprite changes or modal closes.
+function stopNpcSpriteAnimation() {
+    if (npcPreviewInterval) {
+        clearInterval(npcPreviewInterval);
+        npcPreviewInterval = null;
+    }
+}
+
+// Render the NPC sprite preview based on the current modal inputs.
+// Mirrors updatePlayerSpritePreview's behavior: animates the first row at
+// ~6 fps, scales to fit a 76x76 box with crisp-edges pixel rendering.
+function updateNpcSpritePreview() {
+    var container = document.getElementById('npc-template-sprite-preview');
+    if (!container) return;
+    var urlInput = document.getElementById('npc-template-sprite');
+    var colsInput = document.getElementById('npc-template-cols');
+    var rowsInput = document.getElementById('npc-template-rows');
+    if (!urlInput) return;
+
+    var spriteUrl = urlInput.value.trim();
+    var cols = parseInt(colsInput && colsInput.value) || 1;
+    var rows = parseInt(rowsInput && rowsInput.value) || 1;
+
+    stopNpcSpriteAnimation();
+
+    if (!spriteUrl) {
+        container.innerHTML = '<span style="color: #555; font-size: 10px;">No sprite</span>';
+        return;
+    }
+
+    container.innerHTML = '<span style="color: #888; font-size: 10px;">Loading...</span>';
+
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+        npcPreviewImage = img;
+        var frameW = img.naturalWidth / cols;
+        var frameH = img.naturalHeight / rows;
+        var maxSize = 76;
+        var scale = Math.min(maxSize / frameW, maxSize / frameH, 4);
+        var displayW = Math.round(frameW * scale);
+        var displayH = Math.round(frameH * scale);
+
+        var canvas = document.createElement('canvas');
+        canvas.width = displayW;
+        canvas.height = displayH;
+        canvas.style.imageRendering = 'pixelated';
+        canvas.style.imageRendering = 'crisp-edges';
+        var ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        container.innerHTML = '';
+        container.appendChild(canvas);
+
+        if (cols > 1) {
+            var indicator = document.createElement('div');
+            indicator.id = 'npc-template-sprite-frame-indicator';
+            indicator.style.cssText = 'position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: #888;';
+            indicator.textContent = '1/' + cols;
+            container.appendChild(indicator);
+        }
+
+        npcPreviewFrame = 0;
+        var draw = function() {
+            ctx.clearRect(0, 0, displayW, displayH);
+            ctx.drawImage(img,
+                npcPreviewFrame * frameW, 0, frameW, frameH,
+                0, 0, displayW, displayH);
+        };
+        draw();
+        if (cols > 1) {
+            npcPreviewInterval = setInterval(function() {
+                npcPreviewFrame = (npcPreviewFrame + 1) % cols;
+                draw();
+                var ind = document.getElementById('npc-template-sprite-frame-indicator');
+                if (ind) ind.textContent = (npcPreviewFrame + 1) + '/' + cols;
+            }, 150);
+        }
+    };
+    img.onerror = function() {
+        container.innerHTML = '<span style="color: #f66; font-size: 10px;">Failed to load</span>';
+    };
+    img.src = spriteUrl;
+}
+
+// Open the library picker scoped to character sprites. When the user picks
+// one, fill the URL and auto-detect a 3x4 walk-cycle layout for 48x64 sheets
+// (or any sheet with width divisible by 3 and height divisible by 4 where
+// the cell looks roughly square). Otherwise leave cols/rows at 1x1.
+function pickNpcSprite() {
+    var opener = window.openAssetPickerWithCallback ||
+        (window.parent && window.parent !== window && window.parent.openAssetPickerWithCallback);
+    if (!opener) {
+        showToast('Asset picker unavailable', 'warning');
+        return;
+    }
+    opener(function(url) {
+        if (!url) return;
+        var urlInput = document.getElementById('npc-template-sprite');
+        if (urlInput) urlInput.value = url;
+
+        // Probe the image to guess a sensible layout.
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+            var w = img.naturalWidth;
+            var h = img.naturalHeight;
+            // 3x4 walk-cycle heuristic: width / 3 and height / 4 must be
+            // integers, and roughly square (cells in walk sheets are usually
+            // 16x16, 32x32, etc.).
+            if (w % 3 === 0 && h % 4 === 0) {
+                var cellW = w / 3;
+                var cellH = h / 4;
+                if (Math.abs(cellW - cellH) <= 4) {
+                    var colsEl = document.getElementById('npc-template-cols');
+                    var rowsEl = document.getElementById('npc-template-rows');
+                    var widthEl = document.getElementById('npc-template-width');
+                    var heightEl = document.getElementById('npc-template-height');
+                    if (colsEl) colsEl.value = '3';
+                    if (rowsEl) rowsEl.value = '4';
+                    // Default render at 2x cell size (matches the game's
+                    // typical tile render scale).
+                    if (widthEl) widthEl.value = String(cellW * 2);
+                    if (heightEl) heightEl.value = String(cellH * 2);
+                    showToast('Detected 3x4 character sheet. Set cols/rows automatically.', 'info');
+                }
+            }
+            updateNpcSpritePreview();
+        };
+        img.onerror = function() { updateNpcSpritePreview(); };
+        img.src = url;
+    }, 'sprites');
 }
