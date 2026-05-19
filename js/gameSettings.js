@@ -2622,6 +2622,20 @@ function togglePvPSettings(enabled) {
     if (pvpSettingsPanel) {
         pvpSettingsPanel.style.display = enabled ? 'block' : 'none';
     }
+
+    // PvP without projectiles is non-functional: players need a way to hit
+    // each other. Auto-enable projectiles when the author turns on PvP and
+    // hasn't already enabled them, then reveal the projectile-options panel
+    // so Aim Mode / Fire Key / etc. are immediately reachable.
+    if (enabled && !gameSettings.projectileEnabled) {
+        gameSettings.projectileEnabled = true;
+        const projCheckbox = document.getElementById('setting-projectile-enabled');
+        if (projCheckbox) projCheckbox.checked = true;
+        if (typeof toggleProjectileOptions === 'function') toggleProjectileOptions();
+        if (typeof updateProjectileSummary === 'function') updateProjectileSummary();
+        showToast('PvP needs projectiles. Enabled them automatically — see Combat for Aim Mode and Fire Key.', 'info');
+        markDirty();
+    }
 }
 
 // ============================================
