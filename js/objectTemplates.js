@@ -2448,6 +2448,9 @@ function editDoorTemplate(id) {
                 (template.destinationX === null || template.destinationX === undefined) ? '' : template.destinationX;
             document.getElementById('door-template-dest-level-y').value =
                 (template.destinationY === null || template.destinationY === undefined) ? '' : template.destinationY;
+            // Programmatic .value = ... doesn't fire 'change', so refresh
+            // the spawn-coord hint and input max attrs manually.
+            if (typeof updateDoorDestLevelHint === 'function') updateDoorDestLevelHint();
         } else {
             document.getElementById('door-template-dest-x').value = template.destinationX || 0;
             document.getElementById('door-template-dest-y').value = template.destinationY || 0;
