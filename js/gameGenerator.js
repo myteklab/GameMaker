@@ -969,8 +969,9 @@ ${gameSettings.gameType === 'topdown' ? `    <div class="mobile-control-btn" id=
     <div class="mobile-control-btn" id="mobile-down">▼</div>
     <div class="mobile-control-btn" id="mobile-interact">E</div>
     <div class="mobile-control-btn" id="mobile-inventory">📦</div>` : `    <div class="mobile-control-btn" id="mobile-jump">▲</div>`}
-${gameSettings.projectileEnabled ? `    <div class="mobile-control-btn" id="mobile-shoot">🎯</div>` : ''}
+${gameSettings.projectileEnabled && gameSettings.projectileAimMode !== 'mouse' ? `    <div class="mobile-control-btn" id="mobile-shoot">🎯</div>` : ''}
 </div>
+${gameSettings.projectileEnabled && gameSettings.projectileAimMode === 'mouse' ? `<div id="mp-touch-fire-hint" style="position:fixed; left:50%; bottom:14px; transform:translateX(-50%); background:rgba(0,0,0,0.55); color:#fff; padding:4px 10px; border-radius:12px; font:600 11px sans-serif; pointer-events:none; opacity:0; transition:opacity 0.3s; z-index:50;">Tap and hold to fire</div>` : ''}
 
 ${includeComments ? `<!-- Keyboard controls overlay - shown only on desktop -->` : ''}
 <div id="keyboard-controls">
@@ -5241,19 +5242,21 @@ ${includeComments ? `    // ═════════════════�
         keys = {};
     });
 
-    // Mouse aim tracking: cursor position in canvas-pixel coords (camera-relative).
-    // Updated on mousemove; mouseDown is true while the left button is held.
+    // Aim tracking: cursor (or active touch) position in canvas-pixel coords.
+    // Updated on mousemove and touchmove; mouseDown / down-flag is true while
+    // the left mouse button or a finger is on the canvas.
     var mouseCanvasX = CANVAS_WIDTH / 2;
     var mouseCanvasY = CANVAS_HEIGHT / 2;
     var mouseDown = false;
     if (PROJECTILE_AIM_MODE === 'mouse' && canvas) {
-        function updateMouseFromEvent(e) {
+        function clientToCanvas(clientX, clientY) {
             var rect = canvas.getBoundingClientRect();
             var scaleX = CANVAS_WIDTH / rect.width;
             var scaleY = CANVAS_HEIGHT / rect.height;
-            mouseCanvasX = (e.clientX - rect.left) * scaleX;
-            mouseCanvasY = (e.clientY - rect.top) * scaleY;
+            mouseCanvasX = (clientX - rect.left) * scaleX;
+            mouseCanvasY = (clientY - rect.top) * scaleY;
         }
+        function updateMouseFromEvent(e) { clientToCanvas(e.clientX, e.clientY); }
         canvas.addEventListener('mousemove', updateMouseFromEvent);
         canvas.addEventListener('mousedown', function(e) {
             if (e.button !== 0) return;
@@ -5267,7 +5270,56 @@ ${includeComments ? `    // ═════════════════�
         });
         // Suppress browser context menu so right-click can be reserved later.
         canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-        canvas.style.cursor = 'crosshair';
+
+        // Touch handlers: hold-to-fire toward the finger's position. Mirrors
+        // the desktop mouse-down-to-fire behavior so the player learns one
+        // pattern. The mobile direction buttons live in a separate overlay
+        // (#mobile-controls) outside the canvas; their touches don't reach
+        // here. Tap-aware logic (single tap vs hold) intentionally omitted
+        // for v1 — projectile cooldown rate-limits anyway.
+        function updateTouchFromEvent(e) {
+            if (!e.touches || e.touches.length === 0) return;
+            // Use the first active touch on the canvas.
+            var t = e.touches[0];
+            clientToCanvas(t.clientX, t.clientY);
+        }
+        canvas.addEventListener('touchstart', function(e) {
+            updateTouchFromEvent(e);
+            mouseDown = true;
+            e.preventDefault();
+        }, { passive: false });
+        canvas.addEventListener('touchmove', function(e) {
+            updateTouchFromEvent(e);
+            e.preventDefault();
+        }, { passive: false });
+        function endTouch(e) {
+            // Only clear when no fingers remain on the canvas (handles
+            // multi-touch lifts gracefully).
+            if (!e.touches || e.touches.length === 0) mouseDown = false;
+        }
+        canvas.addEventListener('touchend', endTouch);
+        canvas.addEventListener('touchcancel', endTouch);
+
+        // crosshair cursor only makes sense on pointer devices.
+        if (!('ontouchstart' in window) || navigator.maxTouchPoints === 0) {
+            canvas.style.cursor = 'crosshair';
+        }
+
+        // On touch devices, briefly surface the "Tap and hold to fire" hint
+        // so the player understands the gesture, then fade it out after a
+        // few seconds or on first touch.
+        if (IS_TOUCH_DEVICE) {
+            var hint = document.getElementById('mp-touch-fire-hint');
+            if (hint) {
+                hint.style.opacity = '1';
+                var hideHint = function() {
+                    hint.style.opacity = '0';
+                    canvas.removeEventListener('touchstart', hideHint);
+                };
+                canvas.addEventListener('touchstart', hideHint);
+                setTimeout(hideHint, 5000);
+            }
+        }
     }
 
     function resetPlayer() {
