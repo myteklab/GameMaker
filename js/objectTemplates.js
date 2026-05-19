@@ -3378,11 +3378,16 @@ function updateNpcSpritePreview() {
     var urlInput = document.getElementById('npc-template-sprite');
     var colsInput = document.getElementById('npc-template-cols');
     var rowsInput = document.getElementById('npc-template-rows');
+    var widthInput = document.getElementById('npc-template-width');
+    var heightInput = document.getElementById('npc-template-height');
     if (!urlInput) return;
 
     var spriteUrl = urlInput.value.trim();
     var cols = parseInt(colsInput && colsInput.value) || 1;
     var rows = parseInt(rowsInput && rowsInput.value) || 1;
+    // Target render size matches what the NPC will actually be in-game.
+    var targetW = parseInt(widthInput && widthInput.value) || 32;
+    var targetH = parseInt(heightInput && heightInput.value) || 32;
 
     stopNpcSpriteAnimation();
 
@@ -3399,10 +3404,12 @@ function updateNpcSpritePreview() {
         npcPreviewImage = img;
         var frameW = img.naturalWidth / cols;
         var frameH = img.naturalHeight / rows;
+        // Aim for the configured in-game W/H. Cap so it still fits the 80x80
+        // box; cap at 2x to avoid oversampling on very small target sizes.
         var maxSize = 76;
-        var scale = Math.min(maxSize / frameW, maxSize / frameH, 4);
-        var displayW = Math.round(frameW * scale);
-        var displayH = Math.round(frameH * scale);
+        var fitScale = Math.min(maxSize / targetW, maxSize / targetH, 1);
+        var displayW = Math.max(8, Math.round(targetW * fitScale));
+        var displayH = Math.max(8, Math.round(targetH * fitScale));
 
         var canvas = document.createElement('canvas');
         canvas.width = displayW;
@@ -3414,6 +3421,15 @@ function updateNpcSpritePreview() {
 
         container.innerHTML = '';
         container.appendChild(canvas);
+
+        // Size hint so the user can see the canvas matches their settings,
+        // including a downscale note when the canvas can't fit at 1:1.
+        var sizeHint = document.createElement('div');
+        sizeHint.style.cssText = 'position: absolute; top: 2px; left: 4px; font-size: 9px; color: #888;';
+        sizeHint.textContent = fitScale < 1
+            ? targetW + 'x' + targetH + ' (fit)'
+            : targetW + 'x' + targetH;
+        container.appendChild(sizeHint);
 
         if (cols > 1) {
             var indicator = document.createElement('div');
