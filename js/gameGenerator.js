@@ -4322,6 +4322,11 @@ ${includeComments ? `    // ═════════════════�
     }
 
     // Load a level by index
+    // Doors that target a specific spawn tile in the destination level set
+    // this before calling loadLevel. loadLevel applies it after the default
+    // findStartPosition so the multiplayer emit carries the right position.
+    var pendingSpawnOverride = null;
+
     function loadLevel(index) {
         if (index < 0 || index >= allLevels.length) {
             return false;
@@ -4438,6 +4443,27 @@ ${includeComments ? `    // ═════════════════�
         // Initialize objects and player
         initGameObjects();
         findStartPosition();
+
+        // If the entry came through a door with a specific spawn tile, apply
+        // it now (before the multiplayer emit) so other players see us at
+        // the right spot from the moment we appear in the new level.
+        if (pendingSpawnOverride) {
+            var ox = pendingSpawnOverride.x;
+            var oy = pendingSpawnOverride.y;
+            pendingSpawnOverride = null;
+            if (ox !== null && ox !== undefined && oy !== null && oy !== undefined) {
+                if (ox >= 0 && ox < levelWidth && oy >= 0 && oy < levelHeight) {
+                    player.x = ox * RENDER_SIZE;
+                    player.y = oy * RENDER_SIZE;
+                    player.speedX = 0;
+                    player.speedY = 0;
+                } else {
+                    console.warn('Door spawn (' + ox + ',' + oy +
+                        ') is out of bounds for ' + levelWidth + 'x' + levelHeight +
+                        ' level. Using default spawn.');
+                }
+            }
+        }
 
         // Per-level multiplayer: notify the relay so other clients drop us
         // from the old level's view and the new level's peers get a join
@@ -6935,34 +6961,20 @@ ${includeComments ? `        // ────────────────
             // Level transition via door
             var nextIndex = findLevelIndexById(door.destinationLevelId);
             if (nextIndex >= 0) {
-                // Brief delay before transition for effect. If the door
-                // specifies destination tile coords for this level, place
-                // the player there after loadLevel finishes (overrides the
-                // level's default spawn point). Both X and Y must be set.
+                // Stash the optional spawn override so loadLevel can apply
+                // it BEFORE the multiplayer gm_level_change emit. Doing it
+                // after loadLevel (the previous approach) sent the default
+                // spawn to the server, so other players saw us at the wrong
+                // spot until we moved.
                 var overrideX = door.destinationX;
                 var overrideY = door.destinationY;
                 console.log('[Door] level transition to', door.destinationLevelId, 'override spawn:', overrideX, overrideY);
+                if (overrideX !== null && overrideX !== undefined &&
+                    overrideY !== null && overrideY !== undefined) {
+                    pendingSpawnOverride = { x: overrideX, y: overrideY };
+                }
                 setTimeout(function() {
                     loadLevel(nextIndex);
-                    if (overrideX !== null && overrideX !== undefined &&
-                        overrideY !== null && overrideY !== undefined) {
-                        var inBoundsX = overrideX >= 0 && overrideX < levelWidth;
-                        var inBoundsY = overrideY >= 0 && overrideY < levelHeight;
-                        if (inBoundsX && inBoundsY) {
-                            player.x = overrideX * RENDER_SIZE;
-                            player.y = overrideY * RENDER_SIZE;
-                            player.speedX = 0;
-                            player.speedY = 0;
-                        } else {
-                            // Out-of-bounds spawn coords: fall back to the
-                            // destination level's default spawn instead of
-                            // dropping the player off the map.
-                            console.warn('Door spawn (' + overrideX + ',' + overrideY +
-                                ') is out of bounds for ' + levelWidth + 'x' + levelHeight +
-                                ' level. Using default spawn.');
-                            findStartPosition();
-                        }
-                    }
                     startLevelBGM();
                 }, 300);
             } else {
