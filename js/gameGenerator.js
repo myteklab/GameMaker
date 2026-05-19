@@ -695,6 +695,17 @@ ${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown') ? '  
     ═══════════════════════════════════════════════════════════════════════════
     -->` : ''}
     <style>
+        /* Slim, theme-matched scrollbars for any element we tag with the
+           mp-scroll class. The multiplayer join modal's character grid and
+           the chat message list use this so the scrollbar does not clash
+           with the dark UI. WebKit-only; Firefox uses scrollbar-color. */
+        .mp-scroll { scrollbar-width: thin; scrollbar-color: rgba(102, 126, 234, 0.55) transparent; }
+        .mp-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .mp-scroll::-webkit-scrollbar-track { background: transparent; }
+        .mp-scroll::-webkit-scrollbar-thumb { background: rgba(102, 126, 234, 0.55); border-radius: 3px; }
+        .mp-scroll::-webkit-scrollbar-thumb:hover { background: rgba(102, 126, 234, 0.85); }
+        .mp-scroll::-webkit-scrollbar-corner { background: transparent; }
+
         html, body {
             margin: 0;
             padding: 0;
@@ -2414,7 +2425,7 @@ ${includeComments ? `    // ═════════════════�
             characterHTML =
                 '<div style="display: flex; flex-direction: column; text-align: left;">' +
                     '<label style="display:block; color: #9b59b6; font-size: 11px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎮 Choose your character</label>' +
-                    '<div style="flex: 1; padding: 10px; background: rgba(155, 89, 182, 0.08); border: 1px solid rgba(155, 89, 182, 0.25); border-radius: 8px; max-height: 320px; overflow-y: auto;">' +
+                    '<div class="mp-scroll" style="flex: 1; padding: 10px; background: rgba(155, 89, 182, 0.08); border: 1px solid rgba(155, 89, 182, 0.25); border-radius: 8px; max-height: 320px; overflow-y: auto;">' +
                         '<div id="mp-sprite-strip" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;"></div>' +
                     '</div>' +
                 '</div>';
@@ -2429,7 +2440,7 @@ ${includeComments ? `    // ═════════════════�
 
         overlay.innerHTML =
             '<div style="background: rgba(0,0,0,0.95); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; box-sizing: border-box;">' +
-                '<div style="background: #1a1a2e; padding: 24px 28px; border-radius: 15px; border: 2px solid #667eea; width: 100%; max-width: 720px; text-align: center; max-height: 92vh; overflow-y: auto; box-sizing: border-box;">' +
+                '<div class="mp-scroll" style="background: #1a1a2e; padding: 24px 28px; border-radius: 15px; border: 2px solid #667eea; width: 100%; max-width: 720px; text-align: center; max-height: 92vh; overflow-y: auto; box-sizing: border-box;">' +
                     '<div style="display: flex; align-items: center; justify-content: center; gap: 10px;">' +
                         '<div style="font-size: 22px; color: #fff;">🌐 Multiplayer</div>' +
                         '<span style="background: #f39c12; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">EXPERIMENTAL</span>' +
@@ -3073,7 +3084,7 @@ ${includeComments ? `    // ═════════════════�
                 '</div>' +
                 '<div id="mp-chat-section" style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0; padding-top: 6px;">' +
                     '<div style="color: #888; font-size: 9px; margin-bottom: 4px;">MESSAGES <span style="color: #555;">(T to chat)</span></div>' +
-                    '<div id="mp-chat-messages" style="max-height: 80px; overflow-y: auto; word-wrap: break-word; overflow-wrap: break-word;"></div>' +
+                    '<div id="mp-chat-messages" class="mp-scroll" style="max-height: 80px; overflow-y: auto; word-wrap: break-word; overflow-wrap: break-word;"></div>' +
                     '<input type="text" id="mp-chat-input" placeholder="Press T to chat..." maxlength="100" ' +
                         'style="display: none; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 4px 6px; font-size: 10px; ' +
                         'background: rgba(255,255,255,0.1); border: 1px solid rgba(102,126,234,0.5); border-radius: 4px; color: #fff; outline: none;">' +
