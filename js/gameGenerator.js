@@ -2446,9 +2446,10 @@ ${includeComments ? `    // ═════════════════�
                         '<span style="background: #f39c12; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">EXPERIMENTAL</span>' +
                     '</div>' +
                     bodyHTML +
+                    '<div id="mp-error-message" style="display: none; color: #ff6b6b; background: rgba(255,107,107,0.1); border: 1px solid #ff6b6b; border-radius: 8px; padding: 10px; margin-top: 14px; font-size: 12px; text-align: left;"></div>' +
                     '<div style="display: flex; gap: 10px; margin-top: 20px;">' +
-                        '<button onclick="startSinglePlayer()" style="flex: 0 0 auto; padding: 12px 18px; background: transparent; border: 1px solid #444; border-radius: 8px; color: #888; font-size: 13px; cursor: pointer;">Play Solo</button>' +
-                        '<button onclick="connectMultiplayer()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 8px; color: #fff; font-size: 15px; cursor: pointer; font-weight: bold;">🎮 Join Game</button>' +
+                        '<button id="mp-solo-btn" onclick="startSinglePlayer()" style="flex: 0 0 auto; padding: 12px 18px; background: transparent; border: 1px solid #444; border-radius: 8px; color: #888; font-size: 13px; cursor: pointer;">Play Solo</button>' +
+                        '<button id="mp-join-btn" onclick="connectMultiplayer()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 8px; color: #fff; font-size: 15px; cursor: pointer; font-weight: bold;">🎮 Join Game</button>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -2568,11 +2569,44 @@ ${includeComments ? `    // ═════════════════�
             myGreetingMessage = null;
         }
 
+        // Helpers for the join modal's inline error / button state
+        var joinBtn = document.getElementById('mp-join-btn');
+        var originalBtnText = joinBtn ? joinBtn.innerHTML : '';
+        function setJoinError(msg) {
+            var el = document.getElementById('mp-error-message');
+            if (el) {
+                el.innerHTML = msg;
+                el.style.display = msg ? 'block' : 'none';
+            }
+        }
+        function resetJoinButton() {
+            if (joinBtn) {
+                joinBtn.innerHTML = originalBtnText || '🎮 Join Game';
+                joinBtn.disabled = false;
+            }
+        }
+
+        // Client-side validation. Server's sanitizeRoomCode requires
+        // 3-20 chars from [a-zA-Z0-9_-]. We mirror that here so the user
+        // gets immediate feedback instead of a silent failed connect.
+        if (inputRoomCode) {
+            if (inputRoomCode.length < 3) {
+                setJoinError('Room code must be at least 3 characters.');
+                return;
+            }
+            if (inputRoomCode.length > 20) {
+                setJoinError('Room code is too long (max 20 characters).');
+                return;
+            }
+            if (!/^[a-zA-Z0-9_-]+$/.test(inputRoomCode)) {
+                setJoinError('Room code can only contain letters, numbers, dashes, and underscores.');
+                return;
+            }
+        }
+        setJoinError('');
         roomCode = inputRoomCode || 'gm-' + Math.random().toString(36).substring(2, 8);
 
         // Show connecting status
-        var joinBtn = document.querySelector('#mp-join-overlay button');
-        var originalBtnText = joinBtn ? joinBtn.innerHTML : '';
         if (joinBtn) {
             joinBtn.innerHTML = '⏳ Connecting...';
             joinBtn.disabled = true;
@@ -2592,28 +2626,27 @@ ${includeComments ? `    // ═════════════════�
 
         socket.on('connect_error', function(err) {
             console.error('Multiplayer connection error:', err);
-            if (joinBtn) {
-                joinBtn.innerHTML = originalBtnText;
-                joinBtn.disabled = false;
-            }
-            // Show error message to user
-            var errorDiv = document.getElementById('mp-error-message');
-            if (!errorDiv) {
-                errorDiv = document.createElement('div');
-                errorDiv.id = 'mp-error-message';
-                errorDiv.style.cssText = 'color: #ff6b6b; background: rgba(255,107,107,0.1); border: 1px solid #ff6b6b; border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 12px; text-align: center;';
-                var overlay = document.getElementById('mp-join-overlay');
-                if (overlay) {
-                    var innerDiv = overlay.querySelector('div > div');
-                    if (innerDiv) innerDiv.appendChild(errorDiv);
-                }
-            }
-            errorDiv.innerHTML = '❌ Could not connect to multiplayer server.<br><span style="color: #888; font-size: 11px;">The server may be down. Try again later or Play Solo.</span>';
+            resetJoinButton();
+            setJoinError('❌ Could not connect to multiplayer server.<br><span style="color: #888; font-size: 11px;">The server may be down. Try again later or Play Solo.</span>');
             // Clean up failed socket
             if (socket) {
                 socket.disconnect();
                 socket = null;
             }
+        });
+
+        // Server-side validation rejections during the join handshake
+        // (bad room code, name banned, IP rate-limited, etc.) arrive here.
+        // If the join modal is still up, surface the message inline so the
+        // user can correct it instead of staring at "Connecting...". The
+        // late-game error handler further down handles in-session errors.
+        socket.on('error', function(err) {
+            if (!document.getElementById('mp-join-overlay')) return; // post-join, let the other handler take it
+            var msg = (err && err.message) ? err.message : 'Connection error';
+            console.error('Multiplayer error:', err);
+            resetJoinButton();
+            setJoinError('❌ ' + msg);
+            if (socket) { socket.disconnect(); socket = null; }
         });
 
         socket.on('joined_room', function(data) {
