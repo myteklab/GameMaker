@@ -755,48 +755,153 @@ function selectTile(key) {
 
     if (key === '.') {
         infoPanel.classList.remove('visible');
+        stopSelectedTileEffectPreview();
     } else if (isCustomTile(key) && customTiles[key]) {
         // Custom tile selected
         infoPanel.classList.add('visible');
-
-        // Draw preview from custom tile
-        const previewCanvas = document.getElementById('selected-tile-preview');
-        const pctx = previewCanvas.getContext('2d');
-        pctx.imageSmoothingEnabled = false;
-        pctx.clearRect(0, 0, 48, 48);
-
-        const img = getCustomTileImage(key);
-        if (img && img.complete) {
-            pctx.drawImage(img, 0, 0, tileSize, tileSize, 0, 0, 48, 48);
-        } else if (img) {
-            img.onload = () => {
-                pctx.drawImage(img, 0, 0, tileSize, tileSize, 0, 0, 48, 48);
-            };
-        }
-
         document.getElementById('tile-key-input').value = customTiles[key].name || key;
         document.getElementById('tile-key-input').disabled = true; // Can't change custom tile key directly
         document.getElementById('tile-solid-checkbox').checked = customTiles[key].solid !== false;
         populateTileEffectControls(customTiles[key]);
+        // Render the preview (with motion effect applied if any). Animation
+        // loop only runs while an effect is set; static draw otherwise.
+        startSelectedTileEffectPreview();
     } else if (tiles[key]) {
         // Regular tileset tile selected
         infoPanel.classList.add('visible');
-
-        // Draw preview
-        const previewCanvas = document.getElementById('selected-tile-preview');
-        const pctx = previewCanvas.getContext('2d');
-        pctx.imageSmoothingEnabled = false;
-        pctx.clearRect(0, 0, 48, 48);
-
-        if (tilesetImage) {
-            pctx.drawImage(tilesetImage, tiles[key].x, tiles[key].y, tileSize, tileSize, 0, 0, 48, 48);
-        }
-
         document.getElementById('tile-key-input').value = key;
         document.getElementById('tile-key-input').disabled = false;
         document.getElementById('tile-solid-checkbox').checked = tiles[key].solid;
         populateTileEffectControls(tiles[key]);
+        startSelectedTileEffectPreview();
     }
+}
+
+// ============================================
+// SELECTED TILE PREVIEW (with motion-effect animation)
+// ============================================
+// Mirrors the runtime's applyTileEffect() so authors can see what their
+// configured effect looks like before play-testing. Runs while an effect
+// is set on the currently selected tile; falls back to a single static
+// draw when effect === 'none'.
+
+var selectedTileEffectRAF = null;
+var selectedTileEffectStart = 0;
+
+function stopSelectedTileEffectPreview() {
+    if (selectedTileEffectRAF) {
+        cancelAnimationFrame(selectedTileEffectRAF);
+        selectedTileEffectRAF = null;
+    }
+}
+
+function startSelectedTileEffectPreview() {
+    stopSelectedTileEffectPreview();
+    selectedTileEffectStart = performance.now();
+    drawSelectedTilePreview();
+    // Only animate when an effect is set. Saves cycles otherwise.
+    var tile = isCustomTile(selectedTileKey)
+        ? customTiles[selectedTileKey]
+        : tiles[selectedTileKey];
+    if (tile && tile.effect && tile.effect !== 'none') {
+        var loop = function() {
+            drawSelectedTilePreview();
+            selectedTileEffectRAF = requestAnimationFrame(loop);
+        };
+        selectedTileEffectRAF = requestAnimationFrame(loop);
+    }
+}
+
+function drawSelectedTilePreview() {
+    var canvas = document.getElementById('selected-tile-preview');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var SIZE = 48;
+    ctx.clearRect(0, 0, SIZE, SIZE);
+    ctx.imageSmoothingEnabled = false;
+
+    var key = selectedTileKey;
+    if (key === '.' || !key) return;
+
+    // Source image + crop rect for the tile
+    var img = null;
+    var sx = 0, sy = 0;
+    var srcSize = tileSize;
+    var tile = null;
+    if (isCustomTile(key) && customTiles[key]) {
+        tile = customTiles[key];
+        img = getCustomTileImage(key);
+        srcSize = tileSize;
+    } else if (tiles[key]) {
+        tile = tiles[key];
+        img = tilesetImage;
+        sx = tile.x;
+        sy = tile.y;
+        srcSize = tileSize;
+    }
+    if (!img || !tile) return;
+    if (img.complete === false || (img.naturalWidth === 0 && img.complete !== undefined)) {
+        // Custom-tile image still loading: re-render on load (one-shot)
+        if (img.addEventListener) {
+            img.addEventListener('load', drawSelectedTilePreview, { once: true });
+        }
+        return;
+    }
+
+    // Apply motion effect transform, then draw the tile. Math matches the
+    // runtime's applyTileEffect in gameGenerator.js so the editor preview
+    // and the actual game match.
+    var effect = tile.effect;
+    var saved = false;
+    if (effect && effect !== 'none') {
+        var intensity = (tile.effectIntensity || 5) / 10;
+        var speed = (tile.effectSpeed || 5) / 5;
+        var t = (performance.now() - selectedTileEffectStart) * speed / 1000;
+        // No position-based phase in the editor preview; the tile is
+        // shown in isolation so phase = 0 reads naturally.
+        var phase = 0;
+        var cx = SIZE / 2, cy = SIZE / 2;
+        ctx.save();
+        saved = true;
+        switch (effect) {
+            case 'sway':
+                var ang = Math.sin(t * 2 + phase) * intensity * 0.15;
+                ctx.translate(cx, SIZE);
+                ctx.rotate(ang);
+                ctx.translate(-cx, -SIZE);
+                break;
+            case 'pulse':
+                var s = 1 + Math.sin(t * 3 + phase) * intensity * 0.1;
+                ctx.translate(cx, cy);
+                ctx.scale(s, s);
+                ctx.translate(-cx, -cy);
+                break;
+            case 'bounce':
+                ctx.translate(0, -Math.abs(Math.sin(t * 4 + phase)) * intensity * SIZE * 0.1);
+                break;
+            case 'float':
+                ctx.translate(0, Math.sin(t * 1.5 + phase) * intensity * SIZE * 0.08);
+                break;
+            case 'shimmer':
+                var sX = 1 + Math.sin(t * 5 + phase) * intensity * 0.05;
+                var sY = 1 + Math.cos(t * 4 + phase * 1.3) * intensity * 0.05;
+                ctx.translate(cx, cy);
+                ctx.scale(sX, sY);
+                ctx.translate(-cx, -cy);
+                break;
+            case 'wave':
+                ctx.translate(Math.sin(t * 3) * intensity * SIZE * 0.08, 0);
+                break;
+            case 'shake':
+                ctx.translate(
+                    Math.sin(t * 15 + phase) * intensity * SIZE * 0.05,
+                    Math.cos(t * 12 + phase * 1.2) * intensity * SIZE * 0.05
+                );
+                break;
+        }
+    }
+    ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, SIZE, SIZE);
+    if (saved) ctx.restore();
 }
 
 function updateSelectedTileKey() {
@@ -890,6 +995,10 @@ function updateSelectedTileEffect() {
         target.effectSpeed = speed;
     }
     markDirty();
+    // Reflect the change in the live preview immediately.
+    if (typeof startSelectedTileEffectPreview === 'function') {
+        startSelectedTileEffectPreview();
+    }
 }
 
 // ============================================
