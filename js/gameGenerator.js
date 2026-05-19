@@ -948,7 +948,7 @@ The <canvas> element is where all the game graphics are drawn.
 It's like a blank piece of paper that JavaScript can draw on.
 The id="game" lets JavaScript find this specific canvas.
 -->` : ''}
-<canvas id="game"></canvas>
+<canvas id="game" tabindex="0"></canvas>
 <div id="info">${(function() {
     var shootHint = '';
     if (gameSettings.projectileEnabled) {
@@ -2694,6 +2694,12 @@ ${includeComments ? `    // ═════════════════�
             if (overlay) overlay.remove();
             showRoomCodeOverlay();
             multiplayerReady = true;
+            // Removing the overlay leaves nothing focused, so keydown events
+            // don't fire and players can't move until they click. Force focus
+            // to the canvas so WASD/arrows work immediately on join.
+            if (canvas && typeof canvas.focus === 'function') {
+                try { canvas.focus({ preventScroll: true }); } catch (e) {}
+            }
             requestAnimationFrame(gameLoop);
         });
 
@@ -3228,6 +3234,10 @@ ${includeComments ? `    // ═════════════════�
         }
         chatInputActive = false;
         window.chatInputActive = false;
+        // Return keyboard focus to the canvas so movement keys resume.
+        if (canvas && typeof canvas.focus === 'function') {
+            try { canvas.focus({ preventScroll: true }); } catch (e) {}
+        }
     }
 
     function sendChatMessage() {
@@ -5356,15 +5366,25 @@ ${includeComments ? `    // ═════════════════�
     // the editor chrome around the play-test iframe, or the /p/ page header
     // above the preview iframe), keyboard focus leaves this window and
     // keydown events stop firing here. Clicking back on the iframe content
-    // does not automatically restore keyboard focus. Force it on any
-    // pointer-down so movement keys always work as soon as the cursor is
-    // back over the game.
-    window.addEventListener('mousedown', function() {
+    // does not automatically restore keyboard focus. window.focus() from
+    // inside an iframe is unreliable in modern browsers, so we also focus
+    // the canvas (tabindex=0) and blur any rogue INPUT (e.g. a stale chat
+    // input that swallows movement keys via isTyping).
+    function recoverKeyboardFocus() {
         try { window.focus(); } catch (e) {}
-    });
-    window.addEventListener('touchstart', function() {
-        try { window.focus(); } catch (e) {}
-    }, { passive: true });
+        var ae = document.activeElement;
+        if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) {
+            // Don't yank focus while the player is actually typing in chat
+            if (!window.chatInputActive) {
+                try { ae.blur(); } catch (e) {}
+            }
+        }
+        if (canvas && typeof canvas.focus === 'function') {
+            try { canvas.focus({ preventScroll: true }); } catch (e) {}
+        }
+    }
+    window.addEventListener('mousedown', recoverKeyboardFocus);
+    window.addEventListener('touchstart', recoverKeyboardFocus, { passive: true });
     // Also clear any stale "held" keys when the window loses focus, so a
     // press whose keyup was lost during the focus loss doesn't leave the
     // player stuck moving in one direction on return.
@@ -5479,6 +5499,28 @@ ${includeComments ? `    // ═════════════════�
             return;
         }
 
+        // Coop multiplayer: soft respawn only (lives + position). Keep score
+        // so an accidental R press doesn't wipe everything the player earned
+        // alongside their teammates. Other players' games are not touched.
+        if (MULTIPLAYER_ENABLED && multiplayerReady) {
+            lives = ${gameSettings.startLives || 3};
+            gameOver = false;
+            player.invincibleUntil = Date.now() + 1500;
+            player.canDoubleJump = false;
+            player.jumpKeyHeld = false;
+            findStartPosition();
+            player.speedX = 0;
+            player.speedY = 0;
+            if (socket && socket.connected) {
+                socket.emit('gm_player_respawn', { roomCode: roomCode });
+            }
+            if (typeof showChatMessage === 'function') {
+                showChatMessage('System', '🔄 You respawned at the level start. Score kept.');
+            }
+            return;
+        }
+
+        // Solo: full restart from level 1.
         cameraX = 0;
         cameraY = 0;
         autoscrollX = 0; // Reset autoscroll position
@@ -5491,29 +5533,9 @@ ${includeComments ? `    // ═════════════════�
         player.canDoubleJump = false;
         player.jumpKeyHeld = false;
         screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
-
-        // Reset cheat effects (all including permanent)
         resetCheatEffects(false);
-
-        // Notify other players that we respawned
-        if (MULTIPLAYER_ENABLED && socket && socket.connected) {
-            socket.emit('gm_player_respawn', { roomCode: roomCode });
-        }
-
-        // In non-PvP multiplayer, respawn at the current level's spawn point
-        // without jumping back to level 0. Jumping to level 0 would teleport
-        // the player out of their friends' visibility. Score/lives are
-        // local-only here so reset is harmless. Solo keeps the original
-        // "restart from level 1" behavior.
-        if (MULTIPLAYER_ENABLED && multiplayerReady) {
-            findStartPosition();
-            player.speedX = 0;
-            player.speedY = 0;
-            player.invincibleUntil = Date.now() + 1500;
-        } else {
-            loadLevel(0);
-            startLevelBGM();
-        }
+        loadLevel(0);
+        startLevelBGM();
     }
 
     function loseLife() {
