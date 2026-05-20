@@ -162,15 +162,19 @@ async function generateGameHTMLAsync(includeComments = false, pixelScale = 1) {
 
 // Fetch each curated sprite URL and convert to a base64 data URL so the export
 // is fully offline. Returns [{name, data, w, h}, ...]; entries that fail to
-// fetch or encode are silently dropped.
+// fetch or encode are silently dropped. Runs in parallel with a per-sprite
+// timeout: sequential fetching of 25 sprites on a slow school network was
+// stalling Play test long enough to look like a blank/dark screen.
 async function bundlePlayerSprites() {
     const options = Array.isArray(gameSettings.playerSpriteOptions) ? gameSettings.playerSpriteOptions : [];
     if (options.length === 0) return [];
-    const bundled = [];
-    for (const opt of options) {
+    const PER_SPRITE_TIMEOUT_MS = 4000;
+    async function fetchOne(opt) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), PER_SPRITE_TIMEOUT_MS);
         try {
-            const resp = await fetch(opt.url);
-            if (!resp.ok) continue;
+            const resp = await fetch(opt.url, { signal: ctrl.signal });
+            if (!resp.ok) return null;
             const blob = await resp.blob();
             const dataUrl = await new Promise((res, rej) => {
                 const reader = new FileReader();
@@ -178,12 +182,16 @@ async function bundlePlayerSprites() {
                 reader.onerror = () => rej(new Error('encode failed'));
                 reader.readAsDataURL(blob);
             });
-            bundled.push({ name: opt.name, data: dataUrl, w: opt.w, h: opt.h });
+            return { name: opt.name, data: dataUrl, w: opt.w, h: opt.h };
         } catch (e) {
             console.warn('bundlePlayerSprites: skipped', opt.name, e);
+            return null;
+        } finally {
+            clearTimeout(timer);
         }
     }
-    return bundled;
+    const results = await Promise.all(options.map(fetchOne));
+    return results.filter(Boolean);
 }
 
 // Helper function to format fire key for display

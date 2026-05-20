@@ -5,10 +5,15 @@
 // Pull the logged-in platform user's name (display_name preferred, then
 // username) for prefilling the multiplayer join modal. Returns '' if not
 // available, signed out, or the only available value is email-shaped.
+// Hard timeout so a slow / hanging Platform bridge cannot block Play test
+// (the bridge default is 30s, which would look like a dead iframe).
 async function getPlatformPlayerName() {
     if (typeof Platform === 'undefined' || !Platform.getUserInfo) return '';
     try {
-        const info = await Platform.getUserInfo();
+        const info = await Promise.race([
+            Platform.getUserInfo(),
+            new Promise(res => setTimeout(() => res(null), 1500))
+        ]);
         if (!info) return '';
         const looksLikeEmail = (s) => typeof s === 'string' && s.indexOf('@') !== -1;
         let name = '';
@@ -130,6 +135,12 @@ async function loadGamePreview() {
     syncToCurrentLevel();
 
     const iframe = document.getElementById('game-preview-frame');
+    // Show an immediate loading state. Without this, students with multiplayer
+    // enabled (which forces an async sprite-bundle step) or with a slow
+    // platform bridge stare at the iframe's default dark/blank background
+    // for several seconds and assume Play is broken.
+    iframe.srcdoc = '<!doctype html><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#1a1a2e;color:#bbb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}.spin{width:34px;height:34px;border:3px solid #444;border-top-color:#667eea;border-radius:50%;animation:s 0.8s linear infinite}@keyframes s{to{transform:rotate(360deg)}}</style><div class="spin"></div><div>Loading game...</div>';
+
     const pixelScaleRadio = document.querySelector('input[name="pixel-scale"]:checked');
     const pixelScale = pixelScaleRadio ? parseInt(pixelScaleRadio.value) : 1;
     let gameHTML = await generateGameHTMLAsync(false, pixelScale);
@@ -149,9 +160,12 @@ async function loadGamePreview() {
         URL.revokeObjectURL(currentBlobUrl);
     }
 
-    // Use Blob URL instead of srcdoc to avoid iframe rendering issues
+    // Use Blob URL instead of srcdoc to avoid iframe rendering issues.
+    // Must remove the loading-state srcdoc first — srcdoc takes precedence
+    // over src and would silently keep the spinner up forever.
     const blob = new Blob([gameHTML], { type: 'text/html' });
     currentBlobUrl = URL.createObjectURL(blob);
+    iframe.removeAttribute('srcdoc');
     iframe.src = currentBlobUrl;
 
     // Auto-focus iframe after it loads so keyboard controls work immediately
