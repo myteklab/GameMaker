@@ -265,7 +265,7 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
         const tile = tiles[key];
         const row = Math.floor(tile.y / tileSize);
         const col = Math.floor(tile.x / tileSize);
-        tileTypesCode += `        '${key}': { row: ${row}, col: ${col}, solid: ${tile.solid} },\n`;
+        tileTypesCode += `        '${escapeKeyForJS(key)}': { row: ${row}, col: ${col}, solid: ${tile.solid} },\n`;
     }
 
     // Helper to validate custom tile keys
@@ -281,17 +281,28 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
         return false;
     }
 
-    // Helper to escape a key for safe embedding in JavaScript strings
-    // This converts Unicode characters to \uXXXX escape sequences
+    // Helper to escape a key for safe embedding inside a single-quoted JS
+    // string literal. Handles ASCII metachars (\, ', newline, etc.) as well
+    // as non-ASCII (Unicode private-use custom-tile glyphs). Without this,
+    // a tile key of '\' or "'" produces an unterminated string literal in
+    // the generated game and blows up the whole runtime with
+    // SyntaxError: Invalid or unexpected token.
     function escapeKeyForJS(key) {
         let escaped = '';
         for (let i = 0; i < key.length; i++) {
+            const ch = key[i];
             const code = key.charCodeAt(i);
-            if (code > 127) {
-                // Escape non-ASCII characters as \uXXXX
+            if (ch === '\\') escaped += '\\\\';
+            else if (ch === "'") escaped += "\\'";
+            else if (ch === '\n') escaped += '\\n';
+            else if (ch === '\r') escaped += '\\r';
+            else if (ch === '\t') escaped += '\\t';
+            else if (code < 0x20 || code === 0x7f) {
+                escaped += '\\u' + code.toString(16).padStart(4, '0');
+            } else if (code > 127) {
                 escaped += '\\u' + code.toString(16).padStart(4, '0');
             } else {
-                escaped += key[i];
+                escaped += ch;
             }
         }
         return escaped;
