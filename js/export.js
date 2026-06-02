@@ -393,7 +393,7 @@ function generateManifestJSON(appName, iconUrl = '') {
     return JSON.stringify({
         name: appName,
         short_name: appName,
-        description: `${appName} - Built with GameMaker`,
+        description: `${appName} - Built with GameBuilder`,
         start_url: "./",
         display: "fullscreen",
         orientation: "landscape",

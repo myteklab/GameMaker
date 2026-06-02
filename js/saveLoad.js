@@ -524,7 +524,7 @@ async function saveProject() {
 
         const a = document.createElement('a');
         a.href = url;
-        a.download = (projectName || 'gamemaker-project') + '.json';
+        a.download = (projectName || 'gamebuilder-project') + '.json';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

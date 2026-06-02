@@ -612,7 +612,7 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
         learningHeader = `
 // ╔═══════════════════════════════════════════════════════════════════════════════╗
 // ║                         MY PLATFORMER GAME                                     ║
-// ║                      Created with GameMaker                                 ║
+// ║                      Created with GameBuilder                               ║
 // ╚═══════════════════════════════════════════════════════════════════════════════╝
 //
 // Welcome to your game's source code! This file contains everything needed to run

@@ -5,10 +5,10 @@
 
 const helpContent = {
     about: {
-        title: '🎮 Welcome to Game Maker!',
+        title: '🎮 Welcome to GameBuilder!',
         content: `
             <div style="background: linear-gradient(135deg, rgba(233,69,96,0.2), rgba(102,126,234,0.2)); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
-                <p style="margin: 0; font-size: 14px; color: #fff; line-height: 1.5;"><strong>Game Maker</strong> is a platformer game builder that teaches you the fundamentals of game design - no coding required! Build levels, design characters, and learn what makes games <em>feel</em> fun to play.</p>
+                <p style="margin: 0; font-size: 14px; color: #fff; line-height: 1.5;"><strong>GameBuilder</strong> is a platformer game builder that teaches you the fundamentals of game design - no coding required! Build levels, design characters, and learn what makes games <em>feel</em> fun to play.</p>
             </div>
 
             <h4>🎯 What You'll Learn</h4>
