@@ -268,6 +268,26 @@
                 if (typeof draw === 'function') draw();
                 return true;
             }, false);
+        },
+
+        // Apply remote LEVEL metadata to an EXISTING level (name, goal, sounds,
+        // menu buttons, bg color, autoscroll, particle…). Deliberately does NOT
+        // touch tiles/decor/objects (cell-synced), spawnPoint/backgroundLayers
+        // (working-var-backed), or width/height (resize) — those are out of
+        // scope. Skips levels the receiver doesn't have (add/delete deferred).
+        SKIP_LEVEL_FIELDS: ['tiles', 'decorTiles', 'gameObjects', 'spawnPoint', 'backgroundLayers', 'width', 'height', 'id'],
+        applyLevel: function (id, meta) {
+            return safe(function () {
+                if (!meta) return false;
+                var lv = null; for (var i = 0; i < levels.length; i++) { if (levels[i] && levels[i].id === id) { lv = levels[i]; break; } }
+                if (!lv) return false;
+                Object.keys(meta).forEach(function (k) { if (API.SKIP_LEVEL_FIELDS.indexOf(k) === -1) lv[k] = meta[k]; });
+                if (typeof updateLevelsList === 'function') updateLevelsList();
+                if (typeof updateLevelIndicator === 'function') updateLevelIndicator();
+                if (typeof getCurrentLevel === 'function' && lv === getCurrentLevel() && typeof updateLevelSettingsFields === 'function') updateLevelSettingsFields();
+                if (typeof draw === 'function') draw();
+                return true;
+            }, false);
         }
     };
 
