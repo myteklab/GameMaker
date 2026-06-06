@@ -248,7 +248,26 @@
             }, false);
         },
         applySfx: function (id, data) { return safe(function () { if (!gameSettings.sfxData) gameSettings.sfxData = {}; if (data == null) delete gameSettings.sfxData[id]; else gameSettings.sfxData[id] = data; return true; }, false); },
-        applyPfx: function (id, data) { return safe(function () { if (!gameSettings.pfxData) gameSettings.pfxData = {}; if (data == null) delete gameSettings.pfxData[id]; else gameSettings.pfxData[id] = data; return true; }, false); }
+        applyPfx: function (id, data) { return safe(function () { if (!gameSettings.pfxData) gameSettings.pfxData = {}; if (data == null) delete gameSettings.pfxData[id]; else gameSettings.pfxData[id] = data; return true; }, false); },
+
+        // Custom tiles = pixel-editor sprites (key -> { dataURL, solid, ... }).
+        // Syncing them makes a sprite one kid draws + saves appear for everyone
+        // (in the palette and on placed tiles). customTiles() for diffing.
+        customTiles: function () { return safe(function () { return customTiles; }, {}); },
+        applyCustomTile: function (key, data) {
+            return safe(function () {
+                if (typeof customTiles !== 'object') return false;
+                if (data == null) delete customTiles[key]; else customTiles[key] = data;
+                try { delete customTileImageCache[key]; } catch (e) {}                       // invalidate cached Image
+                try { if (window.customTileAnimationCache) delete window.customTileAnimationCache[key]; } catch (e) {}
+                if (data && data.dataURL) {                                                  // preload new image, then redraw
+                    var img = new Image(); img.onload = function () { try { customTileImageCache[key] = img; if (typeof draw === 'function') draw(); } catch (e) {} }; img.src = data.dataURL;
+                }
+                if (typeof renderTilesetPreview === 'function') renderTilesetPreview();
+                if (typeof draw === 'function') draw();
+                return true;
+            }, false);
+        }
     };
 
     window.GameCollab = API;
