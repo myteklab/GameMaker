@@ -190,7 +190,65 @@
                 var sy = (ty * ts - cameraY) * z + half;
                 return { x: sx / Math.max(1, cv.width), y: sy / Math.max(1, cv.height) };
             }, null);
-        }
+        },
+
+        // ── Phase 2: templates + settings + sfx/pfx ─────────────────────────
+        // Map of placed-object template type -> its array. Each reference is
+        // guarded so a missing/renamed array is skipped (no eval -> CSP-safe).
+        templateArrays: function () {
+            var m = {};
+            safe(function () { m.enemy = enemyTemplates; });
+            safe(function () { m.collectible = collectibleTemplates; });
+            safe(function () { m.hazard = hazardTemplates; });
+            safe(function () { m.powerup = powerupTemplates; });
+            safe(function () { m.spring = springTemplates; });
+            safe(function () { m.movingPlatform = movingPlatformTemplates; });
+            safe(function () { m.npc = npcTemplates; });
+            safe(function () { m.door = doorTemplates; });
+            safe(function () { m.mysteryBlock = mysteryBlockTemplates; });
+            safe(function () { m.terrainZone = terrainZoneTemplates; });
+            safe(function () { m.cheatCode = cheatCodeTemplates; });
+            var out = {}; Object.keys(m).forEach(function (k) { if (Array.isArray(m[k])) out[k] = m[k]; });
+            return out;
+        },
+        // Re-render all template list UIs + redraw (placed objects read live template data).
+        refreshTemplates: function () {
+            ['renderEnemyTemplatesList', 'renderCollectibleTemplatesList', 'renderHazardTemplatesList',
+             'renderPowerupTemplatesList', 'renderSpringTemplatesList', 'renderMovingPlatformTemplatesList',
+             'renderNPCTemplatesList', 'renderDoorTemplatesList', 'renderMysteryBlockTemplatesList',
+             'renderTerrainZoneTemplatesList', 'renderCheatCodeTemplatesList'].forEach(function (fn) {
+                safe(function () { if (typeof window[fn] === 'function') window[fn](); });
+            });
+            safe(function () { if (typeof draw === 'function') draw(); });
+        },
+        // Apply a remote template upsert/delete by id (data===null => delete).
+        applyTemplate: function (type, id, data) {
+            return safe(function () {
+                var arr = API.templateArrays()[type]; if (!arr) return false;
+                var idx = -1; for (var i = 0; i < arr.length; i++) { if (arr[i] && arr[i].id === id) { idx = i; break; } }
+                if (data == null) { if (idx >= 0) arr.splice(idx, 1); }
+                else { if (idx >= 0) arr[idx] = data; else arr.push(data); }
+                API.refreshTemplates();
+                return true;
+            }, false);
+        },
+
+        // Game settings (the big object). settings() for diffing; applySettings()
+        // merges incoming scalar fields (preserving sfx/pfx stores) + pushes to UI.
+        settings: function () { return safe(function () { return gameSettings; }, null); },
+        applySettings: function (data) {
+            return safe(function () {
+                if (!data || typeof gameSettings !== 'object') return false;
+                var sfx = gameSettings.sfxData, pfx = gameSettings.pfxData;
+                Object.keys(data).forEach(function (k) { if (k !== 'sfxData' && k !== 'pfxData') gameSettings[k] = data[k]; });
+                gameSettings.sfxData = sfx; gameSettings.pfxData = pfx;
+                if (typeof updateGameSettingsUI === 'function') updateGameSettingsUI();
+                if (typeof draw === 'function') draw();
+                return true;
+            }, false);
+        },
+        applySfx: function (id, data) { return safe(function () { if (!gameSettings.sfxData) gameSettings.sfxData = {}; if (data == null) delete gameSettings.sfxData[id]; else gameSettings.sfxData[id] = data; return true; }, false); },
+        applyPfx: function (id, data) { return safe(function () { if (!gameSettings.pfxData) gameSettings.pfxData = {}; if (data == null) delete gameSettings.pfxData[id]; else gameSettings.pfxData[id] = data; return true; }, false); }
     };
 
     window.GameCollab = API;
