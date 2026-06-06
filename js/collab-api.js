@@ -263,6 +263,7 @@
                 if (data && data.dataURL) {                                                  // preload new image, then redraw
                     var img = new Image(); img.onload = function () { try { customTileImageCache[key] = img; if (typeof draw === 'function') draw(); } catch (e) {} }; img.src = data.dataURL;
                 }
+                if (typeof renderCustomTilesPalette === 'function') renderCustomTilesPalette();   // the custom-tiles palette (so it shows for selection)
                 if (typeof renderTilesetPreview === 'function') renderTilesetPreview();
                 if (typeof draw === 'function') draw();
                 return true;
