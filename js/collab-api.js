@@ -276,6 +276,48 @@
         // (working-var-backed), or width/height (resize) — those are out of
         // scope. Skips levels the receiver doesn't have (add/delete deferred).
         SKIP_LEVEL_FIELDS: ['tiles', 'decorTiles', 'gameObjects', 'spawnPoint', 'backgroundLayers', 'width', 'height', 'id'],
+
+        // Add a whole level (id + dims + tiles + metadata) the collaborator made,
+        // so subsequent cell ops have a level to target. Skips if already present.
+        applyLevelAdd: function (level) {
+            return safe(function () {
+                if (!level || !level.id) return false;
+                for (var i = 0; i < levels.length; i++) { if (levels[i] && levels[i].id === level.id) return false; }
+                levels.push(level);
+                if (typeof updateLevelsList === 'function') updateLevelsList();
+                if (typeof updateLevelIndicator === 'function') updateLevelIndicator();
+                if (typeof updateLevelProgression === 'function') updateLevelProgression();
+                return true;
+            }, false);
+        },
+        applyLevelDel: function (id) {
+            return safe(function () {
+                if (levels.length <= 1) return false;
+                var idx = -1; for (var i = 0; i < levels.length; i++) { if (levels[i] && levels[i].id === id) { idx = i; break; } }
+                if (idx < 0) return false;
+                if (idx === currentLevelIndex && typeof switchToLevel === 'function') switchToLevel(idx === 0 ? 1 : idx - 1);   // I'm on it -> move off first
+                idx = -1; for (var j = 0; j < levels.length; j++) { if (levels[j] && levels[j].id === id) { idx = j; break; } }
+                if (idx < 0) return false;
+                levels.splice(idx, 1);
+                if (currentLevelIndex >= levels.length) currentLevelIndex = levels.length - 1;
+                if (typeof updateLevelsList === 'function') updateLevelsList();
+                if (typeof updateLevelIndicator === 'function') updateLevelIndicator();
+                if (typeof updateLevelProgression === 'function') updateLevelProgression();
+                if (typeof switchToLevel === 'function') switchToLevel(currentLevelIndex);
+                return true;
+            }, false);
+        },
+        // Wrap level add/delete so structure syncs INSTANTLY (before cell ops).
+        onLevelChange: function (cb) {
+            return safe(function () {
+                if (API._lvlWrapped) return true;
+                ['addNewLevel', 'duplicateCurrentLevel', 'deleteLevel'].forEach(function (name) {
+                    if (typeof window[name] === 'function') { var orig = window[name]; window[name] = function () { var r = orig.apply(this, arguments); try { cb(); } catch (e) {} return r; }; }
+                });
+                API._lvlWrapped = true;
+                return true;
+            }, false);
+        },
         applyLevel: function (id, meta) {
             return safe(function () {
                 if (!meta) return false;
