@@ -352,6 +352,24 @@
                 if (typeof draw === 'function') draw();
                 return true;
             }, false);
+        },
+
+        // ---- Tileset (the shared base64 tileset image + tile definitions) ----
+        // Cheap change-signature for diffing (avoid stringifying the ~150KB blob
+        // every poll); full state only fetched when it actually changed.
+        tilesetSig: function () { return safe(function () { var d = tilesetDataURLCache || (tilesetImage ? tilesetImage.src : ''); return (d ? d.length : 0) + ':' + JSON.stringify(tiles || {}); }, ''); },
+        tilesetState: function () { return safe(function () { return { tilesetData: tilesetDataURLCache || (tilesetImage ? tilesetImage.src : null), tiles: tiles }; }, null); },
+        applyTileset: function (data) {
+            return safe(function () {
+                if (!data) return false;
+                if (data.tiles && typeof data.tiles === 'object') tiles = data.tiles;
+                if (data.tilesetData) {
+                    var img = new Image();
+                    img.onload = function () { try { tilesetImage = img; tilesetDataURLCache = data.tilesetData; if (typeof renderTilesetPreview === 'function') renderTilesetPreview(); if (typeof draw === 'function') draw(); } catch (e) {} };
+                    img.src = data.tilesetData;
+                } else { if (typeof renderTilesetPreview === 'function') renderTilesetPreview(); if (typeof draw === 'function') draw(); }
+                return true;
+            }, false);
         }
     };
 
