@@ -17,6 +17,12 @@
     'use strict';
 
     function safe(fn, d) { try { return fn(); } catch (e) { return d; } }
+    // Reshape an array of row-strings to w x h (pad/truncate with '.').
+    function resizeRows(rows, w, h) {
+        var out = [], pad = new Array(w + 1).join('.');
+        for (var y = 0; y < h; y++) { var r = (rows && y < rows.length) ? rows[y] : ''; out.push(r.length < w ? (r + pad.substring(r.length)) : r.substring(0, w)); }
+        return out;
+    }
 
     var API = {
         // ---- readiness ----
@@ -275,7 +281,10 @@
         // touch tiles/decor/objects (cell-synced), spawnPoint/backgroundLayers
         // (working-var-backed), or width/height (resize) — those are out of
         // scope. Skips levels the receiver doesn't have (add/delete deferred).
-        SKIP_LEVEL_FIELDS: ['tiles', 'decorTiles', 'gameObjects', 'spawnPoint', 'backgroundLayers', 'width', 'height', 'id'],
+        SKIP_LEVEL_FIELDS: ['tiles', 'decorTiles', 'gameObjects', 'id'],
+        // Flush the current level's working state (tiles/spawn/bg/dims) into
+        // levels[current] so the adapter's diff sees fresh metadata for it.
+        syncCurrent: function () { return safe(function () { if (typeof syncToCurrentLevel === 'function') syncToCurrentLevel(); return true; }, false); },
 
         // Add a whole level (id + dims + tiles + metadata) the collaborator made,
         // so subsequent cell ops have a level to target. Skips if already present.
@@ -323,10 +332,23 @@
                 if (!meta) return false;
                 var lv = null; for (var i = 0; i < levels.length; i++) { if (levels[i] && levels[i].id === id) { lv = levels[i]; break; } }
                 if (!lv) return false;
-                Object.keys(meta).forEach(function (k) { if (API.SKIP_LEVEL_FIELDS.indexOf(k) === -1) lv[k] = meta[k]; });
+                var isCurrent = (typeof getCurrentLevel === 'function') ? (lv === getCurrentLevel()) : false;
+                Object.keys(meta).forEach(function (k) { if (API.SKIP_LEVEL_FIELDS.indexOf(k) === -1) lv[k] = meta[k]; });   // name/goal/spawn/bg/dims/sounds/menu...
+                if (isCurrent) {
+                    if ('spawnPoint' in meta) { try { spawnPoint = meta.spawnPoint; } catch (e) {} }
+                    if ('backgroundLayers' in meta) { try { backgroundLayers = meta.backgroundLayers; } catch (e) {} }
+                    if (('width' in meta || 'height' in meta) && typeof resizeLevel === 'function') {
+                        try { if (meta.width !== levelWidth || meta.height !== levelHeight) resizeLevel(meta.width || levelWidth, meta.height || levelHeight); } catch (e) {}
+                    }
+                    if (typeof updateSpawnUI === 'function') updateSpawnUI();
+                    if (typeof renderBackgroundLayers === 'function') renderBackgroundLayers();
+                    if (typeof updateLevelSettingsFields === 'function') updateLevelSettingsFields();
+                } else if (('width' in meta) && ('height' in meta)) {   // non-current: reshape stored tile rows to new dims
+                    if (Array.isArray(lv.tiles)) lv.tiles = resizeRows(lv.tiles, meta.width, meta.height);
+                    if (Array.isArray(lv.decorTiles)) lv.decorTiles = resizeRows(lv.decorTiles, meta.width, meta.height);
+                }
                 if (typeof updateLevelsList === 'function') updateLevelsList();
                 if (typeof updateLevelIndicator === 'function') updateLevelIndicator();
-                if (typeof getCurrentLevel === 'function' && lv === getCurrentLevel() && typeof updateLevelSettingsFields === 'function') updateLevelSettingsFields();
                 if (typeof draw === 'function') draw();
                 return true;
             }, false);
