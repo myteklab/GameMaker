@@ -371,6 +371,7 @@ function loadProjectData(data) {
     } else {
         // Version 1.0-2.0: Single level format - migrate to multi-level
         const singleLevel = createNewLevel('level_1', 'Level 1');
+        singleLevel.bgColor = ''; // an old save keeps the sky it was built with
         singleLevel.width = data.levelWidth || 150;
         singleLevel.height = data.levelHeight || 30;
         singleLevel.tiles = data.level || [];

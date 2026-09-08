@@ -4639,11 +4639,16 @@ ${includeComments ? `    // ═════════════════�
 
     // Draw menu level
     function drawMenu() {
-        // Draw background gradient
-        var gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-        gradient.addColorStop(0, '#1a1a3e');
-        gradient.addColorStop(1, '#2d1b4e');
-        ctx.fillStyle = gradient;
+        // Level background: the level's own color when it has one (menus read
+        // it into currentBgColor on load but never drew it), else the gradient
+        if (currentBgColor) {
+            ctx.fillStyle = currentBgColor;
+        } else {
+            var gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+            gradient.addColorStop(0, '#1a1a3e');
+            gradient.addColorStop(1, '#2d1b4e');
+            ctx.fillStyle = gradient;
+        }
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
         // Draw background layers

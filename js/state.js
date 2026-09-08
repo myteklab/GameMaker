@@ -33,6 +33,11 @@ let currentLevelIndex = 0; // Currently edited level
 
 // Level structure template
 // levelType: 'gameplay' (normal level) or 'menu' (title/menu screen)
+// Sky for a level that has not picked one. Saved levels with an empty bgColor
+// keep the old purple gradient so nobody's game changes under them; only
+// levels made from here on start neutral.
+const DEFAULT_LEVEL_BG = '#222a36';
+
 function createNewLevel(id, name, levelType = 'gameplay') {
     const baseLevel = {
         id: id || generateLevelId(),
@@ -64,8 +69,8 @@ function createNewLevel(id, name, levelType = 'gameplay') {
         // Background particle effect (ambient particles like snow, rain, fog)
         backgroundParticleEffect: '',
         backgroundParticleSpawnMode: 'auto', // 'auto', 'top', 'bottom', 'full'
-        // Background color (empty = default dark gradient)
-        bgColor: ''
+        // Background color (empty = the legacy purple gradient)
+        bgColor: DEFAULT_LEVEL_BG
     };
 
     // Add menu-specific properties for menu levels

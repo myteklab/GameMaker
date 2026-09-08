@@ -306,6 +306,9 @@ function duplicateCurrentLevel() {
     newLevel.gameObjects = current.gameObjects.map(obj => ({...obj}));
     newLevel.spawnPoint = current.spawnPoint ? {...current.spawnPoint} : null;
     newLevel.backgroundLayers = current.backgroundLayers.map(layer => ({...layer}));
+    newLevel.bgColor = current.bgColor;
+    newLevel.backgroundParticleEffect = current.backgroundParticleEffect;
+    newLevel.backgroundParticleSpawnMode = current.backgroundParticleSpawnMode;
     newLevel.goalCondition = current.goalCondition;
     newLevel.requiredScore = current.requiredScore;
     newLevel.timeLimit = current.timeLimit;
@@ -859,7 +862,7 @@ function showLevelSettingsModal(index) {
     var bgColorPicker = document.getElementById('level-settings-bg-color');
     var bgColorHex = document.getElementById('level-settings-bg-color-hex');
     if (bgColorPicker) {
-        bgColorPicker.value = lvl.bgColor || '#1a1a2e';
+        bgColorPicker.value = lvl.bgColor || DEFAULT_LEVEL_BG;
     }
     if (bgColorHex) {
         bgColorHex.textContent = lvl.bgColor || 'default';
@@ -951,15 +954,15 @@ function updateLevelBgColor(value) {
     markDirty();
 }
 
-// Clear level background color (reset to default gradient)
+// Reset level background color to the neutral default
 function clearLevelBgColor() {
     if (editingLevelIndex < 0) return;
     const lvl = levels[editingLevelIndex];
-    lvl.bgColor = '';
+    lvl.bgColor = DEFAULT_LEVEL_BG;
     const picker = document.getElementById('level-settings-bg-color');
-    if (picker) picker.value = '#1a1a2e';
+    if (picker) picker.value = DEFAULT_LEVEL_BG;
     const hex = document.getElementById('level-settings-bg-color-hex');
-    if (hex) hex.textContent = 'default';
+    if (hex) hex.textContent = DEFAULT_LEVEL_BG;
     if (editingLevelIndex === currentLevelIndex && typeof draw === 'function') {
         draw();
     }
