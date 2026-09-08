@@ -4413,13 +4413,13 @@
                         <div class="form-group" style="flex: 0.4; min-width: 60px;">
                             <label>Cols</label>
                             <input type="number" id="setting-sprite-cols" value="1" min="1" max="32" style="width: 60px;"
-                                oninput="updateGameSetting('playerSpritesheetCols', this.value); updatePlayerSpritePreview();"
+                                oninput="updateGameSetting('playerSpritesheetCols', this.value); updatePlayerSpritePreview(); updateCollisionPreview();"
                                 title="Frames per row">
                         </div>
                         <div class="form-group" style="flex: 0.4; min-width: 60px;">
                             <label>Rows</label>
                             <input type="number" id="setting-sprite-rows" value="1" min="1" max="16" style="width: 60px;"
-                                oninput="updateGameSetting('playerSpritesheetRows', this.value); updatePlayerSpritePreview();"
+                                oninput="updateGameSetting('playerSpritesheetRows', this.value); updatePlayerSpritePreview(); updateCollisionPreview();"
                                 title="Number of rows (4 for directional: down/left/right/up)">
                         </div>
                         <div class="form-group" style="flex: 0.5;">

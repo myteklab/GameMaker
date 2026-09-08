@@ -1382,10 +1382,13 @@ function updateCollisionPreview() {
     // Draw sprite (player color or sprite image)
     const spriteUrl = gameSettings.playerSpriteURL;
     if (spriteUrl && playerSpriteCache && playerSpriteCacheUrl === spriteUrl) {
-        // Draw sprite image
-        const frameCount = gameSettings.playerFrameCount || 1;
-        const frameWidth = playerSpriteCache.naturalWidth / frameCount;
-        const frameHeight = playerSpriteCache.naturalHeight;
+        // Frame 0 of the grid, sliced the way the runtime slices it. The old
+        // read used the deprecated playerFrameCount and the full image height,
+        // which stretched every row of a multi-row sheet into the sprite box.
+        const spriteCols = gameSettings.playerSpritesheetCols || gameSettings.playerFrameCount || 1;
+        const spriteRows = gameSettings.playerSpritesheetRows || 1;
+        const frameWidth = playerSpriteCache.naturalWidth / spriteCols;
+        const frameHeight = playerSpriteCache.naturalHeight / spriteRows;
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(
             playerSpriteCache,
