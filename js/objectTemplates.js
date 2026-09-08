@@ -604,7 +604,7 @@ function deleteEnemyTemplate(id) {
 
     let confirmMsg = `Delete enemy type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {
@@ -812,7 +812,7 @@ function deleteCollectibleTemplate(id) {
 
     let confirmMsg = `Delete collectible type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {
@@ -1012,7 +1012,7 @@ function deleteHazardTemplate(id) {
 
     let confirmMsg = `Delete hazard type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {
@@ -1244,7 +1244,7 @@ function deletePowerupTemplate(id) {
 
     let confirmMsg = `Delete powerup type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {
@@ -1440,7 +1440,7 @@ function deleteSpringTemplate(id) {
 
     let confirmMsg = `Delete spring type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {
@@ -1631,7 +1631,7 @@ function deleteTerrainZoneTemplate(id) {
 
     let confirmMsg = `Delete terrain zone type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {
@@ -1932,7 +1932,7 @@ function deleteMovingPlatformTemplate(id) {
 
     let confirmMsg = `Delete moving platform type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {
@@ -2317,7 +2317,7 @@ function deleteNPCTemplate(id) {
 
     let confirmMsg = `Delete NPC type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {
@@ -2608,7 +2608,7 @@ function deleteDoorTemplate(id) {
 
     let confirmMsg = `Delete door type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {
@@ -2893,7 +2893,7 @@ function deleteMysteryBlockTemplate(id) {
 
     let confirmMsg = `Delete mystery block type "${template?.name}"?`;
     if (instanceCount > 0) {
-        confirmMsg += `\n\n⚠️ This will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
+        confirmMsg += `\n\nThis will also remove ${instanceCount} placed instance${instanceCount > 1 ? 's' : ''} from your game (across all levels).`;
     }
 
     if (!confirm(confirmMsg)) {

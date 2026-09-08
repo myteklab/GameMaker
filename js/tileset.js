@@ -538,7 +538,7 @@ function updateBrushIndicator() {
     if (!el) return;
     if (tileBrush) {
         el.style.display = '';
-        el.textContent = '🖌 ' + tileBrush.w + '×' + tileBrush.h + ' brush';
+        el.textContent = 'Brush ' + tileBrush.w + '×' + tileBrush.h + ' brush';
     } else {
         el.style.display = 'none';
     }

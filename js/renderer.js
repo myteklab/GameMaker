@@ -138,7 +138,7 @@ function drawDoorSpawnMarkers() {
         ctx.fill();
 
         // Label below: door name (+ source level if cross-level)
-        var label = '🚪 ' + m.name + (m.fromCurrentLevel ? '' : ' (from ' + m.fromLevelName + ')');
+        var label = 'Door: ' + m.name + (m.fromCurrentLevel ? '' : ' (from ' + m.fromLevelName + ')');
         var fontSize = Math.max(9, Math.min(14, zoom * 5));
         ctx.font = 'bold ' + fontSize + 'px sans-serif';
         ctx.textAlign = 'left';

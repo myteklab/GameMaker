@@ -63,7 +63,7 @@ function renderBackgroundLayers() {
                         style="width: 60px; font-size: 11px;"
                         onchange="updateBgLayerSpeed(${index}, this.value)">
                     <button class="visibility-btn" onclick="toggleBgLayerVisibility(${index})" title="${layer.visible ? 'Hide layer' : 'Show layer'}"
-                        style="opacity:${layer.visible ? '1' : '0.4'}; background: none; border: none; cursor: pointer; font-size: 14px;">${layer.visible ? '👁' : '👁‍🗨'}</button>
+                        style="opacity:${layer.visible ? '1' : '0.4'}; background: none; border: none; cursor: pointer; font-size: 14px;"><svg class="gm-icon"><use href="#icon-${layer.visible ? 'eye' : 'eye-off'}"/></svg></button>
                 </div>
             </div>
             <button onclick="removeBgLayer(${index})" title="Remove layer" style="background: rgba(231,76,60,0.3); border: none; color: var(--danger); width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 14px;">×</button>

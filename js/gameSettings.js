@@ -2705,8 +2705,8 @@ function renderCheatCodesList() {
                     </div>
                 </div>
                 <div style="display: flex; gap: 4px;">
-                    <button class="btn btn-small" onclick="editCheatCode('${cheat.id}')" title="Edit" style="padding: 4px 8px; font-size: 11px;">✏️</button>
-                    <button class="btn btn-small btn-danger" onclick="deleteCheatCode('${cheat.id}')" title="Delete" style="padding: 4px 8px; font-size: 11px;">🗑️</button>
+                    <button class="btn btn-small" onclick="editCheatCode('${cheat.id}')" title="Edit" style="padding: 4px 8px; font-size: 11px;"><svg class="gm-icon"><use href="#icon-pencil"/></svg></button>
+                    <button class="btn btn-small btn-danger" onclick="deleteCheatCode('${cheat.id}')" title="Delete" style="padding: 4px 8px; font-size: 11px;"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>
                 </div>
             </div>
         `;

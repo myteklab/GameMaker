@@ -51,7 +51,7 @@ function updateLearnPage() {
     document.getElementById('learn-prev').disabled = currentLearnPage === 1;
     const nextBtn = document.getElementById('learn-next');
     if (currentLearnPage === totalLearnPages) {
-        nextBtn.textContent = 'Done ✓';
+        nextBtn.textContent = 'Done';
     } else {
         nextBtn.textContent = 'Next →';
     }

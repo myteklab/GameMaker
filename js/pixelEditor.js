@@ -65,7 +65,7 @@ const pixelEditorMaxHistory = 50;
 
 const pixelEditorHelpContent = {
     overview: {
-        title: '🎨 Custom Tile Editor',
+        title: 'Custom Tile Editor',
         content: `
             <div class="pixel-help-section">
                 <h4>What is this?</h4>
@@ -93,26 +93,26 @@ const pixelEditorHelpContent = {
         `
     },
     tools: {
-        title: '🛠️ Drawing Tools',
+        title: 'Drawing Tools',
         content: `
             <div class="pixel-help-section">
                 <h4>Draw Tools</h4>
                 <ul>
-                    <li><span class="help-emoji">✏️</span><strong>Pencil</strong> <span class="help-shortcut">P</span> - Draw single pixels</li>
-                    <li><span class="help-emoji">🧹</span><strong>Eraser</strong> <span class="help-shortcut">E</span> - Erase to transparent</li>
-                    <li><span class="help-emoji">🪣</span><strong>Fill</strong> <span class="help-shortcut">F</span> - Fill connected areas with color</li>
-                    <li><span class="help-emoji">💧</span><strong>Eyedropper</strong> <span class="help-shortcut">I</span> - Pick a color from the canvas</li>
-                    <li><span class="help-emoji">✥</span><strong>Move</strong> <span class="help-shortcut">M</span> - Drag to reposition all pixels</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-pencil"/></svg></span><strong>Pencil</strong> <span class="help-shortcut">P</span> - Draw single pixels</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-eraser"/></svg></span><strong>Eraser</strong> <span class="help-shortcut">E</span> - Erase to transparent</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-bucket"/></svg></span><strong>Fill</strong> <span class="help-shortcut">F</span> - Fill connected areas with color</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-droplet"/></svg></span><strong>Eyedropper</strong> <span class="help-shortcut">I</span> - Pick a color from the canvas</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-move"/></svg></span><strong>Move</strong> <span class="help-shortcut">M</span> - Drag to reposition all pixels</li>
                 </ul>
             </div>
             <div class="pixel-help-section">
                 <h4>Shape Tools</h4>
                 <ul>
-                    <li><span class="help-emoji">📏</span><strong>Line</strong> <span class="help-shortcut">L</span> - Draw straight lines</li>
-                    <li><span class="help-emoji">⬜</span><strong>Rectangle</strong> <span class="help-shortcut">R</span> - Draw rectangle outlines</li>
-                    <li><span class="help-emoji">🟦</span><strong>Filled Rect</strong> <span class="help-shortcut">Shift+R</span> - Draw filled rectangles</li>
-                    <li><span class="help-emoji">⭕</span><strong>Circle</strong> <span class="help-shortcut">C</span> - Draw circle outlines</li>
-                    <li><span class="help-emoji">🔵</span><strong>Filled Circle</strong> <span class="help-shortcut">Shift+C</span> - Draw filled circles</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-line-tool"/></svg></span><strong>Line</strong> <span class="help-shortcut">L</span> - Draw straight lines</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-square"/></svg></span><strong>Rectangle</strong> <span class="help-shortcut">R</span> - Draw rectangle outlines</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-square-fill"/></svg></span><strong>Filled Rect</strong> <span class="help-shortcut">Shift+R</span> - Draw filled rectangles</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-circle"/></svg></span><strong>Circle</strong> <span class="help-shortcut">C</span> - Draw circle outlines</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-circle-fill"/></svg></span><strong>Filled Circle</strong> <span class="help-shortcut">Shift+C</span> - Draw filled circles</li>
                 </ul>
             </div>
             <div class="pixel-help-section">
@@ -120,7 +120,7 @@ const pixelEditorHelpContent = {
                 <ul>
                     <li><span class="help-emoji">↔️</span><strong>Flip Horizontal</strong> <span class="help-shortcut">H</span> - Mirror left-to-right</li>
                     <li><span class="help-emoji">↕️</span><strong>Flip Vertical</strong> <span class="help-shortcut">V</span> - Mirror top-to-bottom</li>
-                    <li><span class="help-emoji">🪞</span><strong>Mirror Mode</strong> <span class="help-shortcut">W</span> - Toggle symmetrical drawing (draws on both sides)</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-mirror"/></svg></span><strong>Mirror Mode</strong> <span class="help-shortcut">W</span> - Toggle symmetrical drawing (draws on both sides)</li>
                 </ul>
             </div>
             <div class="pixel-help-section">
@@ -128,7 +128,7 @@ const pixelEditorHelpContent = {
                 <ul>
                     <li><span class="help-emoji">↩️</span><strong>Undo</strong> <span class="help-shortcut">Ctrl+Z</span> - Undo last action</li>
                     <li><span class="help-emoji">↪️</span><strong>Redo</strong> <span class="help-shortcut">Ctrl+Y</span> - Redo undone action</li>
-                    <li><span class="help-emoji">🗑️</span><strong>Clear</strong> - Erase entire canvas</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-trash"/></svg></span><strong>Clear</strong> - Erase entire canvas</li>
                 </ul>
             </div>
             <div class="pixel-help-section">
@@ -143,7 +143,7 @@ const pixelEditorHelpContent = {
         `
     },
     animation: {
-        title: '🎬 Animation Frames',
+        title: 'Animation Frames',
         content: `
             <div class="pixel-help-section">
                 <h4>What are Animation Frames?</h4>
@@ -153,11 +153,11 @@ const pixelEditorHelpContent = {
                 <h4>Frame Controls</h4>
                 <ul>
                     <li><span class="help-emoji">◀</span><span class="help-emoji">▶</span><strong>Navigate</strong> <span class="help-shortcut">←</span><span class="help-shortcut">→</span> - Move between frames</li>
-                    <li><span class="help-emoji">➕</span><strong>Add Frame</strong> - Create a new blank frame</li>
-                    <li><span class="help-emoji">📋</span><strong>Duplicate</strong> - Copy current frame</li>
-                    <li><span class="help-emoji">🗑️</span><strong>Delete</strong> - Remove current frame</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-plus"/></svg></span><strong>Add Frame</strong> - Create a new blank frame</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-clipboard"/></svg></span><strong>Duplicate</strong> - Copy current frame</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-trash"/></svg></span><strong>Delete</strong> - Remove current frame</li>
                     <li><span class="help-emoji">▶️</span><strong>Preview</strong> <span class="help-shortcut">Space</span> - Play/stop animation</li>
-                    <li><span class="help-emoji">🧅</span><strong>Onion Skin</strong> - Show previous frame faintly (helps align frames)</li>
+                    <li><span class="help-emoji"><svg class="gm-icon"><use href="#icon-onion"/></svg></span><strong>Onion Skin</strong> - Show previous frame faintly (helps align frames)</li>
                 </ul>
             </div>
             <div class="pixel-help-section">
@@ -181,7 +181,7 @@ const pixelEditorHelpContent = {
         `
     },
     effects: {
-        title: '🌊 Tile Motion Effects',
+        title: 'Tile Motion Effects',
         content: `
             <div class="pixel-help-section">
                 <h4>What are Motion Effects?</h4>
@@ -190,13 +190,13 @@ const pixelEditorHelpContent = {
             <div class="pixel-help-section">
                 <h4>Available Effects</h4>
                 <ul>
-                    <li><span class="help-emoji">🌿</span><strong>Sway</strong> - Gentle rotation, like wind blowing trees/grass</li>
-                    <li><span class="help-emoji">💫</span><strong>Pulse</strong> - Grow and shrink, like breathing or glowing</li>
-                    <li><span class="help-emoji">⬆️</span><strong>Bounce</strong> - Subtle up/down bounce, for coins or items</li>
-                    <li><span class="help-emoji">☁️</span><strong>Float</strong> - Slow vertical floating, for clouds or ghosts</li>
-                    <li><span class="help-emoji">✨</span><strong>Shimmer</strong> - Sparkly scale variation, for gems or magic</li>
-                    <li><span class="help-emoji">🌊</span><strong>Wave</strong> - Horizontal wave distortion, for water or flags</li>
-                    <li><span class="help-emoji">📳</span><strong>Shake</strong> - Quick vibration, for danger or explosions</li>
+                    <li><strong>Sway</strong> - Gentle rotation, like wind blowing trees/grass</li>
+                    <li><strong>Pulse</strong> - Grow and shrink, like breathing or glowing</li>
+                    <li><strong>Bounce</strong> - Subtle up/down bounce, for coins or items</li>
+                    <li><strong>Float</strong> - Slow vertical floating, for clouds or ghosts</li>
+                    <li><strong>Shimmer</strong> - Sparkly scale variation, for gems or magic</li>
+                    <li><strong>Wave</strong> - Horizontal wave distortion, for water or flags</li>
+                    <li><strong>Shake</strong> - Quick vibration, for danger or explosions</li>
                 </ul>
             </div>
             <div class="pixel-help-section">
@@ -218,7 +218,7 @@ const pixelEditorHelpContent = {
         `
     },
     hitbox: {
-        title: '📦 Tile Hitbox',
+        title: 'Tile Hitbox',
         content: `
             <div class="pixel-help-section">
                 <h4>What is a Hitbox?</h4>
@@ -237,10 +237,10 @@ const pixelEditorHelpContent = {
             <div class="pixel-help-section">
                 <h4>Common Use Cases</h4>
                 <ul>
-                    <li><span class="help-emoji">🌿</span><strong>Grass/flowers</strong> - Use "Bottom Half" so players walk through the top</li>
-                    <li><span class="help-emoji">🪵</span><strong>Platforms</strong> - Use "Top Half" for thin walkable surfaces</li>
-                    <li><span class="help-emoji">🌳</span><strong>Tree tops</strong> - Use non-solid or adjust hitbox for canopy tiles</li>
-                    <li><span class="help-emoji">🧱</span><strong>Decorative trim</strong> - Use appropriate half for overhanging decorations</li>
+                    <li><strong>Grass/flowers</strong> - Use "Bottom Half" so players walk through the top</li>
+                    <li><strong>Platforms</strong> - Use "Top Half" for thin walkable surfaces</li>
+                    <li><strong>Tree tops</strong> - Use non-solid or adjust hitbox for canopy tiles</li>
+                    <li><strong>Decorative trim</strong> - Use appropriate half for overhanging decorations</li>
                 </ul>
             </div>
             <div class="pixel-help-section">
@@ -475,7 +475,7 @@ function updateAnimationStatus() {
 
     if (status) {
         if (pixelEditorFrames.length > 1) {
-            status.innerHTML = `<span style="color: var(--success);">🎬 Animated Tile (${pixelEditorFrames.length} frames)</span>`;
+            status.innerHTML = `<span style="color: var(--success);">Animated Tile (${pixelEditorFrames.length} frames)</span>`;
             if (fpsControl) fpsControl.style.display = 'flex';
         } else {
             status.innerHTML = `<span style="color: var(--text-3);">Static Tile (1 frame)</span>`;

@@ -1624,7 +1624,9 @@
             margin-top: 10px;
         }
         #help-modal .help-tip::before {
-            content: '💡 ';
+            content: 'Tip: ';
+            font-weight: 600;
+            color: var(--success);
         }
         #help-modal .help-tip p {
             color: var(--success);

@@ -5,13 +5,13 @@
 
 const helpContent = {
     about: {
-        title: '🎮 Welcome to GameBuilder!',
+        title: 'Welcome to GameBuilder!',
         content: `
             <div style="background: linear-gradient(135deg, rgba(79, 140, 255, 0.2), rgba(79, 140, 255, 0.2)); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                 <p style="margin: 0; font-size: 14px; color: #fff; line-height: 1.5;"><strong>GameBuilder</strong> is a platformer game builder that teaches you the fundamentals of game design - no coding required! Build levels, design characters, and learn what makes games <em>feel</em> fun to play.</p>
             </div>
 
-            <h4>🎯 What You'll Learn</h4>
+            <h4>What You'll Learn</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
                     <strong style="color: var(--accent);">Level Design</strong>
@@ -31,7 +31,7 @@ const helpContent = {
                 </div>
             </div>
 
-            <h4>🚀 Quick Start Guide</h4>
+            <h4>Quick Start Guide</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <div style="display: flex; align-items: flex-start; margin-bottom: 10px;">
                     <span style="background: var(--accent); color: white; border-radius: 50%; min-width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; margin-right: 10px;">1</span>
@@ -70,7 +70,7 @@ const helpContent = {
                 </div>
             </div>
 
-            <h4>💡 Game Design Principles</h4>
+            <h4>Game Design Principles</h4>
             <p style="font-size: 12px; color: var(--text-2); margin-bottom: 10px;">As you build, you'll naturally discover these professional game design concepts:</p>
             <ul style="font-size: 12px; color: var(--text-2); margin-left: 20px;">
                 <li><strong style="color: #fff;">Risk vs Reward</strong> - Place valuable items in dangerous spots</li>
@@ -80,7 +80,7 @@ const helpContent = {
                 <li><strong style="color: #fff;">The 30-Second Rule</strong> - If the core loop isn't fun in 30 seconds, it won't be fun in 30 minutes</li>
             </ul>
 
-            <h4 style="margin-top: 15px;">🎓 Learning Path</h4>
+            <h4 style="margin-top: 15px;">Learning Path</h4>
             <div style="background: rgba(52, 211, 153, 0.15); border-left: 3px solid var(--success); padding: 10px 12px; border-radius: 0 6px 6px 0;">
                 <p style="font-size: 11px; color: var(--text-2); margin: 0 0 8px 0;"><strong style="color: var(--success);">Recommended progression:</strong></p>
                 <ol style="font-size: 11px; color: var(--text-2); margin: 0 0 0 16px; padding: 0;">
@@ -121,7 +121,7 @@ const helpContent = {
                 <li>Choose the correct <strong>tile size</strong> (usually 16x16 or 32x32 pixels)</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p>Good tilesets have <strong>visual consistency</strong> - all tiles should look like they belong in the same world. Professional games often use a limited color palette to achieve this cohesive look.</p>
 
             <div class="help-tip"><p>Tilesets work best when all tiles are the same size and arranged in a grid pattern. Free tilesets are available at itch.io and OpenGameArt.org!</p></div>
@@ -148,20 +148,20 @@ const helpContent = {
                 <li><strong>Non-solid tiles</strong> - Decorative only (background details, clouds, grass tufts)</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Readable levels</strong> are crucial! Players should instantly recognize what they can stand on vs. what's decoration. Use distinct visual styles for solid and non-solid tiles.</p>
 
             <div class="help-tip"><p>Ground and walls should be Solid. Decorations and backgrounds should be non-solid so the player can walk through them.</p></div>
         `
     },
     backgrounds: {
-        title: '🖼️ Background Layers & Parallax',
+        title: 'Background Layers & Parallax',
         content: `
             <div style="background: linear-gradient(135deg, rgba(79, 140, 255, 0.15), rgba(118,75,162,0.15)); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
-                <p style="margin: 0; font-size: 13px; color: var(--text);"><strong>✨ Parallax</strong> creates the illusion of depth! Distant layers move slowly, nearby layers move fast - just like looking out a car window.</p>
+                <p style="margin: 0; font-size: 13px; color: var(--text);"><strong>Parallax</strong> creates the illusion of depth! Distant layers move slowly, nearby layers move fast - just like looking out a car window.</p>
             </div>
 
-            <h4>📝 Quick Start (4 Steps)</h4>
+            <h4>Quick Start (4 Steps)</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px; margin-bottom: 15px;">
                 <div style="display: flex; align-items: center; margin-bottom: 8px;">
                     <span style="background: var(--accent); color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; margin-right: 8px;">1</span>
@@ -181,28 +181,28 @@ const helpContent = {
                 </div>
             </div>
 
-            <h4>🎚️ Speed Guide</h4>
+            <h4>Speed Guide</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px; margin-bottom: 15px; font-size: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <span style="color: #88f;">🏔️ Far mountains/sky</span>
+                    <span style="color: #88f;">Far mountains/sky</span>
                     <code style="background: rgba(79, 140, 255, 0.3); padding: 2px 8px; border-radius: 4px;">0.1 - 0.2</code>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <span style="color: #8f8;">🌲 Trees/hills</span>
+                    <span style="color: #8f8;">Trees/hills</span>
                     <code style="background: rgba(79, 140, 255, 0.3); padding: 2px 8px; border-radius: 4px;">0.3 - 0.5</code>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0;">
-                    <span style="color: #f88;">🌿 Close bushes/fog</span>
+                    <span style="color: #f88;">Close bushes/fog</span>
                     <code style="background: rgba(79, 140, 255, 0.3); padding: 2px 8px; border-radius: 4px;">0.6 - 0.8</code>
                 </div>
             </div>
 
-            <h4>📚 Layer Order</h4>
+            <h4>Layer Order</h4>
             <div style="background: linear-gradient(180deg, #1a1a3e 0%, #2a1a3e 50%, #3a2a3e 100%); border-radius: 6px; padding: 12px; margin-bottom: 15px; text-align: center;">
                 <div style="color: #88f; font-size: 11px; margin-bottom: 4px;">━━━ Layer 1: Sky (speed 0.1) ━━━</div>
                 <div style="color: #8f8; font-size: 11px; margin-bottom: 4px;">━━━ Layer 2: Mountains (speed 0.3) ━━━</div>
                 <div style="color: #f88; font-size: 11px; margin-bottom: 4px;">━━━ Layer 3: Trees (speed 0.5) ━━━</div>
-                <div style="color: #fff; font-size: 11px; border-top: 2px dashed var(--accent); padding-top: 6px; margin-top: 6px;">🎮 YOUR GAME TILES</div>
+                <div style="color: #fff; font-size: 11px; border-top: 2px dashed var(--accent); padding-top: 6px; margin-top: 6px;">YOUR GAME TILES</div>
             </div>
             <p style="font-size: 11px; color: #999; text-align: center; margin-bottom: 15px;">First layer = furthest back. Add layers front to back!</p>
 
@@ -232,7 +232,7 @@ const helpContent = {
                 <li><strong>Large level:</strong> 300×30 tiles (epic adventure)</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Pacing is everything!</strong> Shorter levels with frequent checkpoints feel more fair to players. Long levels without breaks can be frustrating. Consider: how far should a player lose progress if they die?</p>
 
             <div class="help-tip"><p>Start small! A well-designed 50-tile level is better than an empty 300-tile level. You can always expand later.</p></div>
@@ -268,7 +268,7 @@ const helpContent = {
                 <li><strong>Sprite</strong> - Custom character image (optional)</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>"Game feel"</strong> (also called "juice") is what makes games satisfying. The relationship between gravity and jump power is critical:</p>
             <ul>
                 <li><strong>Mario-style:</strong> Gravity ~0.5, Jump ~12 (floaty, controllable)</li>
@@ -304,7 +304,7 @@ const helpContent = {
                 <li>Animation <strong>pauses</strong> when standing still</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Character silhouette</strong> is important! Players should instantly recognize their character against any background. Bright colors and distinct shapes help. Consider adding an outline if your character blends in.</p>
 
             <div class="help-tip"><p>Start with a simple static image (1 frame). Once that works, try adding a walk animation. Free sprites at itch.io!</p></div>
@@ -312,13 +312,13 @@ const helpContent = {
     },
 
     playerAppearance: {
-        title: '🎨 Player Appearance',
+        title: 'Player Appearance',
         content: `
             <div style="background: linear-gradient(135deg, rgba(79, 140, 255, 0.2), rgba(155,89,182,0.2)); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                 <p style="margin: 0; font-size: 13px; color: #fff; line-height: 1.5;">Customize how your player looks and animates. Visual polish makes your game feel professional!</p>
             </div>
 
-            <h4>📐 Size & Hitbox</h4>
+            <h4>Size & Hitbox</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <p style="font-size: 12px; color: var(--text-2); margin-bottom: 10px;">The player has two sizes:</p>
                 <div style="font-size: 11px; color: var(--text-2);">
@@ -328,7 +328,7 @@ const helpContent = {
                 <p style="font-size: 11px; color: var(--text-3); margin-top: 10px;">Tip: Make the hitbox slightly smaller than the sprite for more forgiving gameplay!</p>
             </div>
 
-            <h4>🎨 Squash & Stretch</h4>
+            <h4>Squash & Stretch</h4>
             <p style="font-size: 12px; color: var(--text-2);">A classic animation principle from Disney that makes characters feel alive! When enabled, the player:</p>
             <ul style="font-size: 12px; color: var(--text-2); margin-left: 16px; margin-bottom: 10px;">
                 <li><strong style="color: #fff;">Stretches vertically</strong> when jumping (elongated, reaching up)</li>
@@ -337,7 +337,7 @@ const helpContent = {
             </ul>
             <p style="font-size: 11px; color: var(--text-2); margin-bottom: 10px;">This makes characters feel bouncy and dynamic, not like rigid robots!</p>
 
-            <h4>🎚️ Intensity Settings</h4>
+            <h4>Intensity Settings</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <div style="font-size: 11px; color: var(--text-2); line-height: 1.6;">
                     <div style="margin-bottom: 6px;"><strong style="color: var(--accent);">Subtle (0.3-0.5x)</strong> - Barely noticeable, realistic feel</div>
@@ -348,22 +348,22 @@ const helpContent = {
                 </div>
             </div>
 
-            <h4>🎮 When to Use Each Setting</h4>
+            <h4>When to Use Each Setting</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--accent); font-size: 11px;">🏃 Realistic Platformer</strong>
+                    <strong style="color: var(--accent); font-size: 11px;">Realistic Platformer</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Subtle or Light - keeps focus on precision</p>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--success); font-size: 11px;">🎪 Cartoony Game</strong>
+                    <strong style="color: var(--success); font-size: 11px;">Cartoony Game</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Normal or Strong - bouncy, fun feel</p>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--accent); font-size: 11px;">🤪 Silly/Comedy</strong>
+                    <strong style="color: var(--accent); font-size: 11px;">Silly/Comedy</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Exaggerated - maximum squish!</p>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--danger); font-size: 11px;">🔲 Pixel Art</strong>
+                    <strong style="color: var(--danger); font-size: 11px;">Pixel Art</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Subtle or Off - can look odd with pixels</p>
                 </div>
             </div>
@@ -377,7 +377,7 @@ const helpContent = {
         content: `
             <h4>Where the Player Starts</h4>
             <p>The spawn point determines where your player appears when the game begins or after losing a life.</p>
-            <p>The player is always visible on the canvas - look for the <strong>🎮 PLAYER</strong> label!</p>
+            <p>The player is always visible on the canvas - look for the <strong>PLAYER</strong> label!</p>
 
             <h4>Auto vs Custom Spawn</h4>
             <ul>
@@ -387,13 +387,13 @@ const helpContent = {
 
             <h4>Moving the Player</h4>
             <ol>
-                <li>Select the <strong>🔄 Move</strong> tool from the toolbar</li>
+                <li>Select the <strong>Move</strong> tool from the toolbar</li>
                 <li>Click and drag the player to reposition them</li>
                 <li>Release to set the new spawn position</li>
             </ol>
             <p>Use <strong>Reset to Auto</strong> to return to automatic spawn detection.</p>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>First impressions matter!</strong> The spawn point is the first thing players see. Place it somewhere that:</p>
             <ul>
                 <li>Is visually safe and welcoming</li>
@@ -463,42 +463,42 @@ const helpContent = {
             <h4>Object Categories</h4>
             <p><strong>Enemies</strong> - Characters that challenge the player</p>
             <ul>
-                <li>👾 <strong>Patrol</strong> - Walks back and forth</li>
-                <li>🦘 <strong>Jumper</strong> - Hops up and down</li>
-                <li>🎯 <strong>Chaser</strong> - Follows the player</li>
-                <li>📍 <strong>Stationary</strong> - Stays in one place</li>
+                <li><strong>Patrol</strong> - Walks back and forth</li>
+                <li><strong>Jumper</strong> - Hops up and down</li>
+                <li><strong>Chaser</strong> - Follows the player</li>
+                <li><strong>Stationary</strong> - Stays in one place</li>
             </ul>
 
             <p><strong>Collectibles</strong> - Items players gather</p>
             <ul>
-                <li>🪙 <strong>Coins</strong> - Basic score items</li>
-                <li>💎 <strong>Gems</strong> - Bonus points</li>
-                <li>⭐ <strong>Stars</strong> - Special collectibles</li>
+                <li><strong>Coins</strong> - Basic score items</li>
+                <li><strong>Gems</strong> - Bonus points</li>
+                <li><strong>Stars</strong> - Special collectibles</li>
             </ul>
 
             <p><strong>Powerups</strong> - Beneficial effects</p>
             <ul>
-                <li>❤️ <strong>Health</strong> - Extra life or heal</li>
-                <li>⚡ <strong>Speed Boost</strong> - Move faster</li>
-                <li>🛡️ <strong>Shield</strong> - Temporary invincibility</li>
-                <li>🔫 <strong>Ammo</strong> - Projectile ammunition</li>
+                <li><strong>Health</strong> - Extra life or heal</li>
+                <li><strong>Speed Boost</strong> - Move faster</li>
+                <li><strong>Shield</strong> - Temporary invincibility</li>
+                <li><strong>Ammo</strong> - Projectile ammunition</li>
             </ul>
 
             <p><strong>Level Objects</strong></p>
             <ul>
-                <li>🚩 <strong>Goal</strong> - Level completion point</li>
-                <li>⚠️ <strong>Hazard</strong> - Instant damage zone</li>
-                <li>🔺 <strong>Spring</strong> - Bounces player upward</li>
-                <li>⛳ <strong>Checkpoint</strong> - Respawn point when player dies</li>
+                <li><strong>Goal</strong> - Level completion point</li>
+                <li><strong>Hazard</strong> - Instant damage zone</li>
+                <li><strong>Spring</strong> - Bounces player upward</li>
+                <li><strong>Checkpoint</strong> - Respawn point when player dies</li>
             </ul>
 
-            <p><strong>✖ Deselect</strong></p>
+            <p><strong>Deselect</strong></p>
             <p>Click Deselect to stop placing objects and return to tile editing mode. This prevents accidentally placing objects when you're done.</p>
 
             <h4>Object Templates</h4>
-            <p>Click the <strong>⚙️ gear icon</strong> to customize any object type with custom sprites, sounds, and behaviors!</p>
+            <p>Click the <strong>gear icon</strong> to customize any object type with custom sprites, sounds, and behaviors!</p>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Object placement is level design!</strong> Consider:</p>
             <ul>
                 <li>Introduce one new element at a time</li>
@@ -519,8 +519,8 @@ const helpContent = {
             <h4>Level Management</h4>
             <ul>
                 <li><strong>+ Add</strong> - Create a new empty level</li>
-                <li><strong>📋 Duplicate</strong> - Copy current level as a starting point</li>
-                <li><strong>⚙️ Manage</strong> - Reorder, rename, or delete levels</li>
+                <li><strong>Duplicate</strong> - Copy current level as a starting point</li>
+                <li><strong>Manage</strong> - Reorder, rename, or delete levels</li>
             </ul>
 
             <h4>Level Progression</h4>
@@ -535,7 +535,7 @@ const helpContent = {
                 <li>Player score (carries between levels)</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Difficulty curve</strong> is crucial! Great games teach through play:</p>
             <ul>
                 <li><strong>Level 1:</strong> Introduce basic movement, few hazards</li>
@@ -556,9 +556,9 @@ const helpContent = {
 
             <h4>Goal Types</h4>
             <ul>
-                <li><strong>🚩 Reach the Goal</strong> - Touch the goal flag to complete (classic platformer)</li>
-                <li><strong>⭐ Collect All</strong> - Gather every collectible before the goal activates</li>
-                <li><strong>🎯 Reach Score</strong> - Achieve a target score to unlock completion</li>
+                <li><strong>Reach the Goal</strong> - Touch the goal flag to complete (classic platformer)</li>
+                <li><strong>Collect All</strong> - Gather every collectible before the goal activates</li>
+                <li><strong>Reach Score</strong> - Achieve a target score to unlock completion</li>
                 <li><strong>⏱️ Survive Time</strong> - Stay alive for a set duration</li>
             </ul>
 
@@ -570,7 +570,7 @@ const helpContent = {
                 <li><strong>Survive Time</strong> - Boss fights, endurance challenges, defense levels</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Variety prevents monotony!</strong> Mixing goal types keeps players engaged:</p>
             <ul>
                 <li>Start with simple "reach the goal" levels</li>
@@ -600,14 +600,14 @@ const helpContent = {
                 </li>
             </ul>
 
-            <h4>⚠️ Death Conditions</h4>
+            <h4>Death Conditions</h4>
             <ul>
                 <li>Player dies if they fall off the <strong>left edge</strong> of the screen</li>
                 <li>Player is pushed forward if they lag behind</li>
                 <li>After dying, player respawns ahead of the camera</li>
             </ul>
 
-            <h4>🎮 Best Practices</h4>
+            <h4>Best Practices</h4>
             <ul>
                 <li><strong>Combine with Fly mode</strong> - Set Jump Mode to "Fly" for Flappy Bird style!</li>
                 <li><strong>Design for flow</strong> - Ensure platforms are reachable at scroll speed</li>
@@ -657,7 +657,7 @@ const helpContent = {
                 <li>Works with "Collect All" goal conditions</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Shooting changes everything!</strong> Consider:</p>
             <ul>
                 <li><strong>Cooldown mode</strong> - More action-focused, like Mega Man</li>
@@ -678,23 +678,23 @@ const helpContent = {
 
             <h4>Powerup Effects</h4>
             <ul>
-                <li><strong>❤️ Extra Life</strong> - Adds one life to the player's count</li>
-                <li><strong>💚 Heal</strong> - Restores health (if using health system)</li>
-                <li><strong>⚡ Speed Boost</strong> - Temporarily increases movement speed</li>
-                <li><strong>🦘 Jump Boost</strong> - Temporarily increases jump power</li>
-                <li><strong>🛡️ Invincibility</strong> - Temporary immunity to damage</li>
-                <li><strong>🔫 Ammo Pack</strong> - Refills projectile ammunition</li>
+                <li><strong>Extra Life</strong> - Adds one life to the player's count</li>
+                <li><strong>Heal</strong> - Restores health (if using health system)</li>
+                <li><strong>Speed Boost</strong> - Temporarily increases movement speed</li>
+                <li><strong>Jump Boost</strong> - Temporarily increases jump power</li>
+                <li><strong>Invincibility</strong> - Temporary immunity to damage</li>
+                <li><strong>Ammo Pack</strong> - Refills projectile ammunition</li>
             </ul>
 
             <h4>Creating Custom Powerups</h4>
             <ol>
                 <li>Select "Powerup" from object categories</li>
-                <li>Click the ⚙️ gear to open template editor</li>
+                <li>Click the gear to open template editor</li>
                 <li>Choose the effect type and customize appearance</li>
                 <li>Set duration for temporary effects</li>
             </ol>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Powerups should feel rewarding!</strong> Best practices:</p>
             <ul>
                 <li><strong>Placement:</strong> Put powerups in slightly risky locations to reward skilled play</li>
@@ -715,10 +715,10 @@ const helpContent = {
 
             <h4>Behavior Types</h4>
             <ul>
-                <li><strong>🚶 Patrol</strong> - Walks left and right between walls or edges</li>
-                <li><strong>🦘 Jumper</strong> - Hops up and down in place</li>
-                <li><strong>🎯 Chaser</strong> - Moves toward the player when in range</li>
-                <li><strong>📍 Stationary</strong> - Stays in one place (good for turrets or obstacles)</li>
+                <li><strong>Patrol</strong> - Walks left and right between walls or edges</li>
+                <li><strong>Jumper</strong> - Hops up and down in place</li>
+                <li><strong>Chaser</strong> - Moves toward the player when in range</li>
+                <li><strong>Stationary</strong> - Stays in one place (good for turrets or obstacles)</li>
             </ul>
 
             <h4>Enemy Properties</h4>
@@ -736,7 +736,7 @@ const helpContent = {
                 <li><strong>Projectiles</strong> - Shooting (if enabled)</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Enemy placement is puzzle design!</strong></p>
             <ul>
                 <li><strong>Patrol enemies</strong> - Great for timing challenges over gaps</li>
@@ -758,7 +758,7 @@ const helpContent = {
             <h4>Opening the Template Editor</h4>
             <ol>
                 <li>Find the object category in the left panel</li>
-                <li>Click the <strong>⚙️ gear icon</strong> next to any object</li>
+                <li>Click the <strong>gear icon</strong> next to any object</li>
                 <li>Customize in the template editor panel</li>
             </ol>
 
@@ -779,7 +779,7 @@ const helpContent = {
                 <li><strong>Powerups:</strong> Effect type, duration, amount</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Visual consistency matters!</strong></p>
             <ul>
                 <li>All enemies should share a visual style</li>
@@ -823,7 +823,7 @@ const helpContent = {
             <h4>Mobile Controls</h4>
             <p>Enable touch controls for mobile devices - adds on-screen buttons for movement, jump, and shooting.</p>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Difficulty balancing:</strong></p>
             <ul>
                 <li><strong>Easy:</strong> 5+ lives, frequent health pickups</li>
@@ -863,7 +863,7 @@ const helpContent = {
             </ul>
             <p>These let players customize their experience!</p>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Audio feedback is crucial!</strong></p>
             <ul>
                 <li><strong>Instant feedback:</strong> Play sounds immediately when actions happen</li>
@@ -898,7 +898,7 @@ const helpContent = {
                 <li>Semi-transparent to not block gameplay</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Mobile-friendly design:</strong></p>
             <ul>
                 <li><strong>Larger platforms:</strong> Touch controls are less precise than keyboards</li>
@@ -940,7 +940,7 @@ const helpContent = {
                 <li>Whether the tile is solid</li>
             </ul>
 
-            <h4>🎮 Game Design Tip</h4>
+            <h4>Game Design Tip</h4>
             <p><strong>Level data is portable!</strong> You can:</p>
             <ul>
                 <li>Export your level and use it in other game engines</li>
@@ -953,13 +953,13 @@ const helpContent = {
         `
     },
     gameFeel: {
-        title: '✨ Game Feel - The Secret to Fun Games',
+        title: 'Game Feel - The Secret to Fun Games',
         content: `
             <div style="background: linear-gradient(135deg, rgba(79, 140, 255, 0.2), rgba(155,89,182,0.2)); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <p style="margin: 0; font-size: 13px; color: #fff;"><strong>"Game Feel"</strong> (also called "juice") is what makes games <em>satisfying</em> to play. It's the difference between a game that feels fun and one that feels flat.</p>
             </div>
 
-            <h4>🎮 The Core Physics Settings</h4>
+            <h4>The Core Physics Settings</h4>
             <p>These work together to create the "feel" of your character:</p>
 
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
@@ -994,7 +994,7 @@ const helpContent = {
             </ul>
             <p style="font-size: 11px; color: var(--text-2);">Most players never notice coyote time - it just makes the game "feel right"!</p>
 
-            <h4>💥 Hit Pause (Freeze Frame)</h4>
+            <h4>Hit Pause (Freeze Frame)</h4>
             <p>A brief freeze when something impactful happens (taking damage, stomping enemies). This tiny pause makes hits feel <strong>powerful</strong>.</p>
             <ul style="font-size: 12px;">
                 <li><strong>50ms</strong> = Quick, snappy (action games)</li>
@@ -1002,14 +1002,14 @@ const helpContent = {
                 <li><strong>120ms+</strong> = Heavy, dramatic (fighting games)</li>
             </ul>
 
-            <h4>📳 Screen Shake & Vibration</h4>
+            <h4>Screen Shake & Vibration</h4>
             <p>Physical feedback makes events feel real:</p>
             <ul style="font-size: 12px;">
                 <li><strong>Screen Shake</strong> - Camera jolts on damage/stomps (visual impact)</li>
                 <li><strong>Vibration</strong> - Controller/phone rumbles (physical feedback, Android only)</li>
             </ul>
 
-            <h4>🛡️ Invincibility Time</h4>
+            <h4>Invincibility Time</h4>
             <p>How long you're immune after taking damage. The player flashes during this time.</p>
             <ul style="font-size: 12px;">
                 <li><strong>Short (1s)</strong> = Challenging, punishing</li>
@@ -1017,7 +1017,7 @@ const helpContent = {
                 <li><strong>Long (2s+)</strong> = Forgiving, casual</li>
             </ul>
 
-            <h4>🏆 Why These Settings Matter</h4>
+            <h4>Why These Settings Matter</h4>
             <p>Professional games spend <strong>months</strong> tuning these values! The difference between a game feeling "okay" and feeling "amazing" often comes down to these subtle settings.</p>
 
             <div style="background: rgba(52, 211, 153, 0.15); border-left: 3px solid var(--success); padding: 10px 12px; border-radius: 0 6px 6px 0; margin-top: 15px;">
@@ -1030,11 +1030,11 @@ const helpContent = {
     },
 
     multiplayer: {
-        title: '🌐 Online Multiplayer',
+        title: 'Online Multiplayer',
         content: `
             <div style="background: linear-gradient(135deg, rgba(243, 156, 18, 0.2), rgba(230, 126, 34, 0.2)); border: 1px solid var(--warn); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 18px;">🧪</span>
+                    <span style="font-size: 18px;"></span>
                     <div>
                         <strong style="color: var(--warn);">Experimental Feature</strong>
                         <p style="font-size: 11px; color: var(--text-2); margin: 2px 0 0 0;">Multiplayer is in beta. Some features may change.</p>
@@ -1042,10 +1042,10 @@ const helpContent = {
                 </div>
             </div>
 
-            <h4>🎮 What is Online Multiplayer?</h4>
+            <h4>What is Online Multiplayer?</h4>
             <p>Online multiplayer lets multiple players explore your Top-Down RPG world together in real-time! Players connect through our game server and can see each other move around, chat, and interact.</p>
 
-            <h4>🔧 How It Works</h4>
+            <h4>How It Works</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <div style="display: flex; align-items: flex-start; margin-bottom: 10px;">
                     <span style="background: var(--accent); color: white; border-radius: 50%; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; margin-right: 10px;">1</span>
@@ -1070,7 +1070,7 @@ const helpContent = {
                 </div>
             </div>
 
-            <h4>⚙️ Settings Explained</h4>
+            <h4>Settings Explained</h4>
             <ul style="font-size: 12px; color: var(--text-2); margin-left: 16px;">
                 <li><strong style="color: #fff;">Max Players</strong> - How many people can play at once (2-12)</li>
                 <li><strong style="color: #fff;">Display Name</strong> - Your name shown to other players</li>
@@ -1078,7 +1078,7 @@ const helpContent = {
                 <li><strong style="color: #fff;">Sync Item Collection</strong> - When enabled, collected items disappear for everyone (first come, first served!)</li>
             </ul>
 
-            <h4>💡 Design Tips for Multiplayer</h4>
+            <h4>Design Tips for Multiplayer</h4>
             <div style="background: rgba(52, 211, 153, 0.15); border-left: 3px solid var(--success); padding: 10px 12px; border-radius: 0 6px 6px 0;">
                 <ul style="font-size: 11px; color: var(--text-2); margin: 0 0 0 16px; padding: 0;">
                     <li>Design larger levels so players have room to explore</li>
@@ -1093,11 +1093,11 @@ const helpContent = {
     },
 
     pvp: {
-        title: '⚔️ PvP Battle Mode',
+        title: 'PvP Battle Mode',
         content: `
             <div style="background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.2)); border: 1px solid var(--danger); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 18px;">⚔️</span>
+                    <span style="font-size: 18px;"></span>
                     <div>
                         <strong style="color: var(--danger);">Player vs Player Combat</strong>
                         <p style="font-size: 11px; color: var(--text-2); margin: 2px 0 0 0;">Turn your co-op world into a competitive arena!</p>
@@ -1105,53 +1105,53 @@ const helpContent = {
                 </div>
             </div>
 
-            <h4>🎯 What is PvP Mode?</h4>
+            <h4>What is PvP Mode?</h4>
             <p>PvP (Player vs Player) Battle Mode allows players to shoot and damage each other using projectiles. Transform your peaceful multiplayer world into an action-packed battle arena!</p>
 
-            <h4>🔫 Requirements</h4>
+            <h4>Requirements</h4>
             <ul style="font-size: 12px; color: var(--text-2); margin-left: 16px;">
                 <li><strong style="color: #fff;">Multiplayer must be enabled</strong> - PvP is an extension of online play</li>
                 <li><strong style="color: #fff;">Projectiles must be enabled</strong> - Players need to be able to shoot (Player Properties → Projectiles)</li>
                 <li><strong style="color: #fff;">Top-Down RPG mode only</strong> - Same as regular multiplayer</li>
             </ul>
 
-            <h4>⚙️ PvP Settings</h4>
+            <h4>PvP Settings</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <div style="margin-bottom: 10px;">
-                    <strong style="color: var(--danger); font-size: 12px;">💔 Damage Per Hit</strong>
+                    <strong style="color: var(--danger); font-size: 12px;">Damage Per Hit</strong>
                     <p style="font-size: 11px; color: var(--text-2); margin: 2px 0 0 0;">How many hearts each shot removes (1-10). Higher = faster eliminations.</p>
                 </div>
                 <div style="margin-bottom: 10px;">
-                    <strong style="color: var(--danger); font-size: 12px;">🏆 Points for Elimination</strong>
+                    <strong style="color: var(--danger); font-size: 12px;">Points for Elimination</strong>
                     <p style="font-size: 11px; color: var(--text-2); margin: 2px 0 0 0;">Score awarded when you eliminate another player (0-500).</p>
                 </div>
                 <div>
-                    <strong style="color: var(--danger); font-size: 12px;">❤️ Starting Lives</strong>
+                    <strong style="color: var(--danger); font-size: 12px;">Starting Lives</strong>
                     <p style="font-size: 11px; color: var(--text-2); margin: 2px 0 0 0;">How many lives each player gets in PvP mode (1-10).</p>
                 </div>
             </div>
 
-            <h4>🎮 Game Mode Ideas</h4>
+            <h4>Game Mode Ideas</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--accent); font-size: 11px;">🏃 Free-for-All</strong>
+                    <strong style="color: var(--accent); font-size: 11px;">Free-for-All</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Everyone vs everyone. Last player standing wins!</p>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--success); font-size: 11px;">🎯 High Score</strong>
+                    <strong style="color: var(--success); font-size: 11px;">High Score</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Unlimited respawns. Most eliminations wins!</p>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--accent); font-size: 11px;">🏰 Arena</strong>
+                    <strong style="color: var(--accent); font-size: 11px;">Arena</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Design a map with cover and power-ups</p>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--warn); font-size: 11px;">🤝 Mixed Mode</strong>
+                    <strong style="color: var(--warn); font-size: 11px;">Mixed Mode</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Explore together AND battle - best of both!</p>
                 </div>
             </div>
 
-            <h4>💡 Arena Design Tips</h4>
+            <h4>Arena Design Tips</h4>
             <div style="background: rgba(52, 211, 153, 0.15); border-left: 3px solid var(--success); padding: 10px 12px; border-radius: 0 6px 6px 0;">
                 <ul style="font-size: 11px; color: var(--text-2); margin: 0 0 0 16px; padding: 0;">
                     <li>Add walls and obstacles for cover</li>
@@ -1167,42 +1167,42 @@ const helpContent = {
     },
 
     gameType: {
-        title: '🎮 Game Type',
+        title: 'Game Type',
         content: `
             <div style="background: linear-gradient(135deg, rgba(79, 140, 255, 0.2), rgba(79, 140, 255, 0.2)); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                 <p style="margin: 0; font-size: 13px; color: #fff; line-height: 1.5;">Choose between two fundamentally different game styles. This affects physics, controls, available objects, and how your game plays.</p>
             </div>
 
-            <h4>🏃 Platformer (Side-Scrolling)</h4>
+            <h4>Platformer (Side-Scrolling)</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <p style="font-size: 12px; color: var(--text-2); margin-bottom: 10px;">Classic side-view gameplay like Mario, Sonic, or Celeste. The camera follows the player from the side.</p>
                 <div style="font-size: 11px; color: var(--text-2);">
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">Gravity & Jumping</strong> - Players fall down and must jump to reach platforms</div>
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">Left/Right Movement</strong> - Arrow keys or A/D to move horizontally</div>
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">Enemy Stomping</strong> - Jump on enemies to defeat them</div>
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">Springs & Moving Platforms</strong> - Dynamic level elements</div>
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">Double Jump & Fly Modes</strong> - Alternative movement options</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">Gravity & Jumping</strong> - Players fall down and must jump to reach platforms</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">Left/Right Movement</strong> - Arrow keys or A/D to move horizontally</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">Enemy Stomping</strong> - Jump on enemies to defeat them</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">Springs & Moving Platforms</strong> - Dynamic level elements</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">Double Jump & Fly Modes</strong> - Alternative movement options</div>
                 </div>
             </div>
 
-            <h4>🗺️ Top-Down RPG (Bird's Eye View)</h4>
+            <h4>Top-Down RPG (Bird's Eye View)</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <p style="font-size: 12px; color: var(--text-2); margin-bottom: 10px;">Overhead perspective like Zelda, Pokémon, or Stardew Valley. The camera looks down from above.</p>
                 <div style="font-size: 11px; color: var(--text-2);">
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">8-Direction Movement</strong> - Move freely in any direction with WASD</div>
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">No Gravity</strong> - Walk anywhere that isn't blocked</div>
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">NPCs & Dialogue</strong> - Create characters that talk to the player</div>
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">Doors & Teleporters</strong> - Connect areas and create dungeons</div>
-                    <div style="margin-bottom: 6px;">✓ <strong style="color: #fff;">Online Multiplayer</strong> - Play with friends (experimental)</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">8-Direction Movement</strong> - Move freely in any direction with WASD</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">No Gravity</strong> - Walk anywhere that isn't blocked</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">NPCs & Dialogue</strong> - Create characters that talk to the player</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">Doors & Teleporters</strong> - Connect areas and create dungeons</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">Online Multiplayer</strong> - Play with friends (experimental)</div>
                 </div>
             </div>
 
-            <h4>⚠️ Switching Game Types</h4>
+            <h4>Switching Game Types</h4>
             <div style="background: rgba(243, 156, 18, 0.15); border-left: 3px solid var(--warn); padding: 10px 12px; border-radius: 0 6px 6px 0; margin-bottom: 15px;">
                 <p style="font-size: 11px; color: var(--text-2); margin: 0;">Switching game types may affect your levels. Some objects (like Moving Platforms) only work in Platformer mode, while others (like NPCs and Doors) only work in Top-Down mode. Objects incompatible with your new mode will be hidden but not deleted.</p>
             </div>
 
-            <h4>🔍 Display Scale</h4>
+            <h4>Display Scale</h4>
             <p style="font-size: 12px; color: var(--text-2);">The <strong>Tile Render Scale</strong> option lets you make your pixel art appear larger in-game. If you're using 16×16 tiles but want a chunkier retro look, set the scale to 2× or 4×.</p>
 
             <div class="help-tip"><p>Can't decide? Start with <strong>Platformer</strong> if you want action-focused gameplay, or <strong>Top-Down RPG</strong> if you want exploration and story.</p></div>
@@ -1210,13 +1210,13 @@ const helpContent = {
     },
 
     cheats: {
-        title: '🎮 Cheat Codes',
+        title: 'Cheat Codes',
         content: `
             <div style="background: linear-gradient(135deg, rgba(79, 140, 255, 0.2), rgba(155,89,182,0.2)); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                 <p style="margin: 0; font-size: 13px; color: #fff; line-height: 1.5;">Add secret codes that players can type during gameplay to unlock special effects. A classic gaming tradition that adds replayability and fun surprises!</p>
             </div>
 
-            <h4>🕹️ How Cheat Codes Work</h4>
+            <h4>How Cheat Codes Work</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <div style="font-size: 11px; color: var(--text-2); line-height: 1.6;">
                     <div style="margin-bottom: 8px;">1. <strong style="color: #fff;">Enable Cheats</strong> - Turn on the master toggle to allow cheat codes in your game</div>
@@ -1226,27 +1226,27 @@ const helpContent = {
                 </div>
             </div>
 
-            <h4>📝 Code Types</h4>
+            <h4>Code Types</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--accent); font-size: 11px;">🔤 Letter Codes</strong>
+                    <strong style="color: var(--accent); font-size: 11px;">Letter Codes</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Type letters like "IDDQD" or "POWER"</p>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">
-                    <strong style="color: var(--success); font-size: 11px;">🎮 Arrow Codes</strong>
+                    <strong style="color: var(--success); font-size: 11px;">Arrow Codes</strong>
                     <p style="font-size: 10px; color: var(--text-2); margin: 4px 0 0 0;">Use arrow keys like ↑↑↓↓←→←→BA</p>
                 </div>
             </div>
 
-            <h4>✨ Available Effects</h4>
+            <h4>Available Effects</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
-                    <div><span style="color: var(--accent);">❤️</span> <strong>Invincible</strong> - Can't take damage</div>
-                    <div><span style="color: var(--warn);">⚡</span> <strong>Speed Boost</strong> - Move faster</div>
-                    <div><span style="color: var(--accent);">🦘</span> <strong>Super Jump</strong> - Jump higher</div>
-                    <div><span style="color: var(--accent);">👻</span> <strong>No Clip</strong> - Walk through walls</div>
-                    <div><span style="color: var(--success);">🔫</span> <strong>Infinite Ammo</strong> - Unlimited shots</div>
-                    <div><span style="color: #1abc9c;">📏</span> <strong>Resize</strong> - Grow or shrink</div>
+                    <div><span style="color: var(--accent);"></span> <strong>Invincible</strong> - Can't take damage</div>
+                    <div><span style="color: var(--warn);"></span> <strong>Speed Boost</strong> - Move faster</div>
+                    <div><span style="color: var(--accent);"></span> <strong>Super Jump</strong> - Jump higher</div>
+                    <div><span style="color: var(--accent);"></span> <strong>No Clip</strong> - Walk through walls</div>
+                    <div><span style="color: var(--success);"></span> <strong>Infinite Ammo</strong> - Unlimited shots</div>
+                    <div><span style="color: #1abc9c;"></span> <strong>Resize</strong> - Grow or shrink</div>
                 </div>
             </div>
 
@@ -1257,7 +1257,7 @@ const helpContent = {
                 <li><strong style="color: #fff;">Toggle</strong> - Type the code again to turn it off</li>
             </ul>
 
-            <h4>💡 Design Tips</h4>
+            <h4>Design Tips</h4>
             <div style="background: rgba(52, 211, 153, 0.15); border-left: 3px solid var(--success); padding: 10px 12px; border-radius: 0 6px 6px 0;">
                 <ul style="font-size: 11px; color: var(--text-2); margin: 0 0 0 16px; padding: 0; line-height: 1.6;">
                     <li>Keep codes secret - share them as rewards for finding secrets</li>

@@ -504,7 +504,7 @@ function updateLevelsList() {
             </div>
             <div class="level-actions">
                 <div class="level-actions-row">
-                    <button class="level-action-btn settings" onclick="event.stopPropagation(); showLevelSettingsModal(${index});" title="Level Settings">⚙️ Settings</button>
+                    <button class="level-action-btn settings" onclick="event.stopPropagation(); showLevelSettingsModal(${index});" title="Level Settings"><svg class="gm-icon"><use href="#icon-gear"/></svg> Settings</button>
                 </div>
                 <div class="level-actions-row">
                     <button class="level-action-btn" onclick="event.stopPropagation(); moveLevelUp(${index});" ${isFirst ? 'disabled' : ''} title="Move Up">▲</button>
@@ -786,7 +786,7 @@ function drawMenuButtonsPreview(ctx, lvl, width, height) {
 function getGoalConditionLabel(condition) {
     const labels = {
         'goal': '<svg class="gm-icon"><use href="#icon-flag"/></svg> Reach Goal',
-        'collect_all': '⭐ Collect All',
+        'collect_all': 'Collect All',
         'score': '<svg class="gm-icon"><use href="#icon-target"/></svg> Reach Score',
         'survive': '<svg class="gm-icon"><use href="#icon-timer"/></svg> Survive Time'
     };
