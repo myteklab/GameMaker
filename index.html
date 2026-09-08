@@ -7,9 +7,6 @@
     <link rel="stylesheet" href="css/gamemaker.css">
     <!-- QR Code Library for PWA Publishing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <!-- Asset Library Picker -->
-    <!-- Asset library picker removed — will be re-integrated when asset library is ported -->
 </head>
 <body>
 
@@ -1002,7 +999,7 @@
         </div>
 
         <div id="statusbar">
-            <span id="tool-hint">Left-click: Draw | Right-click: Erase | Scroll: Pan | Middle-drag: Pan</span>
+            <span id="tool-hint">Left-click: Draw | Right-click: Erase | Shift+drag: Select | P: Go to Player</span>
             <span id="level-size-display">Level: 50 x 15</span>
         </div>
     </div>
@@ -1030,35 +1027,27 @@
         <div id="game-settings-section">
             <div class="clickable-section" onclick="showGamePropertiesModal()">
                 <h2><svg class="gm-icon"><use href="#icon-gear"/></svg> Game Settings <span class="help-icon" onclick="event.stopPropagation(); showHelp('gameRules')">?</span></h2>
-                <p style="font-size: 10px; color: #555; margin-bottom: 8px;">Volume, rules & mobile controls</p>
-                <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888;">
-                    <span><svg class="gm-icon"><use href="#icon-heart"/></svg> Lives: <span id="summary-lives">3</span></span>
-                    <span><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Mobile: <span id="summary-mobile">On</span></span>
+                <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 9px; color: #888;">
+                    <span>Lives: <span id="summary-lives">3</span></span>
+                    <span>Mobile: <span id="summary-mobile">On</span></span>
+                    <span>Vol: <span id="summary-master-vol">100%</span></span>
+                    <span class="topdown-only" style="display:none;">Online: <span id="summary-online">Off</span></span>
                 </div>
-                <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888; margin-top: 6px;">
-                    <span>Master: <span id="summary-master-vol">100%</span></span>
-                    <span>Music: <span id="summary-music-vol">50%</span></span>
-                    <span>SFX: <span id="summary-sfx-vol">70%</span></span>
-                </div>
-                <div class="section-summary topdown-only" style="display: none; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888; margin-top: 6px;">
-                    <span>Online: <span id="summary-online">Off</span></span>
-                </div>
+                <span id="summary-music-vol" style="display:none;">50%</span>
+                <span id="summary-sfx-vol" style="display:none;">70%</span>
             </div>
         </div>
 
         <!-- Player Properties Section -->
         <div id="player-settings-section">
             <div class="clickable-section" onclick="showPlayerPropertiesModal()">
-                <h2><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Player Properties <span class="help-icon" onclick="event.stopPropagation(); showHelp('physics')">?</span></h2>
-                <p style="font-size: 10px; color: #555; margin-bottom: 8px;">Physics, appearance, sounds & projectiles</p>
-                <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888;">
-                    <span>Gravity: <span id="summary-gravity">0.5</span></span>
+                <h2><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Player <span class="help-icon" onclick="event.stopPropagation(); showHelp('physics')">?</span></h2>
+                <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 9px; color: #888;">
+                    <span>G: <span id="summary-gravity">0.5</span></span>
                     <span>Jump: <span id="summary-jump">10</span></span>
-                    <span>Speed: <span id="summary-speed">4</span></span>
-                </div>
-                <div class="section-summary" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #888; margin-top: 6px;">
-                    <span>Size: <span id="summary-player-size">32x32</span></span>
-                    <span>Projectiles: <span id="summary-projectiles">Off</span></span>
+                    <span>Spd: <span id="summary-speed">4</span></span>
+                    <span><span id="summary-player-size">32x32</span></span>
+                    <span>Proj: <span id="summary-projectiles">Off</span></span>
                 </div>
             </div>
         </div>
@@ -1198,12 +1187,12 @@
         <div id="platformer-options" style="display: none; margin: 10px 0;">
             <!-- Export Destination -->
             <div style="padding: 12px; background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), rgba(15, 52, 96, 0.1)); border: 1px solid rgba(233, 69, 96, 0.3); border-radius: 6px; margin-bottom: 10px;">
-                <div style="margin-bottom: 8px;"><strong style="color: #f99;">🎯 Export Destination</strong></div>
+                <div style="margin-bottom: 8px;"><strong style="color: #f99;"><svg class="gm-icon"><use href="#icon-target"/></svg> Export Destination</strong></div>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <label style="display: flex; align-items: center; cursor: pointer; gap: 8px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; border: 1px solid transparent;" class="export-option" onclick="selectExportOption('download')">
                         <input type="radio" name="export-destination" id="export-download" value="download" checked style="width: 16px; height: 16px;">
                         <div>
-                            <span style="color: #fff;">📥 Download HTML File</span>
+                            <span style="color: #fff;"><svg class="gm-icon"><use href="#icon-download"/></svg> Download HTML File</span>
                             <p style="font-size: 10px; color: #888; margin: 2px 0 0 0;">Save to your computer as a standalone HTML file</p>
                         </div>
                     </label>
@@ -1215,7 +1204,7 @@
                 <label style="display: flex; align-items: center; cursor: pointer; gap: 10px;">
                     <input type="checkbox" id="learning-mode-checkbox" onchange="generateExportCode('platformer')" style="width: 18px; height: 18px; cursor: pointer;">
                     <div>
-                        <strong style="color: #99f;">📚 Learning Mode</strong>
+                        <strong style="color: #99f;"><svg class="gm-icon"><use href="#icon-book"/></svg> Learning Mode</strong>
                         <p style="font-size: 11px; color: #888; margin: 4px 0 0 0;">Add extensive educational comments explaining how each part of the code works</p>
                     </div>
                 </label>
@@ -1224,7 +1213,7 @@
             <!-- Pixel Scale Option -->
             <div style="padding: 12px; background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), rgba(15, 52, 96, 0.1)); border: 1px solid rgba(233, 69, 96, 0.3); border-radius: 6px; margin-top: 10px;">
                 <div style="margin-bottom: 8px;">
-                    <strong style="color: #f99;">🔍 Pixel Scale (Mobile Visibility)</strong>
+                    <strong style="color: #f99;"><svg class="gm-icon"><use href="#icon-zoom-in"/></svg> Pixel Scale (Mobile Visibility)</strong>
                     <p style="font-size: 11px; color: #888; margin: 4px 0 0 0;">Scale up pixel art for better visibility on mobile devices</p>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -1262,18 +1251,18 @@
             <!-- Game Icon URL (for PWA publish) -->
             <div id="game-icon-url-section" style="display: none; margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
                 <label style="color: #aaa; font-size: 12px; display: block; margin-bottom: 6px;">
-                    🎨 Game Icon URL (optional):
+                    <svg class="gm-icon"><use href="#icon-palette"/></svg> Game Icon URL (optional):
                 </label>
                 <input type="text" id="game-icon-url" placeholder="https://example.com/my-game-icon.png" style="width: 100%; padding: 8px; background: #1a1a2e; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 14px;">
                 <p style="font-size: 10px; color: #888; margin: 6px 0 0 0;">
-                    💡 Provide a URL to a square image (PNG recommended, 512×512px ideal). This will be your app icon when installed on the home screen.
+                    <svg class="gm-icon"><use href="#icon-lightbulb"/></svg> Provide a URL to a square image (PNG recommended, 512×512px ideal). This will be your app icon when installed on the home screen.
                 </p>
             </div>
 
             <!-- Published App Info (shown when already published) -->
             <div id="published-app-info" style="display: none; margin-top: 10px; padding: 15px; background: linear-gradient(135deg, rgba(17, 153, 142, 0.15), rgba(56, 239, 125, 0.15)); border: 1px solid rgba(17, 153, 142, 0.4); border-radius: 6px;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                    <span style="font-size: 20px;">📱</span>
+                    <span style="font-size: 20px;"><svg class="gm-icon" style="width:20px;height:20px;"><use href="#icon-smartphone"/></svg></span>
                     <div style="flex: 1;">
                         <div style="color: #11998e; font-weight: bold; font-size: 13px;">Already Published</div>
                         <div id="published-app-name" style="color: #ccc; font-size: 11px;"></div>
@@ -1290,7 +1279,7 @@
                     </div>
                 </div>
                 <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <p style="color: #888; font-size: 10px; margin: 0;">💡 Select "Publish as Mobile App" and re-publish to update the live version</p>
+                    <p style="color: #888; font-size: 10px; margin: 0;"><svg class="gm-icon"><use href="#icon-lightbulb"/></svg> Select "Publish as Mobile App" and re-publish to update the live version</p>
                 </div>
             </div>
         </div>
@@ -1308,7 +1297,7 @@
 <!-- Publish Success Modal -->
 <div class="modal-overlay" id="publish-success-modal">
     <div class="modal" style="max-width: 500px;">
-        <h2 style="color: #11998e; margin-bottom: 20px;">🎉 Game Published!</h2>
+        <h2 style="color: #11998e; margin-bottom: 20px;"><svg class="gm-icon"><use href="#icon-party"/></svg> Game Published!</h2>
 
         <div style="text-align: center; margin-bottom: 20px;">
             <p style="color: #ccc; margin-bottom: 15px;">Your game is now live and installable!</p>
@@ -1332,7 +1321,7 @@
 
         <!-- Instructions -->
         <div style="background: rgba(17, 153, 142, 0.1); border: 1px solid rgba(17, 153, 142, 0.3); border-radius: 6px; padding: 12px; margin-bottom: 20px;">
-            <p style="color: #11998e; font-weight: bold; margin-bottom: 8px; font-size: 12px;">📱 How to Install on Your Phone:</p>
+            <p style="color: #11998e; font-weight: bold; margin-bottom: 8px; font-size: 12px;"><svg class="gm-icon"><use href="#icon-smartphone"/></svg> How to Install on Your Phone:</p>
             <ul style="color: #ccc; font-size: 11px; margin: 0; padding-left: 20px;">
                 <li><strong>iOS:</strong> Open URL → Tap Share → "Add to Home Screen"</li>
                 <li><strong>Android:</strong> Open URL → Tap menu → "Install app"</li>
@@ -1625,18 +1614,18 @@
             <div class="form-group">
                 <label>Effect</label>
                 <select id="cheat-editor-effect" onchange="updateCheatDurationVisibility()" style="width: 100%;">
-                    <option value="invincibility">🛡️ Invincibility</option>
-                    <option value="infiniteLives">❤️ Infinite Lives (99)</option>
-                    <option value="speedBoost">⚡ Speed Boost (2x)</option>
-                    <option value="jumpBoost">🦘 Super Jump (1.5x)</option>
-                    <option value="lowGravity">🌙 Low Gravity (Moon)</option>
-                    <option value="oneHitKill">💥 One-Hit Kill</option>
-                    <option value="maxAmmo">🔫 Max Ammo</option>
-                    <option value="levelSkip">⏭️ Skip Level</option>
-                    <option value="scoreBoost" selected>💰 Score +1000</option>
-                    <option value="tinyMode">🐜 Tiny Mode (0.5x)</option>
-                    <option value="giantMode">🦖 Giant Mode (1.5x)</option>
-                    <option value="turboFire">🔥 Turbo Fire (3x)</option>
+                    <option value="invincibility"><svg class="gm-icon"><use href="#icon-shield"/></svg> Invincibility</option>
+                    <option value="infiniteLives"><svg class="gm-icon"><use href="#icon-heart"/></svg> Infinite Lives (99)</option>
+                    <option value="speedBoost"><svg class="gm-icon"><use href="#icon-bolt"/></svg> Speed Boost (2x)</option>
+                    <option value="jumpBoost"><svg class="gm-icon"><use href="#icon-spring"/></svg> Super Jump (1.5x)</option>
+                    <option value="lowGravity"><svg class="gm-icon"><use href="#icon-moon"/></svg> Low Gravity (Moon)</option>
+                    <option value="oneHitKill"><svg class="gm-icon"><use href="#icon-explosion"/></svg> One-Hit Kill</option>
+                    <option value="maxAmmo"><svg class="gm-icon"><use href="#icon-gun"/></svg> Max Ammo</option>
+                    <option value="levelSkip"><svg class="gm-icon"><use href="#icon-skip"/></svg> Skip Level</option>
+                    <option value="scoreBoost" selected><svg class="gm-icon"><use href="#icon-money"/></svg> Score +1000</option>
+                    <option value="tinyMode"><svg class="gm-icon"><use href="#icon-shrink"/></svg> Tiny Mode (0.5x)</option>
+                    <option value="giantMode"><svg class="gm-icon"><use href="#icon-expand"/></svg> Giant Mode (1.5x)</option>
+                    <option value="turboFire"><svg class="gm-icon"><use href="#icon-fire"/></svg> Turbo Fire (3x)</option>
                 </select>
             </div>
 
@@ -1664,7 +1653,7 @@
 <div class="modal-overlay" id="playtest-modal">
     <div class="modal">
         <div class="playtest-header">
-            <h2>▶ Testing Your Game</h2>
+            <h2><svg class="gm-icon"><use href="#icon-play"/></svg> Testing Your Game</h2>
             <div class="game-controls-compact" id="game-controls-display">
                 <span class="key-badge">←→</span><span class="key-badge">AD</span> Move
                 <span class="control-sep">|</span>
@@ -1674,10 +1663,10 @@
                 <span class="key-badge">R</span> Restart
             </div>
             <div class="game-actions">
-                <button class="btn" onclick="restartGame()">🔄</button>
-                <button class="btn btn-export-game" onclick="exportFullGame()">📦 Export</button>
-                <button class="btn" onclick="copyOrOpenShareLink()" title="Get a real /p/ share link that works for anyone">🔗 Share Link</button>
-                <button class="btn" onclick="closePlayTestModal()">✕</button>
+                <button class="btn" onclick="restartGame()"><svg class="gm-icon"><use href="#icon-reload"/></svg></button>
+                <button class="btn btn-export-game" onclick="exportFullGame()"><svg class="gm-icon"><use href="#icon-package"/></svg> Export</button>
+                <button class="btn" onclick="copyOrOpenShareLink()" title="Get a real /p/ share link that works for anyone"><svg class="gm-icon"><use href="#icon-external"/></svg> Share Link</button>
+                <button class="btn" onclick="closePlayTestModal()"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
 
@@ -1750,7 +1739,7 @@
         <div class="editor-columns">
             <!-- Left Column: Appearance -->
             <div class="editor-column">
-                <div class="editor-section-header">📦 Appearance</div>
+                <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-package"/></svg> Appearance</div>
 
                 <div class="form-group">
                     <label>Name</label>
@@ -1800,15 +1789,15 @@
                 <div class="form-row" style="margin-top: 12px;">
                     <div class="form-group">
                         <label>Width (px)</label>
-                        <input type="number" id="enemy-template-width" value="32" min="8" max="128" onchange="updateEnemySpritePreview()">
+                        <input type="number" id="enemy-template-width" value="32" min="8" max="128" oninput="updateEnemyHitboxPreview()" onchange="updateEnemySpritePreview()">
                     </div>
                     <div class="form-group">
                         <label>Height (px)</label>
-                        <input type="number" id="enemy-template-height" value="32" min="8" max="128" onchange="updateEnemySpritePreview()">
+                        <input type="number" id="enemy-template-height" value="32" min="8" max="128" oninput="updateEnemyHitboxPreview()" onchange="updateEnemySpritePreview()">
                     </div>
                     <div class="form-group" style="flex: 0.6;">
                         <label>Sprite Y Offset</label>
-                        <input type="number" id="enemy-template-sprite-offset-y" value="0" min="-32" max="32" title="Shift sprite rendering without moving collision box">
+                        <input type="number" id="enemy-template-sprite-offset-y" value="0" min="-32" max="32" title="Shift sprite rendering without moving collision box" oninput="updateEnemyHitboxPreview()">
                     </div>
                     <div class="form-group" style="flex: 0.5;">
                         <label>Color</label>
@@ -1819,23 +1808,30 @@
                 <div class="form-row" style="margin-top: 8px;">
                     <div class="form-group">
                         <label>Hitbox W</label>
-                        <input type="number" id="enemy-template-collision-width" value="" min="4" max="128" placeholder="auto" title="Collision width (leave empty to match sprite width)">
+                        <input type="number" id="enemy-template-collision-width" value="" min="4" max="128" placeholder="auto" title="Collision width (leave empty to match sprite width)" oninput="updateEnemyHitboxPreview()">
                     </div>
                     <div class="form-group">
                         <label>Hitbox H</label>
-                        <input type="number" id="enemy-template-collision-height" value="" min="4" max="128" placeholder="auto" title="Collision height (leave empty to match sprite height)">
+                        <input type="number" id="enemy-template-collision-height" value="" min="4" max="128" placeholder="auto" title="Collision height (leave empty to match sprite height)" oninput="updateEnemyHitboxPreview()">
                     </div>
                     <div class="form-group" style="flex: 0.6;">
                         <label>Hitbox Y Offset</label>
-                        <input type="number" id="enemy-template-collision-offset-y" value="0" min="-32" max="32" title="Shift collision box up (negative) or down (positive)">
+                        <input type="number" id="enemy-template-collision-offset-y" value="0" min="-32" max="32" title="Shift collision box up (negative) or down (positive)" oninput="updateEnemyHitboxPreview()">
                     </div>
                 </div>
-                <small style="color: #666; font-size: 9px; display: block; margin-top: 4px;">Hitbox controls collision. Leave empty to match sprite size. Press H in play test to visualize.</small>
+                <small style="color: #666; font-size: 9px; display: block; margin-top: 4px;">Hitbox controls collision area. Leave empty to match sprite size. Press H in play test to visualize.</small>
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                    <canvas id="enemy-template-hitbox-preview" width="80" height="80" style="border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: rgba(0,0,0,0.3);"></canvas>
+                    <div style="font-size: 9px; color: #666;">
+                        <span style="color: #ff4444;">Red</span> = sprite<br>
+                        <span style="color: #00ff00;">Green</span> = hitbox
+                    </div>
+                </div>
             </div>
 
             <!-- Right Column: Behavior & Combat -->
             <div class="editor-column">
-                <div class="editor-section-header">🎮 Behavior</div>
+                <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Behavior</div>
 
                 <div class="form-group">
                     <label>Movement Pattern</label>
@@ -1875,7 +1871,7 @@
                     </div>
                 </div>
 
-                <div class="editor-section-header">⚔️ Combat</div>
+                <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-swords"/></svg> Combat</div>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -1896,7 +1892,7 @@
                 <div class="form-group platformer-only" style="margin-top: 12px; padding: 8px; background: rgba(102, 126, 234, 0.1); border-radius: 6px; border: 1px solid rgba(102, 126, 234, 0.2);">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 0;">
                         <input type="checkbox" id="enemy-template-stompable" style="width: 16px; height: 16px;" onchange="toggleStompOptions()">
-                        <span>🦶 Stompable (defeat by jumping on top)</span>
+                        <span><svg class="gm-icon"><use href="#icon-foot"/></svg> Stompable (defeat by jumping on top)</span>
                     </label>
                     <div id="stomp-options" class="platformer-only" style="display: none; margin-top: 8px;">
                         <div class="form-group" style="margin-bottom: 0;">
@@ -1910,7 +1906,7 @@
 
         <!-- Full Width: Audio & Effects -->
         <div class="editor-full-width" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <div class="editor-section-header" style="margin-top: 0;">🔊 Audio & Effects</div>
+            <div class="editor-section-header" style="margin-top: 0;"><svg class="gm-icon"><use href="#icon-volume"/></svg> Audio & Effects</div>
 
             <div class="form-row">
                 <div class="form-group" style="flex: 1;">
@@ -1918,22 +1914,22 @@
                     <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                         <input type="text" id="enemy-template-contact-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 100px;" onchange="updateSoundButtonStates('enemy-template-contact-sound')">
                         <button type="button" class="browse-library-btn" onclick="openAssetPicker('enemy-template-contact-sound', 'sounds')">Browse</button>
-                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('enemy-template-contact-sound', 'Enemy Contact Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('enemy-template-contact-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('enemy-template-contact-sound', 'Enemy Contact Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('enemy-template-contact-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                         <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('enemy-template-contact-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('enemy-template-contact-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('enemy-template-contact-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                     </div>
                 </div>
             </div>
 
             <div class="form-group" style="margin-top: 10px;">
-                <label>💥 Death Particle Effect</label>
+                <label><svg class="gm-icon"><use href="#icon-explosion"/></svg> Death Particle Effect</label>
                 <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                     <input type="text" id="enemy-template-death-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
                         title="Particle effect when this enemy type is defeated">
-                    <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('enemy-template-death-particle', 'Enemy Death Effect', 'explosion')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                    <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('enemy-template-death-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                    <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('enemy-template-death-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                    <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('enemy-template-death-particle', 'Enemy Death Effect', 'explosion')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                    <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('enemy-template-death-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                    <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('enemy-template-death-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                 </div>
             </div>
         </div>
@@ -2002,12 +1998,30 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Width (px)</label>
-                <input type="number" id="collectible-template-width" value="32" min="8" max="128">
+                <input type="number" id="collectible-template-width" oninput="updateObjectHitboxPreview('collectible-template')" value="32" min="8" max="128">
             </div>
             <div class="form-group">
                 <label>Height (px)</label>
-                <input type="number" id="collectible-template-height" value="32" min="8" max="128">
+                <input type="number" id="collectible-template-height" oninput="updateObjectHitboxPreview('collectible-template')" value="32" min="8" max="128">
             </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Hitbox W</label>
+                <input type="number" id="collectible-template-collision-width" value="" min="4" max="128" placeholder="auto" oninput="updateObjectHitboxPreview('collectible-template')">
+            </div>
+            <div class="form-group">
+                <label>Hitbox H</label>
+                <input type="number" id="collectible-template-collision-height" value="" min="4" max="128" placeholder="auto" oninput="updateObjectHitboxPreview('collectible-template')">
+            </div>
+            <div class="form-group" style="flex: 0.6;">
+                <label>Hitbox Y</label>
+                <input type="number" id="collectible-template-collision-offset-y" value="0" min="-32" max="32" oninput="updateObjectHitboxPreview('collectible-template')">
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <canvas id="collectible-template-hitbox-preview" width="80" height="80" style="border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: rgba(0,0,0,0.3); flex-shrink: 0;"></canvas>
+            <small style="color: #666; font-size: 9px;"><span style="color: #00ff00;">Green</span> = hitbox. Leave empty for auto. Press H in play test to verify.</small>
         </div>
         <div class="form-row">
             <div class="form-group">
@@ -2024,31 +2038,31 @@
             </div>
         </div>
         <div class="form-group">
-            <label>🔊 Collect Sound</label>
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Collect Sound</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="collectible-template-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('collectible-template-sound')">
                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('collectible-template-sound', 'sounds')">Browse</button>
-                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('collectible-template-sound', 'Collect Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('collectible-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('collectible-template-sound', 'Collect Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('collectible-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                 <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('collectible-template-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('collectible-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('collectible-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="form-group" style="margin-top: 12px; padding: 10px; background: rgba(46, 204, 113, 0.1); border-radius: 6px; border: 1px solid rgba(46, 204, 113, 0.3);">
             <label style="display: flex; align-items: center; cursor: pointer;">
                 <input type="checkbox" id="collectible-template-respawns" style="width: 16px; height: 16px; margin-right: 8px;">
-                <span>♻️ Respawns When Collected</span>
+                <span><svg class="gm-icon"><use href="#icon-recycle"/></svg> Respawns When Collected</span>
             </label>
             <small style="color: #888; font-size: 10px; margin-left: 24px; display: block;">When collected, reappears at a random location (infinite collectibles)</small>
         </div>
         <div class="form-group" style="margin-top: 15px;">
-            <label>✨ Collect Particle Effect</label>
+            <label><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Collect Particle Effect</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="collectible-template-collect-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
                     title="Particle effect when this item type is collected">
-                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('collectible-template-collect-particle', 'Collect Effect', 'collect')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('collectible-template-collect-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('collectible-template-collect-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('collectible-template-collect-particle', 'Collect Effect', 'collect')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('collectible-template-collect-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('collectible-template-collect-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="modal-buttons">
@@ -2141,24 +2155,24 @@
             </div>
         </div>
         <div class="form-group">
-            <label>🔊 Damage Sound</label>
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Damage Sound</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="hazard-template-damage-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('hazard-template-damage-sound')">
                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('hazard-template-damage-sound', 'sounds')">Browse</button>
-                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('hazard-template-damage-sound', 'Hazard Damage Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('hazard-template-damage-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('hazard-template-damage-sound', 'Hazard Damage Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('hazard-template-damage-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                 <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('hazard-template-damage-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('hazard-template-damage-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('hazard-template-damage-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="form-group" style="margin-top: 15px;">
-            <label>💥 Damage Particle Effect</label>
+            <label><svg class="gm-icon"><use href="#icon-explosion"/></svg> Damage Particle Effect</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="hazard-template-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
                     title="Particle effect when player hits this hazard">
-                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('hazard-template-particle', 'Hazard Damage Effect', 'damage')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('hazard-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('hazard-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('hazard-template-particle', 'Hazard Damage Effect', 'damage')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('hazard-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('hazard-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="modal-buttons">
@@ -2225,12 +2239,30 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Width (px)</label>
-                <input type="number" id="powerup-template-width" value="32" min="8" max="128">
+                <input type="number" id="powerup-template-width" oninput="updateObjectHitboxPreview('powerup-template')" value="32" min="8" max="128">
             </div>
             <div class="form-group">
                 <label>Height (px)</label>
-                <input type="number" id="powerup-template-height" value="32" min="8" max="128">
+                <input type="number" id="powerup-template-height" oninput="updateObjectHitboxPreview('powerup-template')" value="32" min="8" max="128">
             </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Hitbox W</label>
+                <input type="number" id="powerup-template-collision-width" value="" min="4" max="128" placeholder="auto" oninput="updateObjectHitboxPreview('powerup-template')">
+            </div>
+            <div class="form-group">
+                <label>Hitbox H</label>
+                <input type="number" id="powerup-template-collision-height" value="" min="4" max="128" placeholder="auto" oninput="updateObjectHitboxPreview('powerup-template')">
+            </div>
+            <div class="form-group" style="flex: 0.6;">
+                <label>Hitbox Y</label>
+                <input type="number" id="powerup-template-collision-offset-y" value="0" min="-32" max="32" oninput="updateObjectHitboxPreview('powerup-template')">
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <canvas id="powerup-template-hitbox-preview" width="80" height="80" style="border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: rgba(0,0,0,0.3); flex-shrink: 0;"></canvas>
+            <small style="color: #666; font-size: 9px;"><span style="color: #00ff00;">Green</span> = hitbox. Leave empty for auto. Press H in play test to verify.</small>
         </div>
         <div class="form-group">
             <label>Effect</label>
@@ -2263,24 +2295,24 @@
             </div>
         </div>
         <div class="form-group">
-            <label>🔊 Pickup Sound</label>
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Pickup Sound</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="powerup-template-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('powerup-template-sound')">
                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('powerup-template-sound', 'sounds')">Browse</button>
-                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('powerup-template-sound', 'Powerup Pickup Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('powerup-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('powerup-template-sound', 'Powerup Pickup Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('powerup-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                 <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('powerup-template-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('powerup-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('powerup-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="form-group" style="margin-top: 15px;">
-            <label>✨ Pickup Particle Effect</label>
+            <label><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Pickup Particle Effect</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="powerup-template-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
                     title="Particle effect when this powerup is collected">
-                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('powerup-template-particle', 'Powerup Pickup Effect', 'powerup')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('powerup-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('powerup-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('powerup-template-particle', 'Powerup Pickup Effect', 'powerup')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('powerup-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('powerup-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="modal-buttons">
@@ -2338,12 +2370,30 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Width (px)</label>
-                <input type="number" id="spring-template-width" value="32" min="8" max="128">
+                <input type="number" id="spring-template-width" oninput="updateObjectHitboxPreview('spring-template')" value="32" min="8" max="128">
             </div>
             <div class="form-group">
                 <label>Height (px)</label>
-                <input type="number" id="spring-template-height" value="16" min="8" max="128">
+                <input type="number" id="spring-template-height" oninput="updateObjectHitboxPreview('spring-template')" value="16" min="8" max="128">
             </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Hitbox W</label>
+                <input type="number" id="spring-template-collision-width" value="" min="4" max="128" placeholder="auto" oninput="updateObjectHitboxPreview('spring-template')">
+            </div>
+            <div class="form-group">
+                <label>Hitbox H</label>
+                <input type="number" id="spring-template-collision-height" value="" min="4" max="128" placeholder="auto" oninput="updateObjectHitboxPreview('spring-template')">
+            </div>
+            <div class="form-group" style="flex: 0.6;">
+                <label>Hitbox Y</label>
+                <input type="number" id="spring-template-collision-offset-y" value="0" min="-32" max="32" oninput="updateObjectHitboxPreview('spring-template')">
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <canvas id="spring-template-hitbox-preview" width="80" height="80" style="border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: rgba(0,0,0,0.3); flex-shrink: 0;"></canvas>
+            <small style="color: #666; font-size: 9px;"><span style="color: #00ff00;">Green</span> = hitbox. Leave empty for auto. Press H in play test to verify.</small>
         </div>
         <div class="form-group">
             <label>Bounce Power (multiplier of jump power)</label>
@@ -2361,24 +2411,24 @@
             </div>
         </div>
         <div class="form-group">
-            <label>🔊 Bounce Sound</label>
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Bounce Sound</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="spring-template-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('spring-template-sound')">
                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('spring-template-sound', 'sounds')">Browse</button>
-                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('spring-template-sound', 'Spring Bounce Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('spring-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('spring-template-sound', 'Spring Bounce Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('spring-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                 <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('spring-template-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('spring-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('spring-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="form-group" style="margin-top: 15px;">
-            <label>💨 Bounce Particle Effect</label>
+            <label><svg class="gm-icon"><use href="#icon-wind"/></svg> Bounce Particle Effect</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="spring-template-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
                     title="Particle effect when player bounces on this spring">
-                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('spring-template-particle', 'Spring Bounce Effect', 'bounce')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('spring-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('spring-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('spring-template-particle', 'Spring Bounce Effect', 'bounce')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('spring-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('spring-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="modal-buttons">
@@ -2391,7 +2441,7 @@
 <!-- Terrain Zone Templates Modal -->
 <div class="modal-overlay template-modal" id="terrain-zone-templates-modal" onclick="if(event.target === this) closeTerrainZoneTemplatesModal()">
     <div class="modal">
-        <h2>🌊 Terrain Zone Types</h2>
+        <h2><svg class="gm-icon"><use href="#icon-waves"/></svg> Terrain Zone Types</h2>
         <p style="color: #888; font-size: 12px; margin-bottom: 10px;">Define areas that affect movement speed, physics, and can deal damage</p>
         <div class="template-list" id="terrain-zone-templates-list">
             <!-- Populated by JavaScript -->
@@ -2430,7 +2480,7 @@
             </div>
         </div>
 
-        <h4 style="color: #4a90d9; margin: 15px 0 10px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px;">⚡ Movement Effects</h4>
+        <h4 style="color: #4a90d9; margin: 15px 0 10px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px;"><svg class="gm-icon"><use href="#icon-bolt"/></svg> Movement Effects</h4>
         <div class="form-group">
             <label>Speed Multiplier: <span id="terrain-zone-speed-display">0.5x</span></label>
             <input type="range" id="terrain-zone-template-speed" value="0.5" min="0.1" max="2" step="0.1"
@@ -2453,24 +2503,24 @@
             </div>
         </div>
 
-        <h4 style="color: #e74c3c; margin: 15px 0 10px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px;">💔 Damage</h4>
+        <h4 style="color: #e74c3c; margin: 15px 0 10px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px;"><svg class="gm-icon"><use href="#icon-broken-heart"/></svg> Damage</h4>
         <div class="form-group">
             <label>Damage Per Second (0 = no damage)</label>
             <input type="number" id="terrain-zone-template-damage" value="0" min="0" max="10" step="0.5">
             <span style="font-size:9px;color:#888;display:block;margin-top:2px;">Use for lava, poison swamp, etc.</span>
         </div>
 
-        <h4 style="color: #2ecc71; margin: 15px 0 10px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px;">🔊 Sounds</h4>
+        <h4 style="color: #2ecc71; margin: 15px 0 10px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px;"><svg class="gm-icon"><use href="#icon-volume"/></svg> Sounds</h4>
         <div class="form-row">
             <div class="form-group">
                 <label>Entry Sound</label>
                 <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                     <input type="text" id="terrain-zone-template-entry-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 100px;" onchange="updateSoundButtonStates('terrain-zone-template-entry-sound')">
                     <button type="button" class="browse-library-btn" onclick="openAssetPicker('terrain-zone-template-entry-sound', 'sounds')">Browse</button>
-                    <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('terrain-zone-template-entry-sound', 'Zone Entry Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                    <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('terrain-zone-template-entry-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                    <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('terrain-zone-template-entry-sound', 'Zone Entry Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                    <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('terrain-zone-template-entry-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                     <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('terrain-zone-template-entry-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                    <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('terrain-zone-template-entry-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                    <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('terrain-zone-template-entry-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                 </div>
             </div>
             <div class="form-group">
@@ -2478,15 +2528,15 @@
                 <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                     <input type="text" id="terrain-zone-template-loop-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 100px;" onchange="updateSoundButtonStates('terrain-zone-template-loop-sound')">
                     <button type="button" class="browse-library-btn" onclick="openAssetPicker('terrain-zone-template-loop-sound', 'sounds')">Browse</button>
-                    <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('terrain-zone-template-loop-sound', 'Zone Ambient Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                    <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('terrain-zone-template-loop-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                    <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('terrain-zone-template-loop-sound', 'Zone Ambient Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                    <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('terrain-zone-template-loop-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                     <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('terrain-zone-template-loop-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                    <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('terrain-zone-template-loop-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                    <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('terrain-zone-template-loop-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                 </div>
             </div>
         </div>
 
-        <h4 style="color: #f39c12; margin: 15px 0 10px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px;">⚙️ Options</h4>
+        <h4 style="color: #f39c12; margin: 15px 0 10px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px;"><svg class="gm-icon"><use href="#icon-gear"/></svg> Options</h4>
         <div class="form-row">
             <div class="form-group" style="flex: 1;">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -2668,14 +2718,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label>🔊 Movement Sound</label>
+                    <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Movement Sound</label>
                     <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                         <input type="text" id="moving-platform-template-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('moving-platform-template-sound')">
                         <button type="button" class="browse-library-btn" onclick="openAssetPicker('moving-platform-template-sound', 'sounds')">Browse</button>
-                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('moving-platform-template-sound', 'Platform Move Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('moving-platform-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('moving-platform-template-sound', 'Platform Move Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('moving-platform-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                         <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('moving-platform-template-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('moving-platform-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('moving-platform-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                     </div>
                 </div>
             </div>
@@ -2708,14 +2758,14 @@
                         </div>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label>🔊 Collapse Sound</label>
+                        <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Collapse Sound</label>
                         <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                             <input type="text" id="moving-platform-template-collapse-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('moving-platform-template-collapse-sound')">
                             <button type="button" class="browse-library-btn" onclick="openAssetPicker('moving-platform-template-collapse-sound', 'sounds')">Browse</button>
-                            <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('moving-platform-template-collapse-sound', 'Platform Collapse Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                            <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('moving-platform-template-collapse-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                            <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('moving-platform-template-collapse-sound', 'Platform Collapse Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                            <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('moving-platform-template-collapse-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                             <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('moving-platform-template-collapse-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                            <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('moving-platform-template-collapse-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                            <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('moving-platform-template-collapse-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                         </div>
                     </div>
                 </div>
@@ -2732,7 +2782,7 @@
 <!-- NPC Templates Modal (Top-Down RPG) -->
 <div class="modal-overlay template-modal topdown-only" id="npc-templates-modal" onclick="if(event.target === this) closeNPCTemplatesModal()">
     <div class="modal">
-        <h2>👤 NPC Types</h2>
+        <h2><svg class="gm-icon"><use href="#icon-person"/></svg> NPC Types</h2>
         <p style="color: #888; font-size: 12px; margin-bottom: 10px;">Define characters the player can talk to (Top-Down RPG only)</p>
         <div class="template-list" id="npc-templates-list">
             <!-- Populated by JavaScript -->
@@ -2845,7 +2895,7 @@
 <!-- Door Templates Modal (Top-Down RPG) -->
 <div class="modal-overlay template-modal topdown-only" id="door-templates-modal" onclick="if(event.target === this) closeDoorTemplatesModal()">
     <div class="modal">
-        <h2>🚪 Door Types</h2>
+        <h2><svg class="gm-icon"><use href="#icon-door"/></svg> Door Types</h2>
         <p style="color: #888; font-size: 12px; margin-bottom: 10px;">Define teleporters and level transitions (Top-Down RPG only)</p>
         <div class="template-list" id="door-templates-list">
             <!-- Populated by JavaScript -->
@@ -2941,24 +2991,24 @@
             </div>
         </div>
         <div class="form-group">
-            <label>🔊 Interact Sound</label>
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Interact Sound</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="door-template-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('door-template-sound')">
                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('door-template-sound', 'sounds')">Browse</button>
-                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('door-template-sound', 'Door Interact Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('door-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('door-template-sound', 'Door Interact Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('door-template-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                 <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('door-template-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('door-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('door-template-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="form-group">
-            <label>✨ Teleport Effect</label>
+            <label><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Teleport Effect</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="door-template-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
                     title="Particle effect when player uses this door">
-                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('door-template-particle', 'Door Teleport Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('door-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('door-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('door-template-particle', 'Door Teleport Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('door-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('door-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="modal-buttons">
@@ -2991,7 +3041,7 @@
         <div class="editor-columns">
             <!-- Left Column: Appearance -->
             <div class="editor-column">
-                <div class="editor-section-header">📦 Appearance</div>
+                <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-package"/></svg> Appearance</div>
 
                 <div class="form-group">
                     <label>Name</label>
@@ -3038,7 +3088,7 @@
 
                 <!-- Depleted Appearance Section -->
                 <div style="border: 1px solid rgba(241, 196, 15, 0.3); border-radius: 6px; padding: 10px; margin-top: 12px; background: rgba(241, 196, 15, 0.05);">
-                    <div style="color: #f1c40f; font-size: 11px; font-weight: bold; margin-bottom: 8px;">🔲 Depleted Appearance</div>
+                    <div style="color: #f1c40f; font-size: 11px; font-weight: bold; margin-bottom: 8px;"><svg class="gm-icon"><use href="#icon-grid"/></svg> Depleted Appearance</div>
 
                     <div class="form-group" style="margin-bottom: 6px;">
                         <label style="font-size: 10px; color: #888;">Sprite URL</label>
@@ -3064,7 +3114,7 @@
 
             <!-- Right Column: Behavior -->
             <div class="editor-column">
-                <div class="editor-section-header">🎁 What It Emits</div>
+                <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-gift"/></svg> What It Emits</div>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -3097,7 +3147,7 @@
                     </div>
                 </div>
 
-                <div class="editor-section-header">🎯 Physics</div>
+                <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-target"/></svg> Physics</div>
 
                 <div class="form-group">
                     <label>Emit Mode</label>
@@ -3135,7 +3185,7 @@
                     </label>
                 </div>
 
-                <div class="editor-section-header">✨ Collection</div>
+                <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Collection</div>
 
                 <div class="form-group">
                     <label>Collection Mode</label>
@@ -3155,7 +3205,7 @@
 
         <!-- Full Width: Sounds Section -->
         <div class="editor-full-width" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <div class="editor-section-header" style="margin-top: 0;">🔊 Sounds</div>
+            <div class="editor-section-header" style="margin-top: 0;"><svg class="gm-icon"><use href="#icon-volume"/></svg> Sounds</div>
 
             <div class="form-row">
                 <div class="form-group" style="flex: 1;">
@@ -3163,10 +3213,10 @@
                     <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                         <input type="text" id="mystery-block-template-hit-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 80px;" onchange="updateSoundButtonStates('mystery-block-template-hit-sound')">
                         <button type="button" class="browse-library-btn" onclick="openAssetPicker('mystery-block-template-hit-sound', 'sounds')">Browse</button>
-                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('mystery-block-template-hit-sound', 'Mystery Block Hit')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('mystery-block-template-hit-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('mystery-block-template-hit-sound', 'Mystery Block Hit')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('mystery-block-template-hit-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                         <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('mystery-block-template-hit-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('mystery-block-template-hit-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('mystery-block-template-hit-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                     </div>
                 </div>
                 <div class="form-group" style="flex: 1;">
@@ -3174,24 +3224,24 @@
                     <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                         <input type="text" id="mystery-block-template-empty-hit-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 80px;" onchange="updateSoundButtonStates('mystery-block-template-empty-hit-sound')">
                         <button type="button" class="browse-library-btn" onclick="openAssetPicker('mystery-block-template-empty-hit-sound', 'sounds')">Browse</button>
-                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('mystery-block-template-empty-hit-sound', 'Mystery Block Empty')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('mystery-block-template-empty-hit-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
+                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('mystery-block-template-empty-hit-sound', 'Mystery Block Empty')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('mystery-block-template-empty-hit-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                         <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('mystery-block-template-empty-hit-sound')" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); display: none;">▶</button>
-                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('mystery-block-template-empty-hit-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('mystery-block-template-empty-hit-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                     </div>
                 </div>
             </div>
 
             <!-- Particle Effects Section -->
-            <div class="editor-section-header" style="margin-top: 15px;">✨ Particle Effect</div>
+            <div class="editor-section-header" style="margin-top: 15px;"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Particle Effect</div>
             <div class="form-group">
                 <label>Hit Effect (when block is struck)</label>
                 <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                     <input type="text" id="mystery-block-template-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
                         title="Particle effect when this mystery block is hit">
-                    <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('mystery-block-template-particle', 'Mystery Block Hit Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                    <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('mystery-block-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                    <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('mystery-block-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                    <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('mystery-block-template-particle', 'Mystery Block Hit Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                    <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('mystery-block-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                    <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('mystery-block-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                 </div>
             </div>
         </div>
@@ -3251,23 +3301,23 @@
             </div>
         </div>
         <div class="form-group">
-            <label>🔊 Reach Sound</label>
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Reach Sound</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="goal-template-reach-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;">
                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('goal-template-reach-sound', 'sounds')">Browse</button>
-                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('goal-template-reach-sound', 'Goal Reached')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">🎵 Create</button>
-                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('goal-template-reach-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('goal-template-reach-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('goal-template-reach-sound', 'Goal Reached')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('goal-template-reach-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('goal-template-reach-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="form-group" style="margin-top: 15px;">
-            <label>🎉 Goal Reached Particle Effect</label>
+            <label><svg class="gm-icon"><use href="#icon-party"/></svg> Goal Reached Particle Effect</label>
             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                 <input type="text" id="goal-template-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
                     title="Celebration particle effect when goal is reached">
-                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('goal-template-particle', 'Goal Reached Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('goal-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('goal-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('goal-template-particle', 'Goal Reached Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('goal-template-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('goal-template-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
         </div>
         <div class="modal-buttons">
@@ -3279,7 +3329,7 @@
 
 <!-- Pixel Editor Modal (Custom Tiles) -->
 <div class="template-editor" id="pixel-editor-modal">
-    <div class="template-editor-content" style="width: 620px; max-height: 90vh; overflow-y: auto;">
+    <div class="template-editor-content" style="width: 760px; max-height: 90vh; overflow-y: auto;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
             <h3 id="pixel-editor-title" style="margin: 0;">Create Custom Tile</h3>
             <button class="pixel-help-btn" onclick="showPixelEditorHelp('overview')" title="Help">?</button>
@@ -3324,11 +3374,11 @@
             <div style="display: flex; flex-direction: column; gap: 2px;">
                 <span style="font-size: 8px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Draw</span>
                 <div style="display: flex; gap: 2px; align-items: center;">
-                    <button class="pixel-tool-btn active" id="tool-pencil" onclick="selectPixelTool('pencil')" title="Pencil (P)">✏️</button>
-                    <button class="pixel-tool-btn" id="tool-eraser" onclick="selectPixelTool('eraser')" title="Eraser (E)">🧹</button>
-                    <button class="pixel-tool-btn" id="tool-fill" onclick="selectPixelTool('fill')" title="Fill Bucket (F)">🪣</button>
-                    <button class="pixel-tool-btn" id="tool-eyedropper" onclick="selectPixelTool('eyedropper')" title="Eyedropper (I)">💧</button>
-                    <button class="pixel-tool-btn" id="tool-move" onclick="selectPixelTool('move')" title="Move (M) - Drag or Arrow Keys">✋</button>
+                    <button class="pixel-tool-btn active" id="tool-pencil" onclick="selectPixelTool('pencil')" title="Pencil (P)"><svg class="gm-icon"><use href="#icon-pencil"/></svg></button>
+                    <button class="pixel-tool-btn" id="tool-eraser" onclick="selectPixelTool('eraser')" title="Eraser (E)"><svg class="gm-icon"><use href="#icon-eraser"/></svg></button>
+                    <button class="pixel-tool-btn" id="tool-fill" onclick="selectPixelTool('fill')" title="Fill Bucket (F)"><svg class="gm-icon"><use href="#icon-bucket"/></svg></button>
+                    <button class="pixel-tool-btn" id="tool-eyedropper" onclick="selectPixelTool('eyedropper')" title="Eyedropper (I)"><svg class="gm-icon"><use href="#icon-droplet"/></svg></button>
+                    <button class="pixel-tool-btn" id="tool-move" onclick="selectPixelTool('move')" title="Move (M) - Drag or Arrow Keys"><svg class="gm-icon"><use href="#icon-hand"/></svg></button>
                 </div>
             </div>
 
@@ -3338,11 +3388,11 @@
             <div style="display: flex; flex-direction: column; gap: 2px;">
                 <span style="font-size: 8px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Shapes</span>
                 <div style="display: flex; gap: 2px; align-items: center;">
-                    <button class="pixel-tool-btn" id="tool-line" onclick="selectPixelTool('line')" title="Line (L)">📏</button>
-                    <button class="pixel-tool-btn" id="tool-rect" onclick="selectPixelTool('rect')" title="Rectangle (R)">⬜</button>
-                    <button class="pixel-tool-btn" id="tool-rect-fill" onclick="selectPixelTool('rect-fill')" title="Filled Rectangle (Shift+R)">🟦</button>
-                    <button class="pixel-tool-btn" id="tool-circle" onclick="selectPixelTool('circle')" title="Circle (C)">⭕</button>
-                    <button class="pixel-tool-btn" id="tool-circle-fill" onclick="selectPixelTool('circle-fill')" title="Filled Circle (Shift+C)">🔵</button>
+                    <button class="pixel-tool-btn" id="tool-line" onclick="selectPixelTool('line')" title="Line (L)"><svg class="gm-icon"><use href="#icon-line-tool"/></svg></button>
+                    <button class="pixel-tool-btn" id="tool-rect" onclick="selectPixelTool('rect')" title="Rectangle (R)"><svg class="gm-icon"><use href="#icon-square"/></svg></button>
+                    <button class="pixel-tool-btn" id="tool-rect-fill" onclick="selectPixelTool('rect-fill')" title="Filled Rectangle (Shift+R)"><svg class="gm-icon"><use href="#icon-square-fill"/></svg></button>
+                    <button class="pixel-tool-btn" id="tool-circle" onclick="selectPixelTool('circle')" title="Circle (C)"><svg class="gm-icon"><use href="#icon-circle"/></svg></button>
+                    <button class="pixel-tool-btn" id="tool-circle-fill" onclick="selectPixelTool('circle-fill')" title="Filled Circle (Shift+C)"><svg class="gm-icon"><use href="#icon-circle-fill"/></svg></button>
                 </div>
             </div>
 
@@ -3352,8 +3402,8 @@
             <div style="display: flex; flex-direction: column; gap: 2px;">
                 <span style="font-size: 8px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Transform</span>
                 <div style="display: flex; gap: 2px; align-items: center;">
-                    <button class="pixel-tool-btn" onclick="flipHorizontal()" title="Flip Horizontal (H)">↔️</button>
-                    <button class="pixel-tool-btn" onclick="flipVertical()" title="Flip Vertical (V)">↕️</button>
+                    <button class="pixel-tool-btn" onclick="flipHorizontal()" title="Flip Horizontal (H)"><svg class="gm-icon"><use href="#icon-flip-h"/></svg></button>
+                    <button class="pixel-tool-btn" onclick="flipVertical()" title="Flip Vertical (V)"><svg class="gm-icon"><use href="#icon-flip-v"/></svg></button>
                     <button class="pixel-tool-btn" id="tool-mirror-toggle" onclick="toggleMirrorMode()" title="Mirror Mode OFF (W) - Click to enable symmetric drawing">🪞</button>
                 </div>
             </div>
@@ -3364,9 +3414,9 @@
             <div style="display: flex; flex-direction: column; gap: 2px;">
                 <span style="font-size: 8px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Edit</span>
                 <div style="display: flex; gap: 2px; align-items: center;">
-                    <button class="pixel-tool-btn" onclick="pixelEditorUndo()" title="Undo (Ctrl+Z)">↩️</button>
-                    <button class="pixel-tool-btn" onclick="pixelEditorRedo()" title="Redo (Ctrl+Y)">↪️</button>
-                    <button class="pixel-tool-btn" onclick="clearPixelCanvas()" title="Clear All">🗑️</button>
+                    <button class="pixel-tool-btn" onclick="pixelEditorUndo()" title="Undo (Ctrl+Z)"><svg class="gm-icon"><use href="#icon-undo"/></svg></button>
+                    <button class="pixel-tool-btn" onclick="pixelEditorRedo()" title="Redo (Ctrl+Y)"><svg class="gm-icon"><use href="#icon-redo"/></svg></button>
+                    <button class="pixel-tool-btn" onclick="clearPixelCanvas()" title="Clear All"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>
                 </div>
             </div>
         </div>
@@ -3398,7 +3448,7 @@
                     <div style="display: flex; justify-content: center; align-items: center; height: 64px; background: repeating-conic-gradient(#222 0% 25%, #333 0% 50%) 50% / 8px 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; margin-top: 4px;">
                         <canvas id="pixel-editor-preview" width="32" height="32" style="image-rendering: pixelated;"></canvas>
                     </div>
-                    <button class="pixel-tool-btn small" onclick="openTilePreviewModal()" title="Preview Tiling Pattern" style="width: 100%; margin-top: 4px; font-size: 10px; padding: 4px; color: #ddd;">🔲 Tiling</button>
+                    <button class="pixel-tool-btn small" onclick="openTilePreviewModal()" title="Preview Tiling Pattern" style="width: 100%; margin-top: 4px; font-size: 10px; padding: 4px; color: #ddd;"><svg class="gm-icon"><use href="#icon-grid"/></svg> Tiling</button>
                 </div>
 
                 <!-- Used Colors -->
@@ -3456,18 +3506,18 @@
                     <button class="pixel-tool-btn small" onclick="nextFrame()" title="Next Frame (→)">▶</button>
                 </div>
                 <div class="frame-action-controls">
-                    <button class="pixel-tool-btn small" onclick="addFrame()" title="Add New Frame">➕</button>
-                    <button class="pixel-tool-btn small" onclick="duplicateFrame()" title="Duplicate Frame">📋</button>
-                    <button class="pixel-tool-btn small" onclick="deleteFrame()" title="Delete Frame">🗑️</button>
+                    <button class="pixel-tool-btn small" onclick="addFrame()" title="Add New Frame"><svg class="gm-icon"><use href="#icon-plus"/></svg></button>
+                    <button class="pixel-tool-btn small" onclick="duplicateFrame()" title="Duplicate Frame"><svg class="gm-icon"><use href="#icon-clipboard"/></svg></button>
+                    <button class="pixel-tool-btn small" onclick="deleteFrame()" title="Delete Frame"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>
                     <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.15); margin: 0 4px;"></div>
-                    <button class="pixel-tool-btn small" id="pixel-editor-preview-btn" onclick="toggleAnimationPreview()" title="Preview Animation (Space)">▶️</button>
-                    <button class="pixel-tool-btn small" id="pixel-editor-onion-btn" onclick="toggleOnionSkin()" title="Onion Skinning">🧅</button>
+                    <button class="pixel-tool-btn small" id="pixel-editor-preview-btn" onclick="toggleAnimationPreview()" title="Preview Animation (Space)"><svg class="gm-icon"><use href="#icon-play"/></svg></button>
+                    <button class="pixel-tool-btn small" id="pixel-editor-onion-btn" onclick="toggleOnionSkin()" title="Onion Skinning"><svg class="gm-icon"><use href="#icon-onion"/></svg></button>
                 </div>
             </div>
 
             <!-- Animation Help Text -->
             <div style="font-size: 9px; color: #555; text-align: center; margin-top: 6px;">
-                💡 Add multiple frames to create an animated tile. Use ← → to navigate frames.
+                <svg class="gm-icon"><use href="#icon-lightbulb"/></svg> Add multiple frames to create an animated tile. Use ← → to navigate frames.
             </div>
         </div>
 
@@ -3476,7 +3526,7 @@
             <div class="pixel-editor-effects-header">
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <button class="pixel-help-btn small" onclick="showPixelEditorHelp('effects')" title="Effects Help">?</button>
-                    <span style="font-size: 11px; color: #888;">🌊 Tile Motion Effect</span>
+                    <span style="font-size: 11px; color: #888;"><svg class="gm-icon"><use href="#icon-waves"/></svg> Tile Motion Effect</span>
                 </div>
                 <span id="pixel-editor-effect-status" style="font-size: 10px; color: #555;">(None)</span>
             </div>
@@ -3487,13 +3537,13 @@
                     <label>Effect:</label>
                     <select id="pixel-editor-effect-type" onchange="updateTileEffect()">
                         <option value="none">None (Static)</option>
-                        <option value="sway">🌿 Sway (Wind)</option>
-                        <option value="pulse">💫 Pulse (Glow)</option>
-                        <option value="bounce">⬆️ Bounce</option>
-                        <option value="float">☁️ Float</option>
-                        <option value="shimmer">✨ Shimmer</option>
-                        <option value="wave">🌊 Wave</option>
-                        <option value="shake">📳 Shake</option>
+                        <option value="sway"><svg class="gm-icon"><use href="#icon-leaf"/></svg> Sway (Wind)</option>
+                        <option value="pulse"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Pulse (Glow)</option>
+                        <option value="bounce"><svg class="gm-icon"><use href="#icon-spring"/></svg> Bounce</option>
+                        <option value="float"><svg class="gm-icon"><use href="#icon-cloud"/></svg> Float</option>
+                        <option value="shimmer"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Shimmer</option>
+                        <option value="wave"><svg class="gm-icon"><use href="#icon-waves"/></svg> Wave</option>
+                        <option value="shake"><svg class="gm-icon"><use href="#icon-explosion"/></svg> Shake</option>
                     </select>
                 </div>
 
@@ -3522,13 +3572,13 @@
                     <label>Preview:</label>
                     <div class="effect-preview-container">
                         <canvas id="pixel-editor-effect-preview" width="32" height="32"></canvas>
-                        <button class="pixel-tool-btn small" id="effect-preview-btn" onclick="toggleEffectPreview()" title="Preview Effect">▶️</button>
+                        <button class="pixel-tool-btn small" id="effect-preview-btn" onclick="toggleEffectPreview()" title="Preview Effect"><svg class="gm-icon"><use href="#icon-play"/></svg></button>
                     </div>
                 </div>
             </div>
 
             <div style="font-size: 9px; color: #555; text-align: center; margin-top: 6px;">
-                💡 Motion effects add procedural movement without extra frames. Great for grass, water, crystals!
+                <svg class="gm-icon"><use href="#icon-lightbulb"/></svg> Motion effects add procedural movement without extra frames. Great for grass, water, crystals!
             </div>
         </div>
 
@@ -3537,7 +3587,7 @@
             <div style="flex: 1; font-size: 9px; color: #666;">
                 <strong style="color: #888;">Keys:</strong> P E F I L R C M | Ctrl+Z/Y
             </div>
-            <button class="btn" onclick="downloadCustomTilePNG()" style="padding: 6px 12px;" title="Download as PNG">⬇️ Download</button>
+            <button class="btn" onclick="downloadCustomTilePNG()" style="padding: 6px 12px;" title="Download as PNG"><svg class="gm-icon"><use href="#icon-download"/></svg> Download</button>
             <button class="btn" id="pixel-editor-save-btn" style="padding: 6px 16px;">Save</button>
             <button class="btn" onclick="closePixelEditor()" style="padding: 6px 12px;">Cancel</button>
         </div>
@@ -3564,7 +3614,7 @@
 <div class="template-editor" id="tile-preview-modal" style="z-index: 10001;">
     <div class="template-editor-content" style="width: 380px; max-height: 90vh; overflow-y: auto;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <h3 style="margin: 0;">🔲 Tile Preview</h3>
+            <h3 style="margin: 0;"><svg class="gm-icon"><use href="#icon-grid"/></svg> Tile Preview</h3>
             <button class="pixel-tool-btn" onclick="closeTilePreviewModal()" title="Close">&times;</button>
         </div>
 
@@ -3610,38 +3660,38 @@
 <div class="modal-overlay template-modal" id="game-properties-modal" onclick="if(event.target === this) closeGamePropertiesModal()">
     <div class="modal template-editor-modal" style="max-width: 550px; max-height: 80vh; display: flex; flex-direction: column;">
         <div class="modal-header" style="flex-shrink: 0;">
-            <h2>⚙️ Game Settings</h2>
+            <h2><svg class="gm-icon"><use href="#icon-gear"/></svg> Game Settings</h2>
             <button class="modal-close-btn" onclick="closeGamePropertiesModal()">&times;</button>
         </div>
         <div class="game-settings-container">
             <!-- Left Navigation -->
             <div class="game-settings-nav">
                 <button class="game-settings-nav-item active" data-section="gametype" onclick="showGameSettingsSection('gametype')">
-                    <span class="nav-icon">🎮</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-gamepad"/></svg></span>
                     <span class="nav-label">Game Type</span>
                 </button>
                 <button class="game-settings-nav-item" data-section="gamefeel" onclick="showGameSettingsSection('gamefeel')">
-                    <span class="nav-icon">✨</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-sparkles"/></svg></span>
                     <span class="nav-label">Game Feel</span>
                 </button>
                 <button class="game-settings-nav-item" data-section="rules" onclick="showGameSettingsSection('rules')">
-                    <span class="nav-icon">📋</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-clipboard"/></svg></span>
                     <span class="nav-label">Rules</span>
                 </button>
                 <button class="game-settings-nav-item" data-section="volume" onclick="showGameSettingsSection('volume')">
-                    <span class="nav-icon">🔊</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-volume"/></svg></span>
                     <span class="nav-label">Volume</span>
                 </button>
                 <button class="game-settings-nav-item" data-section="particles" onclick="showGameSettingsSection('particles')">
-                    <span class="nav-icon">💫</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-magic"/></svg></span>
                     <span class="nav-label">Particles</span>
                 </button>
                 <button class="game-settings-nav-item topdown-only" data-section="multiplayer" onclick="showGameSettingsSection('multiplayer')" style="display: none;">
-                    <span class="nav-icon">🌐</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-globe"/></svg></span>
                     <span class="nav-label" style="white-space: nowrap;">Online <span style="font-size: 6px; background: #f39c12; color: #000; padding: 1px 3px; border-radius: 2px;">BETA</span></span>
                 </button>
                 <button class="game-settings-nav-item" data-section="cheats" onclick="showGameSettingsSection('cheats'); updateCheatsUI();">
-                    <span class="nav-icon">🎮</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-gamepad"/></svg></span>
                     <span class="nav-label">Cheats</span>
                 </button>
             </div>
@@ -3656,13 +3706,13 @@
                     <div style="display: flex; gap: 12px; margin-bottom: 15px;">
                         <button class="game-type-btn active" id="game-type-platformer" onclick="setGameType('platformer')"
                             style="flex: 1; padding: 15px 10px; background: linear-gradient(135deg, #e94560, #ff6b6b); border: 2px solid transparent; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: center; color: #fff;">
-                            <div style="font-size: 28px; margin-bottom: 6px;">🏃</div>
+                            <div style="font-size: 28px; margin-bottom: 6px;"><svg class="gm-icon" style="width:28px;height:28px;"><use href="#icon-runner"/></svg></div>
                             <div style="font-weight: bold; font-size: 12px;">Platformer</div>
                             <div style="font-size: 9px; opacity: 0.8; margin-top: 4px;">Side-scrolling</div>
                         </button>
                         <button class="game-type-btn" id="game-type-topdown" onclick="setGameType('topdown')"
                             style="flex: 1; padding: 15px 10px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: center; color: #fff;">
-                            <div style="font-size: 28px; margin-bottom: 6px;">🗺️</div>
+                            <div style="font-size: 28px; margin-bottom: 6px;"><svg class="gm-icon" style="width:28px;height:28px;"><use href="#icon-map"/></svg></div>
                             <div style="font-weight: bold; font-size: 12px;">Top-Down RPG</div>
                             <div style="font-size: 9px; opacity: 0.8; margin-top: 4px;">Bird's eye view</div>
                         </button>
@@ -3675,7 +3725,7 @@
                     <!-- In-Modal Game Type Switch Confirmation -->
                     <div id="game-type-confirm-panel" style="display: none; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(233, 69, 96, 0.25)); border: 2px solid #e94560; border-radius: 10px; animation: confirmPanelFadeIn 0.2s ease-out;">
                         <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px;">
-                            <span style="font-size: 20px;">⚠️</span>
+                            <span style="font-size: 20px;"><svg class="gm-icon"><use href="#icon-warning"/></svg></span>
                             <div>
                                 <div style="font-weight: bold; color: #ff6b6b; font-size: 12px; margin-bottom: 4px;">Switching Game Mode</div>
                                 <div id="game-type-confirm-target" style="font-size: 11px; color: #ccc;"></div>
@@ -3772,7 +3822,7 @@
                     <!-- Experimental Warning Banner -->
                     <div style="background: linear-gradient(135deg, rgba(243, 156, 18, 0.2), rgba(230, 126, 34, 0.2)); border: 2px solid #f39c12; border-radius: 10px; padding: 12px; margin-bottom: 15px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 20px;">🧪</span>
+                            <span style="font-size: 20px;"><svg class="gm-icon" style="width:20px;height:20px;"><use href="#icon-flask"/></svg></span>
                             <div>
                                 <div style="font-weight: bold; color: #f39c12; font-size: 12px;">Experimental Feature</div>
                                 <div style="font-size: 10px; color: #ccc; line-height: 1.4;">
@@ -3789,7 +3839,7 @@
                             <input type="checkbox" id="setting-multiplayer-enabled"
                                    onchange="toggleMultiplayer(this.checked)"
                                    style="width: 16px; height: 16px; margin-right: 8px;">
-                            <span style="font-weight: bold; font-size: 12px;">🌐 Enable Multiplayer</span>
+                            <span style="font-weight: bold; font-size: 12px;"><svg class="gm-icon"><use href="#icon-globe"/></svg> Enable Multiplayer</span>
                         </label>
                         <small style="color: #888; margin-top: 4px; display: block;">Allow other players to join your game online</small>
                     </div>
@@ -3826,7 +3876,7 @@
                                 <input type="checkbox" id="setting-multiplayer-show-chat" checked
                                        style="width: 14px; height: 14px; margin-right: 8px;"
                                        onchange="updateGameSetting('multiplayerShowChat', this.checked)">
-                                <span style="font-size: 11px;">💬 Show Chat</span>
+                                <span style="font-size: 11px;"><svg class="gm-icon"><use href="#icon-chat"/></svg> Show Chat</span>
                             </label>
                         </div>
 
@@ -3835,7 +3885,7 @@
                                 <input type="checkbox" id="setting-multiplayer-sync-items" checked
                                        style="width: 14px; height: 14px; margin-right: 8px;"
                                        onchange="updateGameSetting('multiplayerSyncItems', this.checked)">
-                                <span style="font-size: 11px;">🎁 Sync Item Collection</span>
+                                <span style="font-size: 11px;"><svg class="gm-icon"><use href="#icon-gift"/></svg> Sync Item Collection</span>
                             </label>
                             <small style="color: #666; font-size: 9px; margin-left: 22px; display: block;">First player to collect an item gets it</small>
                         </div>
@@ -3845,7 +3895,7 @@
                                 <input type="checkbox" id="setting-multiplayer-sync-enemies" checked
                                        style="width: 14px; height: 14px; margin-right: 8px;"
                                        onchange="updateGameSetting('multiplayerSyncEnemies', this.checked)">
-                                <span style="font-size: 11px;">👾 Sync Enemy Deaths</span>
+                                <span style="font-size: 11px;"><svg class="gm-icon"><use href="#icon-alien"/></svg> Sync Enemy Deaths</span>
                             </label>
                             <small style="color: #666; font-size: 9px; margin-left: 22px; display: block;">When one player kills an enemy, it dies for everyone</small>
                         </div>
@@ -3857,7 +3907,7 @@
                                     <input type="checkbox" id="setting-multiplayer-pvp-enabled"
                                            style="width: 14px; height: 14px; margin-right: 8px;"
                                            onchange="togglePvPSettings(this.checked)">
-                                    <span style="font-size: 11px;">⚔️ PvP Battle Mode</span>
+                                    <span style="font-size: 11px;"><svg class="gm-icon"><use href="#icon-swords"/></svg> PvP Battle Mode</span>
                                     <span style="background: #e74c3c; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 8px; margin-left: 6px;">NEW</span>
                                     <span class="help-icon" onclick="event.stopPropagation(); showHelp('pvp')" style="margin-left: 6px;">?</span>
                                 </label>
@@ -3866,7 +3916,7 @@
 
                             <!-- PvP Settings Panel (hidden by default) -->
                             <div id="pvp-settings-panel" style="display: none; margin-top: 12px; padding: 10px; background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3); border-radius: 6px;">
-                                <div style="color: #e74c3c; font-size: 10px; font-weight: bold; margin-bottom: 10px;">⚔️ PvP SETTINGS</div>
+                                <div style="color: #e74c3c; font-size: 10px; font-weight: bold; margin-bottom: 10px;"><svg class="gm-icon"><use href="#icon-swords"/></svg> PvP SETTINGS</div>
 
                                 <!-- Damage Per Hit -->
                                 <div class="form-group" style="margin-bottom: 10px;">
@@ -3911,8 +3961,8 @@
                                 </div>
 
                                 <div style="font-size: 9px; color: #888; margin-top: 10px; line-height: 1.4;">
-                                    💀 When a player loses all lives, they respawn with score reset.<br>
-                                    🏆 Leaderboard shows lives remaining next to scores.
+                                    <svg class="gm-icon"><use href="#icon-skull"/></svg> When a player loses all lives, they respawn with score reset.<br>
+                                    <svg class="gm-icon"><use href="#icon-trophy"/></svg> Leaderboard shows lives remaining next to scores.
                                 </div>
                             </div>
                         </div>
@@ -3947,7 +3997,7 @@
 
                 <!-- Cheats Section -->
                 <div class="game-settings-section" id="game-settings-section-cheats">
-                    <h3 style="color: #e94560; font-size: 14px; margin: 0 0 8px 0;">🎮 Cheat Codes <span class="help-icon" onclick="event.stopPropagation(); showHelp('cheats')">?</span></h3>
+                    <h3 style="color: #e94560; font-size: 14px; margin: 0 0 8px 0;"><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Cheat Codes <span class="help-icon" onclick="event.stopPropagation(); showHelp('cheats')">?</span></h3>
                     <p style="font-size: 10px; color: #888; margin-bottom: 15px;">Enable secret codes that players can type during gameplay for special effects. Great for adding replayability!</p>
 
                     <!-- Master Toggle -->
@@ -4000,27 +4050,27 @@
                     <!-- Platformer Presets -->
                     <div class="preset-grid platformer-only" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
                         <div class="preset-card" onclick="applyGameFeelPreset('balanced'); showPresetDetails('balanced');" style="background: linear-gradient(135deg, #3498db, #2980b9); padding: 10px 8px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center;">
-                            <div style="font-size: 18px;">⚖️</div>
+                            <div style="font-size: 18px;"><svg class="gm-icon"><use href="#icon-balance"/></svg></div>
                             <div style="font-weight: bold; font-size: 11px;">Balanced</div>
                         </div>
                         <div class="preset-card" onclick="applyGameFeelPreset('floaty'); showPresetDetails('floaty');" style="background: linear-gradient(135deg, #e91e63, #c2185b); padding: 10px 8px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center;">
-                            <div style="font-size: 18px;">☁️</div>
+                            <div style="font-size: 18px;"><svg class="gm-icon"><use href="#icon-cloud"/></svg></div>
                             <div style="font-weight: bold; font-size: 11px;">Floaty</div>
                         </div>
                         <div class="preset-card" onclick="applyGameFeelPreset('tight'); showPresetDetails('tight');" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); padding: 10px 8px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center;">
-                            <div style="font-size: 18px;">⚡</div>
+                            <div style="font-size: 18px;"><svg class="gm-icon"><use href="#icon-bolt"/></svg></div>
                             <div style="font-weight: bold; font-size: 11px;">Tight</div>
                         </div>
                         <div class="preset-card" onclick="applyGameFeelPreset('heavy'); showPresetDetails('heavy');" style="background: linear-gradient(135deg, #607d8b, #455a64); padding: 10px 8px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center;">
-                            <div style="font-size: 18px;">🏰</div>
+                            <div style="font-size: 18px;"><svg class="gm-icon"><use href="#icon-castle"/></svg></div>
                             <div style="font-weight: bold; font-size: 11px;">Heavy</div>
                         </div>
                         <div class="preset-card" onclick="applyGameFeelPreset('bouncy'); showPresetDetails('bouncy');" style="background: linear-gradient(135deg, #ff9800, #f57c00); padding: 10px 8px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center;">
-                            <div style="font-size: 18px;">🔵</div>
+                            <div style="font-size: 18px;"><svg class="gm-icon"><use href="#icon-circle-fill"/></svg></div>
                             <div style="font-weight: bold; font-size: 11px;">Bouncy</div>
                         </div>
                         <div class="preset-card" onclick="applyGameFeelPreset('flappy'); showPresetDetails('flappy');" style="background: linear-gradient(135deg, #4caf50, #388e3c); padding: 10px 8px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center;">
-                            <div style="font-size: 18px;">🐦</div>
+                            <div style="font-size: 18px;"><svg class="gm-icon"><use href="#icon-bird"/></svg></div>
                             <div style="font-weight: bold; font-size: 11px;">Flappy</div>
                         </div>
                     </div>
@@ -4028,15 +4078,15 @@
                     <!-- Top-Down RPG Presets -->
                     <div class="preset-grid topdown-only" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
                         <div class="preset-card" onclick="applyGameFeelPreset('topdown_rpg'); showPresetDetails('topdown_rpg');" style="background: linear-gradient(135deg, #27ae60, #1e8449); padding: 10px 8px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center;">
-                            <div style="font-size: 18px;">🗺️</div>
+                            <div style="font-size: 18px;"><svg class="gm-icon" style="width:28px;height:28px;"><use href="#icon-map"/></svg></div>
                             <div style="font-weight: bold; font-size: 11px;">RPG</div>
                         </div>
                         <div class="preset-card" onclick="applyGameFeelPreset('topdown_action'); showPresetDetails('topdown_action');" style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 10px 8px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center;">
-                            <div style="font-size: 18px;">🎯</div>
+                            <div style="font-size: 18px;"><svg class="gm-icon"><use href="#icon-target"/></svg></div>
                             <div style="font-weight: bold; font-size: 11px;">Action</div>
                         </div>
                         <div class="preset-card" onclick="applyGameFeelPreset('topdown_zelda'); showPresetDetails('topdown_zelda');" style="background: linear-gradient(135deg, #f39c12, #d68910); padding: 10px 8px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center;">
-                            <div style="font-size: 18px;">⚔️</div>
+                            <div style="font-size: 18px;"><svg class="gm-icon"><use href="#icon-swords"/></svg></div>
                             <div style="font-weight: bold; font-size: 11px;">Zelda</div>
                         </div>
                     </div>
@@ -4078,7 +4128,7 @@
                     <div class="form-group platformer-only" style="margin-top: 15px;">
                         <label style="display: flex; align-items: center; cursor: pointer;">
                             <input type="checkbox" id="setting-run-timer" onchange="updateGameSetting('runTimerEnabled', this.checked); document.getElementById('run-timer-options').style.display = this.checked ? 'block' : 'none';">
-                            <span style="margin-left: 8px;">⏱️ Show Run Timer</span>
+                            <span style="margin-left: 8px;"><svg class="gm-icon"><use href="#icon-timer"/></svg> Show Run Timer</span>
                         </label>
                         <small style="color: #666; font-size: 9px;">Display elapsed time for speedrunning</small>
                         <div id="run-timer-options" style="display: none; margin-top: 8px; margin-left: 20px;">
@@ -4095,7 +4145,7 @@
                     <div class="form-group topdown-only" style="margin-top: 15px; padding: 12px; background: rgba(155, 89, 182, 0.1); border-radius: 8px; border: 1px solid rgba(155, 89, 182, 0.3);">
                         <label style="display: flex; align-items: center; cursor: pointer;">
                             <input type="checkbox" id="setting-save-rpg-progress" checked onchange="updateGameSetting('saveRPGProgress', this.checked)">
-                            <span style="margin-left: 8px;">💾 Save Progress (localStorage)</span>
+                            <span style="margin-left: 8px;"><svg class="gm-icon"><use href="#icon-save"/></svg> Save Progress (localStorage)</span>
                         </label>
                         <small style="color: #9b59b6; font-size: 9px;">Inventory & checkpoints persist between sessions</small>
                     </div>
@@ -4160,60 +4210,60 @@
 
                         <div style="background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.3); border-radius: 6px; padding: 10px; margin-bottom: 15px;">
                             <p style="font-size: 10px; color: #3498db; margin: 0;">
-                                <strong>💡 Per-Object Effects:</strong> Enemy death, collectible, powerup, spring, and hazard effects are now set on each template individually. Edit your templates in the Objects panel to add custom particle effects for each object type!
+                                <strong><svg class="gm-icon"><use href="#icon-lightbulb"/></svg> Per-Object Effects:</strong> Enemy death, collectible, powerup, spring, and hazard effects are now set on each template individually. Edit your templates in the Objects panel to add custom particle effects for each object type!
                             </p>
                         </div>
 
                         <h4 style="font-size: 12px; color: #888; margin: 0 0 12px 0; border-bottom: 1px solid #333; padding-bottom: 6px;">Player Effects</h4>
 
                         <div class="form-group" style="margin-bottom: 12px;">
-                            <label style="font-size: 11px; color: #888;">💔 Player Damage Effect:</label>
+                            <label style="font-size: 11px; color: #888;"><svg class="gm-icon"><use href="#icon-broken-heart"/></svg> Player Damage Effect:</label>
                             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="setting-particle-player-damage" placeholder="pfx:id"
                                     style="flex: 1; min-width: 80px; padding: 6px 8px; background: #2a2a3e; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 11px;"
                                     onchange="updateGameSetting('particleEffect_playerDamage', this.value)">
-                                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('setting-particle-player-damage', 'Player Damage Effect', 'damage')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 4px 8px; font-size: 10px;">✨ Create</button>
-                                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('setting-particle-player-damage')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 4px 8px; font-size: 10px; display: none;">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('setting-particle-player-damage')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 4px 8px; font-size: 10px; display: none;">✕</button>
+                                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('setting-particle-player-damage', 'Player Damage Effect', 'damage')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 4px 8px; font-size: 10px;"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('setting-particle-player-damage')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 4px 8px; font-size: 10px; display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('setting-particle-player-damage')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 4px 8px; font-size: 10px; display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                             </div>
                             <small style="color: #666; font-size: 9px;">Plays when player takes damage</small>
                         </div>
 
                         <div class="form-group" style="margin-bottom: 12px;">
-                            <label style="font-size: 11px; color: #888;">💨 Player Jump Effect:</label>
+                            <label style="font-size: 11px; color: #888;"><svg class="gm-icon"><use href="#icon-wind"/></svg> Player Jump Effect:</label>
                             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="setting-particle-player-jump" placeholder="pfx:id"
                                     style="flex: 1; min-width: 80px; padding: 6px 8px; background: #2a2a3e; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 11px;"
                                     onchange="updateGameSetting('particleEffect_playerJump', this.value)">
-                                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('setting-particle-player-jump', 'Player Jump Effect', 'smoke')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 4px 8px; font-size: 10px;">✨ Create</button>
-                                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('setting-particle-player-jump')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 4px 8px; font-size: 10px; display: none;">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('setting-particle-player-jump')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 4px 8px; font-size: 10px; display: none;">✕</button>
+                                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('setting-particle-player-jump', 'Player Jump Effect', 'smoke')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 4px 8px; font-size: 10px;"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('setting-particle-player-jump')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 4px 8px; font-size: 10px; display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('setting-particle-player-jump')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 4px 8px; font-size: 10px; display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                             </div>
                             <small style="color: #666; font-size: 9px;">Dust cloud when player jumps</small>
                         </div>
 
                         <div class="form-group" style="margin-bottom: 12px;">
-                            <label style="font-size: 11px; color: #888;">🚩 Checkpoint Effect:</label>
+                            <label style="font-size: 11px; color: #888;"><svg class="gm-icon"><use href="#icon-flag"/></svg> Checkpoint Effect:</label>
                             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="setting-particle-checkpoint" placeholder="pfx:id"
                                     style="flex: 1; min-width: 80px; padding: 6px 8px; background: #2a2a3e; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 11px;"
                                     onchange="updateGameSetting('particleEffect_checkpoint', this.value)">
-                                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('setting-particle-checkpoint', 'Checkpoint Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 4px 8px; font-size: 10px;">✨ Create</button>
-                                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('setting-particle-checkpoint')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 4px 8px; font-size: 10px; display: none;">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('setting-particle-checkpoint')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 4px 8px; font-size: 10px; display: none;">✕</button>
+                                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('setting-particle-checkpoint', 'Checkpoint Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 4px 8px; font-size: 10px;"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('setting-particle-checkpoint')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 4px 8px; font-size: 10px; display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('setting-particle-checkpoint')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 4px 8px; font-size: 10px; display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                             </div>
                             <small style="color: #666; font-size: 9px;">Plays when checkpoint is activated</small>
                         </div>
 
                         <div class="form-group" style="margin-bottom: 12px;">
-                            <label style="font-size: 11px; color: #888;">🎉 Level Complete Effect:</label>
+                            <label style="font-size: 11px; color: #888;"><svg class="gm-icon"><use href="#icon-party"/></svg> Level Complete Effect:</label>
                             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="setting-particle-level-complete" placeholder="pfx:id"
                                     style="flex: 1; min-width: 80px; padding: 6px 8px; background: #2a2a3e; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 11px;"
                                     onchange="updateGameSetting('particleEffect_levelComplete', this.value)">
-                                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('setting-particle-level-complete', 'Level Complete Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 4px 8px; font-size: 10px;">✨ Create</button>
-                                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('setting-particle-level-complete')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 4px 8px; font-size: 10px; display: none;">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('setting-particle-level-complete')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 4px 8px; font-size: 10px; display: none;">✕</button>
+                                <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('setting-particle-level-complete', 'Level Complete Effect', 'sparkle')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 4px 8px; font-size: 10px;"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('setting-particle-level-complete')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); padding: 4px 8px; font-size: 10px; display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('setting-particle-level-complete')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); padding: 4px 8px; font-size: 10px; display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                             </div>
                             <small style="color: #666; font-size: 9px;">Celebration effect when level is completed</small>
                         </div>
@@ -4233,30 +4283,30 @@
 <div class="modal-overlay template-modal" id="player-properties-modal" onclick="if(event.target === this) closePlayerPropertiesModal()">
     <div class="modal template-editor-modal" style="max-width: 700px; max-height: 85vh; display: flex; flex-direction: column;">
         <div class="modal-header" style="flex-shrink: 0;">
-            <h2>🎮 Player Properties</h2>
+            <h2><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Player Properties</h2>
             <button class="modal-close-btn" onclick="closePlayerPropertiesModal()">&times;</button>
         </div>
         <div class="player-props-container">
             <!-- Left Navigation -->
             <div class="player-props-nav">
                 <button class="player-props-nav-item active" data-section="movement" onclick="showPlayerSection('movement')">
-                    <span class="nav-icon">🏃</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-runner"/></svg></span>
                     <span class="nav-label">Movement</span>
                 </button>
                 <button class="player-props-nav-item" data-section="appearance" onclick="showPlayerSection('appearance')">
-                    <span class="nav-icon">🎨</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-palette"/></svg></span>
                     <span class="nav-label">Appearance</span>
                 </button>
                 <button class="player-props-nav-item" data-section="combat" onclick="showPlayerSection('combat')">
-                    <span class="nav-icon">🎯</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-target"/></svg></span>
                     <span class="nav-label">Combat</span>
                 </button>
                 <button class="player-props-nav-item" data-section="audio" onclick="showPlayerSection('audio')">
-                    <span class="nav-icon">🔊</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-volume"/></svg></span>
                     <span class="nav-label">Audio</span>
                 </button>
                 <button class="player-props-nav-item" data-section="effects" onclick="showPlayerSection('effects')">
-                    <span class="nav-icon">✨</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-sparkles"/></svg></span>
                     <span class="nav-label">Effects</span>
                 </button>
             </div>
@@ -4363,10 +4413,10 @@
                     <div class="form-row" style="margin-bottom: 8px;">
                         <div class="form-group">
                             <label>Sprite Y Offset</label>
-                            <input type="number" id="setting-player-sprite-offset-y" value="0" min="-32" max="32" oninput="updateGameSetting('playerSpriteOffsetY', this.value);" title="Shift player sprite up (negative) or down (positive) without moving collision.">
+                            <input type="number" id="setting-player-sprite-offset-y" value="0" min="-32" max="32" oninput="updateGameSetting('playerSpriteOffsetY', this.value);" title="Shift player sprite up (negative) or down (positive) without moving collision. Use this to align the visible character with the hitbox.">
                         </div>
                     </div>
-                    <small style="color: #666; font-size: 9px; display: block; margin-bottom: 8px;">Shifts where the player is drawn without changing collision. Align the visible sprite with the hitbox.</small>
+                    <small style="color: #666; font-size: 9px; display: block; margin-bottom: 8px;">Shifts where the player is drawn without changing collision. Use to align the visible sprite with the hitbox.</small>
                     <!-- Hitbox Preview -->
                     <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
                         <div style="flex-shrink: 0;">
@@ -4379,7 +4429,7 @@
                         </div>
                         <div style="flex: 1; padding-top: 16px;">
                             <div style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 4px; padding: 6px 8px;">
-                                <small style="color: #00ff88; font-size: 9px;">💡 Press <kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">H</kbd> during Play Test to visualize the hitbox in-game</small>
+                                <small style="color: #00ff88; font-size: 9px;"><svg class="gm-icon"><use href="#icon-lightbulb"/></svg> Press <kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">H</kbd> during Play Test to visualize the hitbox in-game</small>
                             </div>
                             <div style="margin-top: 6px;">
                                 <small style="color: #666; font-size: 9px;">
@@ -4550,24 +4600,24 @@
                     <h3 style="color: #e94560; font-size: 14px; margin: 0 0 12px 0;">Player Sounds <span class="help-icon" onclick="showHelp('sounds')">?</span></h3>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>🦘 Jump Sound</label>
+                            <label><svg class="gm-icon"><use href="#icon-spring"/></svg> Jump Sound</label>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="setting-sound-jump" placeholder="URL or sfx:id" onchange="updateGameSetting('sounds.jump', this.value); updateSoundButtonStates('setting-sound-jump');" style="flex: 1; min-width: 120px;">
                                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('setting-sound-jump', 'sounds')" style="padding: 4px 8px;" title="Browse asset library">Browse</button>
-                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('setting-sound-jump', 'Jump Sound')" style="padding: 4px 8px; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound">🎵 Create</button>
-                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('setting-sound-jump')" style="padding: 4px 8px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('setting-sound-jump')" style="padding: 4px 8px; background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound">✕</button>
+                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('setting-sound-jump', 'Jump Sound')" style="padding: 4px 8px; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('setting-sound-jump')" style="padding: 4px 8px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('setting-sound-jump')" style="padding: 4px 8px; background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                                 <button class="btn btn-small" onclick="testSound('jump')" title="Test sound">▶</button>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>💔 Hurt Sound</label>
+                            <label><svg class="gm-icon"><use href="#icon-broken-heart"/></svg> Hurt Sound</label>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="setting-sound-hurt" placeholder="URL or sfx:id" onchange="updateGameSetting('sounds.hurt', this.value); updateSoundButtonStates('setting-sound-hurt');" style="flex: 1; min-width: 120px;">
                                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('setting-sound-hurt', 'sounds')" style="padding: 4px 8px;" title="Browse asset library">Browse</button>
-                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('setting-sound-hurt', 'Hurt Sound')" style="padding: 4px 8px; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound">🎵 Create</button>
-                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('setting-sound-hurt')" style="padding: 4px 8px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('setting-sound-hurt')" style="padding: 4px 8px; background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound">✕</button>
+                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('setting-sound-hurt', 'Hurt Sound')" style="padding: 4px 8px; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('setting-sound-hurt')" style="padding: 4px 8px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('setting-sound-hurt')" style="padding: 4px 8px; background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                                 <button class="btn btn-small" onclick="testSound('hurt')" title="Test sound">▶</button>
                             </div>
                         </div>
@@ -4709,9 +4759,9 @@
                             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="setting-sound-shoot" placeholder="URL or sfx:id" onchange="updateGameSetting('sounds.shoot', this.value); updateSoundButtonStates('setting-sound-shoot');" style="flex: 1; min-width: 120px;">
                                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('setting-sound-shoot', 'sounds')">Browse</button>
-                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('setting-sound-shoot', 'Shoot Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound">🎵 Create</button>
-                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('setting-sound-shoot')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('setting-sound-shoot')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound">✕</button>
+                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('setting-sound-shoot', 'Shoot Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('setting-sound-shoot')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('setting-sound-shoot')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                             </div>
                         </div>
                         <div class="form-group">
@@ -4719,9 +4769,9 @@
                             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="setting-sound-projectile-hit" placeholder="URL or sfx:id" onchange="updateGameSetting('sounds.projectileHit', this.value); updateSoundButtonStates('setting-sound-projectile-hit');" style="flex: 1; min-width: 120px;">
                                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('setting-sound-projectile-hit', 'sounds')">Browse</button>
-                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('setting-sound-projectile-hit', 'Hit Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound">🎵 Create</button>
-                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('setting-sound-projectile-hit')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('setting-sound-projectile-hit')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound">✕</button>
+                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('setting-sound-projectile-hit', 'Hit Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('setting-sound-projectile-hit')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('setting-sound-projectile-hit')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                             </div>
                         </div>
                     </div><!-- End projectile-options -->
@@ -4733,34 +4783,34 @@
                     <p style="font-size: 10px; color: #888; margin-bottom: 15px;">Add visual effects created in ParticleFX to player actions.</p>
 
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label>💨 Jump Particle Effect</label>
+                        <label><svg class="gm-icon"><use href="#icon-wind"/></svg> Jump Particle Effect</label>
                         <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                             <input type="text" id="player-particle-jump" placeholder="pfx:id" style="flex: 1; min-width: 80px;"
                                 title="Particle effect when player jumps"
                                 onchange="updateGameSetting('particleEffect_playerJump', this.value); document.getElementById('setting-particle-player-jump').value = this.value; updateParticleButtonStates('player-particle-jump'); updateParticleButtonStates('setting-particle-player-jump');">
-                            <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('player-particle-jump', 'Player Jump Effect', 'smoke')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                            <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('player-particle-jump')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                            <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('player-particle-jump')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                            <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('player-particle-jump', 'Player Jump Effect', 'smoke')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                            <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('player-particle-jump')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                            <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('player-particle-jump')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                         </div>
                         <small style="color: #666; font-size: 9px;">Dust cloud when player jumps</small>
                     </div>
 
                     <div class="form-group">
-                        <label>💔 Damage Particle Effect</label>
+                        <label><svg class="gm-icon"><use href="#icon-broken-heart"/></svg> Damage Particle Effect</label>
                         <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                             <input type="text" id="player-particle-damage" placeholder="pfx:id" style="flex: 1; min-width: 80px;"
                                 title="Particle effect when player takes damage"
                                 onchange="updateGameSetting('particleEffect_playerDamage', this.value); document.getElementById('setting-particle-player-damage').value = this.value; updateParticleButtonStates('player-particle-damage'); updateParticleButtonStates('setting-particle-player-damage');">
-                            <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('player-particle-damage', 'Player Damage Effect', 'damage')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                            <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('player-particle-damage')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                            <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('player-particle-damage')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                            <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('player-particle-damage', 'Player Damage Effect', 'damage')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                            <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('player-particle-damage')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                            <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('player-particle-damage')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                         </div>
                         <small style="color: #666; font-size: 9px;">Effect when player gets hurt</small>
                     </div>
 
                     <div style="background: rgba(233, 69, 96, 0.1); border: 1px solid rgba(233, 69, 96, 0.3); border-radius: 6px; padding: 10px; margin-top: 15px;">
                         <p style="font-size: 10px; color: #e94560; margin: 0;">
-                            <strong>💡 Tip:</strong> Create effects in ParticleFX app, then "Export to Assets" to use here.
+                            <strong><svg class="gm-icon"><use href="#icon-lightbulb"/></svg> Tip:</strong> Create effects in ParticleFX app, then "Export to Assets" to use here.
                         </p>
                     </div>
                 </div><!-- End Effects Section -->
@@ -4796,38 +4846,38 @@
 <div class="modal-overlay template-modal" id="level-settings-modal" onclick="if(event.target === this) closeLevelSettingsModal()">
     <div class="modal template-editor-modal" style="max-width: 600px; max-height: 85vh; display: flex; flex-direction: column;">
         <div class="modal-header" style="flex-shrink: 0;">
-            <h2>🗺️ Level Settings <span class="help-icon" onclick="showHelp('levels')">?</span></h2>
+            <h2><svg class="gm-icon"><use href="#icon-map"/></svg> Level Settings <span class="help-icon" onclick="showHelp('levels')">?</span></h2>
             <button class="modal-close-btn" onclick="closeLevelSettingsModal()">&times;</button>
         </div>
         <div class="level-settings-container">
             <!-- Left Navigation -->
             <div class="level-settings-nav">
                 <button class="level-settings-nav-item active" data-section="basics" onclick="showLevelSettingsSection('basics')">
-                    <span class="nav-icon">📐</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-ruler"/></svg></span>
                     <span class="nav-label">Basics</span>
                 </button>
                 <button class="level-settings-nav-item gameplay-level-only" data-section="goals" onclick="showLevelSettingsSection('goals')">
-                    <span class="nav-icon">🎯</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-target"/></svg></span>
                     <span class="nav-label">Goals</span>
                 </button>
                 <button class="level-settings-nav-item platformer-only gameplay-level-only" data-section="autoscroll" onclick="showLevelSettingsSection('autoscroll')">
-                    <span class="nav-icon">📜</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-scroll"/></svg></span>
                     <span class="nav-label">Autoscroll</span>
                 </button>
                 <button class="level-settings-nav-item" data-section="audio" onclick="showLevelSettingsSection('audio')">
-                    <span class="nav-icon">🔊</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-volume"/></svg></span>
                     <span class="nav-label">Audio</span>
                 </button>
                 <button class="level-settings-nav-item" data-section="backgrounds" onclick="showLevelSettingsSection('backgrounds')">
-                    <span class="nav-icon">🖼️</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-image"/></svg></span>
                     <span class="nav-label">Backgrounds</span>
                 </button>
                 <button class="level-settings-nav-item" data-section="particles" onclick="showLevelSettingsSection('particles')">
-                    <span class="nav-icon">✨</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-sparkles"/></svg></span>
                     <span class="nav-label">Particles</span>
                 </button>
                 <button class="level-settings-nav-item menu-level-only" data-section="menu-elements" onclick="showLevelSettingsSection('menu-elements')" style="display: none;">
-                    <span class="nav-icon">🔘</span>
+                    <span class="nav-icon"><svg class="gm-icon"><use href="#icon-radio"/></svg></span>
                     <span class="nav-label">Menu Elements</span>
                 </button>
             </div>
@@ -4843,10 +4893,10 @@
                         <label>Level Type</label>
                         <div class="level-type-toggle" style="display: flex; gap: 8px; margin-top: 5px;">
                             <button type="button" class="level-type-btn active" data-type="gameplay" onclick="setLevelType('gameplay')">
-                                <span style="font-size: 16px;">🎮</span> Gameplay
+                                <span style="font-size: 16px;"><svg class="gm-icon"><use href="#icon-gamepad"/></svg></span> Gameplay
                             </button>
                             <button type="button" class="level-type-btn" data-type="menu" onclick="setLevelType('menu')">
-                                <span style="font-size: 16px;">📋</span> Menu Screen
+                                <span style="font-size: 16px;"><svg class="gm-icon"><use href="#icon-clipboard"/></svg></span> Menu Screen
                             </button>
                         </div>
                         <small style="color: #666; font-size: 9px;">Menu screens display buttons instead of gameplay tiles</small>
@@ -4871,12 +4921,12 @@
 
                     <!-- Spawn Point (per-level) -->
                     <div class="gameplay-level-only" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <h4 style="color: #e94560; font-size: 12px; margin: 0 0 10px 0;">🎯 Spawn Point</h4>
+                        <h4 style="color: #e94560; font-size: 12px; margin: 0 0 10px 0;"><svg class="gm-icon"><use href="#icon-target"/></svg> Spawn Point</h4>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 11px; color: #888;">Current Status:</span>
                             <span id="level-spawn-status" style="font-size: 11px; color: #ffaa00;">Auto</span>
                         </div>
-                        <p style="font-size: 10px; color: #666; margin-bottom: 10px;">Use the <strong>🔄 Move</strong> tool to drag the player on the canvas to set where they start in this level.</p>
+                        <p style="font-size: 10px; color: #666; margin-bottom: 10px;">Use the <strong><svg class="gm-icon"><use href="#icon-move"/></svg> Move</strong> tool to drag the player on the canvas to set where they start in this level.</p>
                         <button id="level-clear-spawn-btn" onclick="clearSpawnPoint(); updateLevelSpawnUI();" class="btn btn-full" style="background: rgba(255,100,100,0.2); border-color: #f66; color: #f66; display: none;">Reset to Auto-Detect</button>
                     </div>
 
@@ -4900,10 +4950,10 @@
                     <div class="form-group">
                         <label>Goal Type</label>
                         <select id="level-settings-goal" onchange="updateLevelSettingsFields()">
-                            <option value="goal">🚩 Reach the Goal Flag</option>
-                            <option value="collect_all">⭐ Collect All Items</option>
-                            <option value="score">🏆 Reach Target Score</option>
-                            <option value="survive">⏱️ Survive Time Limit</option>
+                            <option value="goal"><svg class="gm-icon"><use href="#icon-flag"/></svg> Reach the Goal Flag</option>
+                            <option value="collect_all"><svg class="gm-icon"><use href="#icon-star"/></svg> Collect All Items</option>
+                            <option value="score"><svg class="gm-icon"><use href="#icon-trophy"/></svg> Reach Target Score</option>
+                            <option value="survive"><svg class="gm-icon"><use href="#icon-timer"/></svg> Survive Time Limit</option>
                         </select>
                     </div>
 
@@ -4953,7 +5003,7 @@
                     </div>
 
                     <div style="margin-top: 15px; padding: 10px; background: rgba(231, 76, 60, 0.15); border-radius: 6px; border-left: 3px solid #e74c3c;">
-                        <p style="font-size: 10px; color: #e74c3c; margin: 0;">⚠️ Player dies if they fall behind the left edge of the screen!</p>
+                        <p style="font-size: 10px; color: #e74c3c; margin: 0;"><svg class="gm-icon"><use href="#icon-warning"/></svg> Player dies if they fall behind the left edge of the screen!</p>
                     </div>
                 </div><!-- End Autoscroll Section -->
 
@@ -4963,7 +5013,7 @@
                     <p style="font-size: 11px; color: #888; margin-bottom: 12px;">Add music and sound effects for this level</p>
 
                     <div class="form-group">
-                        <label>🎵 Background Music</label>
+                        <label><svg class="gm-icon"><use href="#icon-music"/></svg> Background Music</label>
                         <div class="input-with-browse">
                             <input type="text" id="level-settings-bgm" placeholder="https://example.com/music.mp3">
                             <button type="button" class="browse-library-btn" onclick="openAssetPicker('level-settings-bgm', 'music')">Browse</button>
@@ -4972,7 +5022,7 @@
                     </div>
                     <div class="form-group" style="margin-top: 8px;">
                         <label style="display: flex; align-items: center; gap: 8px;">
-                            🔊 Music Volume
+                            <svg class="gm-icon"><use href="#icon-volume"/></svg> Music Volume
                             <span id="level-settings-bgm-volume-display" style="color: #667eea; font-size: 11px;">50%</span>
                             <button type="button" id="level-settings-bgm-preview-btn" onclick="toggleBgmPreview()"
                                 style="margin-left: auto; padding: 4px 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 4px; color: white; font-size: 11px; cursor: pointer;"
@@ -4988,23 +5038,23 @@
                     <div style="margin-top: 18px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
                         <label style="font-size: 12px; color: #888; margin-bottom: 10px; display: block;">Event Sounds</label>
                         <div class="form-group">
-                            <label>🎉 Level Complete</label>
+                            <label><svg class="gm-icon"><use href="#icon-party"/></svg> Level Complete</label>
                             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="level-settings-complete-sound" placeholder="URL or sfx:id" onchange="updateSoundButtonStates('level-settings-complete-sound');" style="flex: 1; min-width: 120px;">
                                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('level-settings-complete-sound', 'sounds')">Browse</button>
-                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('level-settings-complete-sound', 'Level Complete Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound">🎵 Create</button>
-                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('level-settings-complete-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('level-settings-complete-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound">✕</button>
+                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('level-settings-complete-sound', 'Level Complete Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('level-settings-complete-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('level-settings-complete-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                             </div>
                         </div>
                         <div class="form-group" style="margin-top: 12px;">
-                            <label>💀 Game Over</label>
+                            <label><svg class="gm-icon"><use href="#icon-skull"/></svg> Game Over</label>
                             <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 <input type="text" id="level-settings-gameover-sound" placeholder="URL or sfx:id" onchange="updateSoundButtonStates('level-settings-gameover-sound');" style="flex: 1; min-width: 120px;">
                                 <button type="button" class="browse-library-btn" onclick="openAssetPicker('level-settings-gameover-sound', 'sounds')">Browse</button>
-                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('level-settings-gameover-sound', 'Game Over Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound">🎵 Create</button>
-                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('level-settings-gameover-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound">✏️ Edit</button>
-                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('level-settings-gameover-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound">✕</button>
+                                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('level-settings-gameover-sound', 'Game Over Sound')" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);" title="Create custom sound"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('level-settings-gameover-sound')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;" title="Edit linked sound"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('level-settings-gameover-sound')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;" title="Unlink sound"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                             </div>
                         </div>
                     </div>
@@ -5012,7 +5062,19 @@
 
                 <!-- Backgrounds Section -->
                 <div class="level-settings-section" id="level-settings-section-backgrounds">
-                    <h3 style="color: #2ecc71; font-size: 14px; margin: 0 0 12px 0;">Parallax Backgrounds <span class="help-icon" onclick="showHelp('backgrounds')">?</span></h3>
+                    <h3 style="color: #2ecc71; font-size: 14px; margin: 0 0 12px 0;">Background <span class="help-icon" onclick="showHelp('backgrounds')">?</span></h3>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Background Color</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="color" id="level-settings-bg-color" value="#1a1a2e" style="width: 48px; height: 32px; border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; padding: 0;" onchange="updateLevelBgColor(this.value)">
+                            <span id="level-settings-bg-color-hex" style="font-size: 11px; color: #888; font-family: monospace;">#1a1a2e</span>
+                            <button class="btn btn-small" onclick="clearLevelBgColor()" style="font-size: 10px; padding: 4px 8px;">Reset</button>
+                        </div>
+                        <small style="color: #666; font-size: 9px; margin-top: 4px; display: block;">Sets a solid background color. Background layers render on top of this.</small>
+                    </div>
+
+                    <h4 style="color: #aaa; font-size: 12px; margin: 0 0 8px 0;">Parallax Layers</h4>
                     <p style="font-size: 11px; color: #888; margin-bottom: 5px;">Add depth with scrolling background layers</p>
                     <p style="font-size: 10px; color: #666; margin-bottom: 12px;">Speed: 0 = static, 0.3 = slow parallax, 1 = moves with camera</p>
 
@@ -5030,20 +5092,20 @@
                     <p style="font-size: 11px; color: #888; margin-bottom: 12px;">Add ambient particle effects like snow, rain, fog, or floating embers</p>
 
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label>✨ Background Effect</label>
+                        <label><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Background Effect</label>
                         <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
                             <input type="text" id="level-settings-bg-particle" placeholder="pfx:id" style="flex: 1; min-width: 80px;"
                                 title="Continuous particle effect for this level's background"
                                 onchange="updateLevelBackgroundParticle(this.value)">
-                            <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('level-settings-bg-particle', 'Background Effect', 'snow')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">✨ Create</button>
-                            <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('level-settings-bg-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;">✏️ Edit</button>
-                            <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('level-settings-bg-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;">✕</button>
+                            <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('level-settings-bg-particle', 'Background Effect', 'snow')" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                            <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('level-settings-bg-particle')" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                            <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('level-settings-bg-particle')" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                         </div>
                         <small style="color: #666; font-size: 9px;">Particles will continuously spawn across the level background</small>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label>📍 Spawn Position</label>
+                        <label><svg class="gm-icon"><use href="#icon-pin"/></svg> Spawn Position</label>
                         <select id="level-settings-bg-particle-spawn" onchange="updateLevelBackgroundParticleSpawn(this.value)" style="width: 100%;">
                             <option value="auto">Auto (detect from effect)</option>
                             <option value="top">Top - particles fall down (rain, snow)</option>
@@ -5081,7 +5143,7 @@
                             <small style="color: #666; font-size: 9px;">Custom text shown on screen (leave blank for default)</small>
                         </div>
                         <div id="press-any-key-warning" style="display: none; margin-top: 8px; padding: 8px; background: rgba(255, 193, 7, 0.15); border-radius: 4px; border-left: 3px solid #ffc107;">
-                            <small style="color: #ffc107; font-size: 10px;">⚠️ <strong>Note:</strong> Buttons will be hidden until any key/touch is pressed. Players see this text first, then buttons appear.</small>
+                            <small style="color: #ffc107; font-size: 10px;"><svg class="gm-icon"><use href="#icon-warning"/></svg> <strong>Note:</strong> Buttons will be hidden until any key/touch is pressed. Players see this text first, then buttons appear.</small>
                         </div>
                     </div>
 
@@ -5199,13 +5261,13 @@
 <div class="modal-overlay" id="sfx-studio-modal" style="display: none; z-index: 2200;">
     <div class="modal" style="width: 95vw; max-width: 1200px; height: 85vh; display: flex; flex-direction: column; padding: 0;">
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-            <h2 style="margin: 0; font-size: 18px; color: #fff;">🎵 Sound Effect Studio</h2>
+            <h2 style="margin: 0; font-size: 18px; color: #fff;"><svg class="gm-icon"><use href="#icon-music"/></svg> Sound Effect Studio</h2>
             <div style="display: flex; gap: 10px;">
                 <button class="btn" onclick="saveSfxAndClose()" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 8px 20px;">
-                    💾 Save & Use Sound
+                    <svg class="gm-icon"><use href="#icon-save"/></svg> Save & Use Sound
                 </button>
                 <button class="btn" onclick="closeSfxStudioModal()" style="background: rgba(255,255,255,0.1); padding: 8px 16px;">
-                    ✕ Cancel
+                    <svg class="gm-icon"><use href="#icon-x-mark"/></svg> Cancel
                 </button>
             </div>
         </div>
@@ -5219,13 +5281,13 @@
 <div class="modal-overlay" id="pfx-studio-modal" style="display: none; z-index: 2200;">
     <div class="modal" style="width: 95vw; max-width: 1200px; height: 85vh; display: flex; flex-direction: column; padding: 0;">
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-            <h2 style="margin: 0; font-size: 18px; color: #fff;">✨ Particle FX Designer</h2>
+            <h2 style="margin: 0; font-size: 18px; color: #fff;"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Particle FX Designer</h2>
             <div style="display: flex; gap: 10px;">
                 <button class="btn" onclick="savePfxAndClose()" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); padding: 8px 20px;">
-                    💾 Save & Use Effect
+                    <svg class="gm-icon"><use href="#icon-save"/></svg> Save & Use Effect
                 </button>
                 <button class="btn" onclick="closePfxStudioModal()" style="background: rgba(255,255,255,0.1); padding: 8px 16px;">
-                    ✕ Cancel
+                    <svg class="gm-icon"><use href="#icon-x-mark"/></svg> Cancel
                 </button>
             </div>
         </div>
@@ -5280,6 +5342,7 @@ const URL_BACKGROUNDS = [];
 <script src="js/viewSync.js"></script>
 <script src="js/tilesPanelResize.js"></script>
 <script src="js/assetPicker.js"></script>
-<script src="js/collab-api.js?v=9"></script>
+<script src="js/collab-api.js"></script>
+
 </body>
 </html>
