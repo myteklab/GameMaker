@@ -1689,7 +1689,7 @@ function explainSpriteLoadFailure(url, container, seq) {
     fetch(url, { method: 'HEAD' }).then(res => {
         if (seq !== playerPreviewLoadSeq || !container) return;
         if (res.status === 403) {
-            container.innerHTML = '<span style="color: var(--warn); font-size: 9px; text-align: center; padding: 4px; line-height: 1.3;">Private file. Share it in My Files, or pick it again and choose Share and use.</span>';
+            container.innerHTML = '<span style="color: var(--warn); font-size: 9px; text-align: center; padding: 4px; line-height: 1.3;">Private file. Pick it again from the Asset Library and choose Use it, which makes it viewable by link.</span>';
         }
     }).catch(() => {});
 }
