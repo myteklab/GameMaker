@@ -3048,6 +3048,9 @@
         .pp-col {
             min-width: 0;
         }
+        .pp-wide {
+            margin-top: 8px;
+        }
         .pp-block {
             padding: 12px 0 4px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -4194,3 +4197,10 @@
 .clip-hint.bad { color: var(--warn); }
 .clip-controls { display: flex; align-items: center; gap: 12px; margin-top: 6px; font-size: 10px; color: var(--text-2); }
 .clip-controls input[type="number"] { padding: 2px 4px; font-size: 10px; }
+
+.clip-panel-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; align-items: start; }
+.clip-main { min-width: 0; }
+.clip-side { display: flex; flex-direction: column; gap: 8px; }
+.clip-side .clip-controls { margin-top: 0; flex-wrap: wrap; }
+.frame-editor-grid { max-height: 280px; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
+@media (max-width: 960px) { .clip-panel-grid { grid-template-columns: 1fr; } }

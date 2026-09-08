@@ -1675,9 +1675,23 @@ function updatePlayerSpritePreview() {
         playerSheetSize = null;
         previewContainer.innerHTML = '<span style="color: var(--danger); font-size: 10px;">Failed to load</span>';
         updateSpriteGridReadout();
+        explainSpriteLoadFailure(spriteUrl, previewContainer, seq);
     };
 
     img.src = spriteUrl;
+}
+
+// A My Files asset that is not shared is served only to its owner's bearer
+// token, which an <img> never carries, so it fails for everyone including
+// the owner after a reload. Say so, rather than a bare "Failed to load".
+function explainSpriteLoadFailure(url, container, seq) {
+    if (!/\/a\/[0-9a-f-]{36}(\?|$)/.test(url)) return;
+    fetch(url, { method: 'HEAD' }).then(res => {
+        if (seq !== playerPreviewLoadSeq || !container) return;
+        if (res.status === 403) {
+            container.innerHTML = '<span style="color: var(--warn); font-size: 9px; text-align: center; padding: 4px; line-height: 1.3;">Private file. Share it in My Files, or pick it again and choose Share and use.</span>';
+        }
+    }).catch(() => {});
 }
 
 function stopPlayerSpriteAnimation() {

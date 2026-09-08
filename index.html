@@ -4475,50 +4475,72 @@
                             </div>
                         </div>
                     </details>
-                    <!-- Animation clips (spec 102): which frames play for each state -->
-                    <div id="frame-editor-section" style="display: none; margin-top: 8px;">
-                        <button type="button" id="edit-frames-btn" onclick="toggleFrameEditor()"
-                            class="btn btn-small" style="width: 100%; font-size: 10px;">
-                            Animation Clips
-                        </button>
-                        <div id="frame-editor-panel" style="display: none; margin-top: 8px;
-                            background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px;">
-                            <div class="clip-presets">
-                                <span>Layout:</span>
-                                <button type="button" class="btn btn-small" onclick="applyClipPreset('strip')" title="All frames in one row: walk cycle, first frame stands still">Horizontal strip</button>
-                                <button type="button" class="btn btn-small" onclick="applyClipPreset('vertical')" title="Frames stacked in one column: rebuilt into a row first">Vertical strip</button>
-                                <button type="button" class="btn btn-small" onclick="applyClipPreset('directions')" title="Rows are down, left, right, up (3x4 or 4x4 character sheets)">Direction sheet</button>
-                                <button type="button" class="btn btn-small" onclick="applyClipPreset('rows')" title="Each row is a state, in order: idle, walk, jump, fall, hurt">One row per state</button>
+</div>
+</div>
+<div class="pp-col">
+<div class="pp-block"><div class="pp-subhead">Hitbox</div>
+                    <!-- Collision Size -->
+                    <div class="form-row" style="margin-top: 8px;">
+                        <div class="form-group" style="flex: 0.3;">
+                            <label style="color: var(--text-3); font-size: 10px;">Hitbox Size</label>
+                        </div>
+                        <div class="form-group" style="flex: 0.35;">
+                            <label>Width (px)</label>
+                            <input type="number" id="setting-collision-width" value="32" min="4" max="128" oninput="updateGameSetting('playerCollisionWidth', this.value); updateCollisionPreview();">
+                        </div>
+                        <div class="form-group" style="flex: 0.35;">
+                            <label>Height (px)</label>
+                            <input type="number" id="setting-collision-height" value="32" min="4" max="128" oninput="updateGameSetting('playerCollisionHeight', this.value); updateCollisionPreview();">
+                        </div>
+                    </div>
+                    <!-- Collision Offset -->
+                    <div class="form-row" style="margin-top: 4px;">
+                        <div class="form-group" style="flex: 0.3;">
+                            <label style="color: var(--text-3); font-size: 10px;">Hitbox Offset</label>
+                        </div>
+                        <div class="form-group" style="flex: 0.35;">
+                            <label>X Offset</label>
+                            <input type="number" id="setting-collision-offset-x" value="0" min="-64" max="64" oninput="updateGameSetting('playerCollisionOffsetX', this.value); updateCollisionPreview();">
+                        </div>
+                        <div class="form-group" style="flex: 0.35;">
+                            <label>Y Offset</label>
+                            <input type="number" id="setting-collision-offset-y" value="0" min="-64" max="64" oninput="updateGameSetting('playerCollisionOffsetY', this.value); updateCollisionPreview();">
+                        </div>
+                    </div>
+                    <small style="color: var(--text-3); font-size: 9px; display: block; margin-bottom: 8px;">Hitbox is centered horizontally, bottom-aligned. Offset adjusts position from default.</small>
+
+                    <div class="form-row" style="margin-bottom: 8px;">
+                        <div class="form-group">
+                            <label>Sprite Y Offset</label>
+                            <input type="number" id="setting-player-sprite-offset-y" value="0" min="-32" max="32" oninput="updateGameSetting('playerSpriteOffsetY', this.value);" title="Shift player sprite up (negative) or down (positive) without moving collision. Use this to align the visible character with the hitbox.">
+                        </div>
+                    </div>
+                    <small style="color: var(--text-3); font-size: 9px; display: block; margin-bottom: 8px;">Shifts where the player is drawn without changing collision. Use to align the visible sprite with the hitbox.</small>
+                    <!-- Hitbox Preview -->
+                    <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                        <div style="flex-shrink: 0;">
+                            <label style="font-size: 10px; color: var(--text-3); display: block; margin-bottom: 4px;">Hitbox Preview</label>
+                            <canvas id="hitbox-preview-canvas" width="100" height="100" style="
+                                background: var(--bg-1);
+                                border: 1px solid rgba(255,255,255,0.1);
+                                border-radius: 4px;
+                            "></canvas>
+                        </div>
+                        <div style="flex: 1; padding-top: 16px;">
+                            <div style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 4px; padding: 6px 8px;">
+                                <small style="color: var(--success); font-size: 9px;"><svg class="gm-icon"><use href="#icon-lightbulb"/></svg> Press <kbd style="background: var(--bg-4); padding: 1px 4px; border-radius: 2px;">H</kbd> during Play Test to visualize the hitbox in-game</small>
                             </div>
-                            <div id="clip-tabs" class="clip-tabs"></div>
-                            <div id="clip-hint" class="clip-hint">Click this clip's frames in order, left to right on one row.</div>
-                            <div id="frame-editor-grid" class="frame-editor-grid"></div>
-                            <div class="clip-controls">
-                                <label>Speed <input type="number" id="clip-fps" min="1" max="30" placeholder="8" style="width: 52px;" oninput="onClipFpsInput()"> fps</label>
-                                <label><input type="checkbox" id="clip-loop" checked onchange="onClipLoopChange()"> Loop</label>
-                                <button type="button" onclick="clearFrameSelection()" class="btn btn-small" style="font-size: 9px; padding: 2px 6px;">Clear clip</button>
-                            </div>
-                            <div id="frame-editor-sequence" style="margin-top: 6px; font-size: 10px; color: var(--text-3);">
-                                No frames selected
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                                <div id="frame-editor-preview" style="width: 64px; height: 64px;
-                                    background: rgba(0,0,0,0.3); border-radius: 4px; display: flex;
-                                    align-items: center; justify-content: center; overflow: hidden;">
-                                    <span style="color: var(--text-3); font-size: 9px;">Preview</span>
-                                </div>
-                                <div style="flex: 1; font-size: 9px; color: var(--text-3);">
-                                    Frames not on one row? Rebuild the sheet from this selection into a single row, then set the clip.
-                                </div>
-                                <button type="button" id="apply-frames-btn" onclick="applyFrameSelection()"
-                                    disabled class="btn btn-small"
-                                    style="padding: 6px; font-size: 11px;">
-                                    Rebuild sheet
-                                </button>
+                            <div style="margin-top: 6px;">
+                                <small style="color: var(--text-3); font-size: 9px;">
+                                    <span style="color: #ff6b6b;">■</span> Sprite &nbsp;
+                                    <span style="color: var(--success);">■</span> Hitbox
+                                </small>
                             </div>
                         </div>
                     </div>
-<!-- Squash & Stretch Animation -->
+</div>
+<div class="pp-block"><div class="pp-subhead">Motion</div>
+                    <!-- Squash & Stretch Animation -->
                     <div class="form-group platformer-only" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
                         <label style="display: flex; align-items: center; cursor: pointer;">
                             <input type="checkbox" id="setting-squash-stretch" checked onchange="updateGameSetting('squashStretchEnabled', this.checked); toggleSquashStretchOptions();">
@@ -4586,6 +4608,57 @@
                     </div>
                 </div>
 </div>
+</div>
+<div class="pp-block pp-wide"><div class="pp-subhead">Animation</div>
+                    <!-- Animation clips (spec 102): which frames play for each state -->
+                    <div id="frame-editor-section" style="display: none; margin-top: 8px;">
+                        <button type="button" id="edit-frames-btn" onclick="toggleFrameEditor()"
+                            class="btn btn-small" style="width: 100%; font-size: 10px;">
+                            Animation Clips
+                        </button>
+                        <div id="frame-editor-panel" style="display: none; margin-top: 8px;
+                            background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px;">
+                          <div class="clip-panel-grid">
+                          <div class="clip-main">
+                            <div class="clip-presets">
+                                <span>Layout:</span>
+                                <button type="button" class="btn btn-small" onclick="applyClipPreset('strip')" title="All frames in one row: walk cycle, first frame stands still">Horizontal strip</button>
+                                <button type="button" class="btn btn-small" onclick="applyClipPreset('vertical')" title="Frames stacked in one column: rebuilt into a row first">Vertical strip</button>
+                                <button type="button" class="btn btn-small" onclick="applyClipPreset('directions')" title="Rows are down, left, right, up (3x4 or 4x4 character sheets)">Direction sheet</button>
+                                <button type="button" class="btn btn-small" onclick="applyClipPreset('rows')" title="Each row is a state, in order: idle, walk, jump, fall, hurt">One row per state</button>
+                            </div>
+                            <div id="clip-tabs" class="clip-tabs"></div>
+                            <div id="clip-hint" class="clip-hint">Click this clip's frames in order, left to right on one row.</div>
+                            <div id="frame-editor-grid" class="frame-editor-grid"></div>
+                          </div>
+                          <div class="clip-side">
+                            <div class="clip-controls">
+                                <label>Speed <input type="number" id="clip-fps" min="1" max="30" placeholder="8" style="width: 52px;" oninput="onClipFpsInput()"> fps</label>
+                                <label><input type="checkbox" id="clip-loop" checked onchange="onClipLoopChange()"> Loop</label>
+                                <button type="button" onclick="clearFrameSelection()" class="btn btn-small" style="font-size: 9px; padding: 2px 6px;">Clear clip</button>
+                            </div>
+                            <div id="frame-editor-sequence" style="margin-top: 6px; font-size: 10px; color: var(--text-3);">
+                                No frames selected
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                <div id="frame-editor-preview" style="width: 64px; height: 64px;
+                                    background: rgba(0,0,0,0.3); border-radius: 4px; display: flex;
+                                    align-items: center; justify-content: center; overflow: hidden;">
+                                    <span style="color: var(--text-3); font-size: 9px;">Preview</span>
+                                </div>
+                                <div style="flex: 1; font-size: 9px; color: var(--text-3);">
+                                    Frames not on one row? Rebuild the sheet from this selection into a single row, then set the clip.
+                                </div>
+                                <button type="button" id="apply-frames-btn" onclick="applyFrameSelection()"
+                                    disabled class="btn btn-small"
+                                    style="padding: 6px; font-size: 11px;">
+                                    Rebuild sheet
+                                </button>
+                            </div>
+                          </div>
+                          </div>
+                        </div>
+                    </div>
 </div>
 </div><!-- End Appearance Section -->
 
