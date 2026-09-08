@@ -108,7 +108,7 @@ function updateExportButtonText() {
     const exportBtn = document.getElementById('export-action-btn');
     if (exportBtn) {
         exportBtn.textContent = 'Download File';
-        exportBtn.style.background = 'linear-gradient(135deg, #e94560, #0f3460)';
+        exportBtn.style.background = 'linear-gradient(135deg, var(--accent), var(--bg-3))';
     }
 }
 
@@ -150,7 +150,7 @@ function updateExportExplanation(format) {
     const explanations = {
         js: `<h4>JavaScript Array Format</h4>
             <p>Each row of your level becomes a string in an array. Each character represents one tile:</p>
-            <ul style="margin: 5px 0 0 20px; color: #aaa; font-size: 11px;">
+            <ul style="margin: 5px 0 0 20px; color: var(--text-2); font-size: 11px;">
                 <li><code>.</code> = Empty space (no tile)</li>
                 <li><code>A-Z</code> = Your defined tiles</li>
             </ul>
@@ -158,7 +158,7 @@ function updateExportExplanation(format) {
 
         json: `<h4>JSON Format</h4>
             <p>A portable data format that can be loaded in any language. Includes:</p>
-            <ul style="margin: 5px 0 0 20px; color: #aaa; font-size: 11px;">
+            <ul style="margin: 5px 0 0 20px; color: var(--text-2); font-size: 11px;">
                 <li>Level dimensions (width, height)</li>
                 <li>Tile definitions with positions</li>
                 <li>Level data as an array</li>
@@ -167,7 +167,7 @@ function updateExportExplanation(format) {
 
         csv: `<h4>CSV/Grid Format</h4>
             <p>A simple comma-separated format, ideal for:</p>
-            <ul style="margin: 5px 0 0 20px; color: #aaa; font-size: 11px;">
+            <ul style="margin: 5px 0 0 20px; color: var(--text-2); font-size: 11px;">
                 <li>Importing into spreadsheets</li>
                 <li>Quick visual inspection</li>
                 <li>Simple parsers</li>
@@ -176,7 +176,7 @@ function updateExportExplanation(format) {
 
         pencilcode: `<h4>Pencil.code Format</h4>
             <p>Optimized for use with Pencil.code:</p>
-            <ul style="margin: 5px 0 0 20px; color: #aaa; font-size: 11px;">
+            <ul style="margin: 5px 0 0 20px; color: var(--text-2); font-size: 11px;">
                 <li>CoffeeScript-friendly syntax</li>
                 <li>Easy to integrate with turtle graphics</li>
                 <li>Uses string arrays</li>
@@ -184,7 +184,7 @@ function updateExportExplanation(format) {
 
         platformer: `<h4><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Complete Platformer Game</h4>
             <p>Export as a fully playable HTML5 game! Includes:</p>
-            <ul style="margin: 5px 0 0 20px; color: #aaa; font-size: 11px;">
+            <ul style="margin: 5px 0 0 20px; color: var(--text-2); font-size: 11px;">
                 <li>Your level and tile graphics</li>
                 <li>Player movement and physics</li>
                 <li>Parallax backgrounds</li>

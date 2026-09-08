@@ -475,10 +475,10 @@ function updateAnimationStatus() {
 
     if (status) {
         if (pixelEditorFrames.length > 1) {
-            status.innerHTML = `<span style="color: #2ecc71;">🎬 Animated Tile (${pixelEditorFrames.length} frames)</span>`;
+            status.innerHTML = `<span style="color: var(--success);">🎬 Animated Tile (${pixelEditorFrames.length} frames)</span>`;
             if (fpsControl) fpsControl.style.display = 'flex';
         } else {
-            status.innerHTML = `<span style="color: #888;">Static Tile (1 frame)</span>`;
+            status.innerHTML = `<span style="color: var(--text-3);">Static Tile (1 frame)</span>`;
             if (fpsControl) fpsControl.style.display = 'none';
         }
     }
@@ -672,7 +672,7 @@ function updateTileEffect() {
     if (statusEl) {
         if (pixelEditorEffect === 'none') {
             statusEl.textContent = '(None)';
-            statusEl.style.color = '#555';
+            statusEl.style.color = 'var(--text-3)';
         } else {
             const effectNames = {
                 'sway': 'Sway',
@@ -684,7 +684,7 @@ function updateTileEffect() {
                 'shake': 'Shake'
             };
             statusEl.textContent = `(${effectNames[pixelEditorEffect]} active)`;
-            statusEl.style.color = '#2ecc71';
+            statusEl.style.color = 'var(--success)';
         }
     }
 
@@ -869,7 +869,7 @@ function resetEffectSettings() {
     if (speedValue) speedValue.textContent = '5';
     if (statusEl) {
         statusEl.textContent = '(None)';
-        statusEl.style.color = '#555';
+        statusEl.style.color = 'var(--text-3)';
     }
 }
 
@@ -2468,7 +2468,7 @@ function updateUsedColorsPalette() {
     const colors = getUsedColors();
 
     if (colors.length === 0) {
-        container.innerHTML = '<div style="font-size: 9px; color: #555; text-align: center; width: 100%;">Draw to see colors</div>';
+        container.innerHTML = '<div style="font-size: 9px; color: var(--text-3); text-align: center; width: 100%;">Draw to see colors</div>';
         return;
     }
 

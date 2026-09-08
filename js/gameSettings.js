@@ -120,7 +120,7 @@ function showGameTypeConfirmPanel(type, warnings) {
     targetEl.textContent = `You are about to switch to ${modeName} mode.`;
 
     // Set the warnings
-    warningsEl.innerHTML = '<div style="margin-bottom: 6px; color: #ccc;">The following will be affected:</div>' +
+    warningsEl.innerHTML = '<div style="margin-bottom: 6px; color: var(--text-2);">The following will be affected:</div>' +
         warnings.map(w => `<div>${w}</div>`).join('');
 
     // Show the panel with animation
@@ -1179,7 +1179,7 @@ function showPresetDetails(presetName) {
     for (const [key, config] of Object.entries(valueLabels)) {
         if (preset[key] !== undefined) {
             const value = config.format(preset[key]);
-            valuesHTML += '<div style="color: #888;">' + config.label + ':</div>';
+            valuesHTML += '<div style="color: var(--text-3);">' + config.label + ':</div>';
             valuesHTML += '<div style="color: #fff; font-weight: bold;">' + value + '</div>';
         }
     }
@@ -1465,12 +1465,12 @@ function updatePlayerSpritePreview() {
     }
 
     if (!spriteUrl) {
-        previewContainer.innerHTML = '<span style="color: #555; font-size: 10px;">No sprite</span>';
+        previewContainer.innerHTML = '<span style="color: var(--text-3); font-size: 10px;">No sprite</span>';
         return;
     }
 
     // Show loading state
-    previewContainer.innerHTML = '<span style="color: #888; font-size: 10px;">Loading...</span>';
+    previewContainer.innerHTML = '<span style="color: var(--text-3); font-size: 10px;">Loading...</span>';
 
     // Load the image
     playerPreviewImage = new Image();
@@ -1504,7 +1504,7 @@ function updatePlayerSpritePreview() {
         if (frameCount > 1) {
             const frameIndicator = document.createElement('div');
             frameIndicator.id = 'frame-indicator';
-            frameIndicator.style.cssText = 'position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: #888;';
+            frameIndicator.style.cssText = 'position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: var(--text-3);';
             frameIndicator.textContent = '1/' + frameCount;
             previewContainer.appendChild(frameIndicator);
         }
@@ -1529,7 +1529,7 @@ function updatePlayerSpritePreview() {
     };
 
     playerPreviewImage.onerror = function() {
-        previewContainer.innerHTML = '<span style="color: #f66; font-size: 10px;">Failed to load</span>';
+        previewContainer.innerHTML = '<span style="color: var(--danger); font-size: 10px;">Failed to load</span>';
     };
 
     playerPreviewImage.src = spriteUrl;
@@ -1595,7 +1595,7 @@ function openFrameEditor() {
     };
     frameEditorImage.onerror = function() {
         document.getElementById('frame-editor-grid').innerHTML =
-            '<span style="color: #f66; font-size: 10px;">Failed to load sprite</span>';
+            '<span style="color: var(--danger); font-size: 10px;">Failed to load sprite</span>';
     };
     frameEditorImage.src = spriteUrl;
 }
@@ -1684,7 +1684,7 @@ function clearFrameSelection() {
 
     const previewEl = document.getElementById('frame-editor-preview');
     if (previewEl) {
-        previewEl.innerHTML = '<span style="color: #555; font-size: 9px;">Preview</span>';
+        previewEl.innerHTML = '<span style="color: var(--text-3); font-size: 9px;">Preview</span>';
     }
     const seqEl = document.getElementById('frame-editor-sequence');
     if (seqEl) seqEl.textContent = 'No frames selected';
@@ -1898,7 +1898,7 @@ function selectPlayerCustomTile(tileKey) {
         // Cleared selection
         gameSettings.playerCustomTileKey = '';
         if (preview) {
-            preview.innerHTML = '<span style="color:#666;font-size:10px;">Select a custom tile to use as player sprite</span>';
+            preview.innerHTML = '<span style="color:var(--text-3);font-size:10px;">Select a custom tile to use as player sprite</span>';
         }
         markDirty();
         return;
@@ -1907,7 +1907,7 @@ function selectPlayerCustomTile(tileKey) {
     // Check if custom tile exists
     if (typeof customTiles !== 'object' || !customTiles[tileKey]) {
         if (preview) {
-            preview.innerHTML = '<span style="color:#f66;font-size:10px;">Custom tile not found</span>';
+            preview.innerHTML = '<span style="color:var(--danger);font-size:10px;">Custom tile not found</span>';
         }
         return;
     }
@@ -2060,13 +2060,13 @@ function updatePlayerCustomTilePreview(tileKey) {
     if (!preview) return;
 
     if (!tileKey) {
-        preview.innerHTML = '<span style="color:#666;font-size:10px;">Select a custom tile to use as player sprite</span>';
+        preview.innerHTML = '<span style="color:var(--text-3);font-size:10px;">Select a custom tile to use as player sprite</span>';
         return;
     }
 
     // Check if custom tile exists
     if (typeof customTiles !== 'object' || !customTiles[tileKey]) {
-        preview.innerHTML = '<span style="color:#f66;font-size:10px;">Custom tile not found</span>';
+        preview.innerHTML = '<span style="color:var(--danger);font-size:10px;">Custom tile not found</span>';
         return;
     }
 
@@ -2075,11 +2075,11 @@ function updatePlayerCustomTilePreview(tileKey) {
 
     if (ct.dataURL) {
         preview.innerHTML = `
-            <img src="${ct.dataURL}" style="width:24px;height:24px;image-rendering:pixelated;border:1px solid #555;">
+            <img src="${ct.dataURL}" style="width:24px;height:24px;image-rendering:pixelated;border:1px solid var(--text-3);">
             <span style="color:#4ecdc4;font-size:10px;">${ct.name || tileKey}${frameInfo}</span>
         `;
     } else {
-        preview.innerHTML = '<span style="color:#f66;font-size:10px;">No image data</span>';
+        preview.innerHTML = '<span style="color:var(--danger);font-size:10px;">No image data</span>';
     }
 }
 
@@ -2520,17 +2520,17 @@ function renderPlayerSpriteRoster() {
     if (!container) return;
     const options = Array.isArray(gameSettings.playerSpriteOptions) ? gameSettings.playerSpriteOptions : [];
     if (options.length === 0) {
-        container.innerHTML = '<div style="color: #888; font-size: 11px; padding: 8px; font-style: italic;">No sprites yet. Players will use the default character. Click "Reset to defaults" for the starter pack.</div>';
+        container.innerHTML = '<div style="color: var(--text-3); font-size: 11px; padding: 8px; font-style: italic;">No sprites yet. Players will use the default character. Click "Reset to defaults" for the starter pack.</div>';
         return;
     }
     container.innerHTML = options.map((s, i) =>
         '<div class="player-sprite-row" style="display: flex; align-items: center; gap: 8px; padding: 6px; background: rgba(0,0,0,0.25); border-radius: 4px;">' +
-            '<span style="color: #888; font-size: 11px; width: 18px; text-align: center;">' + (i + 1) + '</span>' +
-            '<canvas class="player-sprite-thumb" width="32" height="32" data-url="' + (s.url || '') + '" data-w="' + (s.w || 0) + '" data-h="' + (s.h || 0) + '" style="background: #16213e; border-radius: 4px; image-rendering: pixelated; image-rendering: crisp-edges;"></canvas>' +
+            '<span style="color: var(--text-3); font-size: 11px; width: 18px; text-align: center;">' + (i + 1) + '</span>' +
+            '<canvas class="player-sprite-thumb" width="32" height="32" data-url="' + (s.url || '') + '" data-w="' + (s.w || 0) + '" data-h="' + (s.h || 0) + '" style="background: var(--bg-2); border-radius: 4px; image-rendering: pixelated; image-rendering: crisp-edges;"></canvas>' +
             '<span style="flex: 1; color: #fff; font-size: 12px;">' + escapeHtml(s.name || '(unnamed)') + '</span>' +
-            '<button onclick="movePlayerSprite(' + i + ', -1)" ' + (i === 0 ? 'disabled' : '') + ' title="Move up" style="background: transparent; border: none; color: ' + (i === 0 ? '#444' : '#9b59b6') + '; font-size: 14px; cursor: ' + (i === 0 ? 'default' : 'pointer') + '; padding: 2px 6px;">▲</button>' +
-            '<button onclick="movePlayerSprite(' + i + ', 1)" ' + (i === options.length - 1 ? 'disabled' : '') + ' title="Move down" style="background: transparent; border: none; color: ' + (i === options.length - 1 ? '#444' : '#9b59b6') + '; font-size: 14px; cursor: ' + (i === options.length - 1 ? 'default' : 'pointer') + '; padding: 2px 6px;">▼</button>' +
-            '<button onclick="removePlayerSprite(' + i + ')" title="Remove" style="background: transparent; border: none; color: #e74c3c; font-size: 14px; cursor: pointer; padding: 2px 8px;">✕</button>' +
+            '<button onclick="movePlayerSprite(' + i + ', -1)" ' + (i === 0 ? 'disabled' : '') + ' title="Move up" style="background: transparent; border: none; color: ' + (i === 0 ? 'var(--line)' : 'var(--accent)') + '; font-size: 14px; cursor: ' + (i === 0 ? 'default' : 'pointer') + '; padding: 2px 6px;">▲</button>' +
+            '<button onclick="movePlayerSprite(' + i + ', 1)" ' + (i === options.length - 1 ? 'disabled' : '') + ' title="Move down" style="background: transparent; border: none; color: ' + (i === options.length - 1 ? 'var(--line)' : 'var(--accent)') + '; font-size: 14px; cursor: ' + (i === options.length - 1 ? 'default' : 'pointer') + '; padding: 2px 6px;">▼</button>' +
+            '<button onclick="removePlayerSprite(' + i + ')" title="Remove" style="background: transparent; border: none; color: var(--danger); font-size: 14px; cursor: pointer; padding: 2px 8px;">✕</button>' +
         '</div>'
     ).join('');
     // Draw thumbnails (first "down" frame at row 0, col 0)
@@ -2682,7 +2682,7 @@ function renderCheatCodesList() {
     if (!container) return;
 
     if (cheatCodeTemplates.length === 0) {
-        container.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No cheat codes configured</div>';
+        container.innerHTML = '<div style="color: var(--text-3); text-align: center; padding: 20px;">No cheat codes configured</div>';
         return;
     }
 
@@ -2692,15 +2692,15 @@ function renderCheatCodesList() {
         const durationText = cheat.duration > 0 ? cheat.duration + 's' : 'Permanent';
 
         html += `
-            <div class="cheat-code-item" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: ${cheat.enabled ? 'rgba(46, 204, 113, 0.15)' : 'rgba(255, 255, 255, 0.05)'}; border-radius: 6px; margin-bottom: 6px; border: 1px solid ${cheat.enabled ? 'rgba(46, 204, 113, 0.3)' : 'rgba(255, 255, 255, 0.1)'};">
+            <div class="cheat-code-item" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: ${cheat.enabled ? 'rgba(52, 211, 153, 0.15)' : 'rgba(255, 255, 255, 0.05)'}; border-radius: 6px; margin-bottom: 6px; border: 1px solid ${cheat.enabled ? 'rgba(52, 211, 153, 0.3)' : 'rgba(255, 255, 255, 0.1)'};">
                 <input type="checkbox" ${cheat.enabled ? 'checked' : ''} onchange="toggleCheatCode('${cheat.id}', this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
                 <div style="flex: 1; min-width: 0;">
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <span style="font-size: 14px;">${effectInfo.icon}</span>
                         <span style="font-weight: bold; color: #fff;">${cheat.name}</span>
                     </div>
-                    <div style="font-size: 10px; color: #888; margin-top: 2px;">
-                        Code: <code style="background: #0f3460; padding: 1px 4px; border-radius: 3px; color: #e94560;">${formatCheatCodeDisplay(cheat.code)}</code>
+                    <div style="font-size: 10px; color: var(--text-3); margin-top: 2px;">
+                        Code: <code style="background: var(--line); padding: 1px 4px; border-radius: 3px; color: var(--accent);">${formatCheatCodeDisplay(cheat.code)}</code>
                         &nbsp;|&nbsp; ${durationText}
                     </div>
                 </div>

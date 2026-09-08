@@ -760,7 +760,7 @@ function updateSpawnUI() {
     if (statusEl) {
         if (sp) {
             statusEl.textContent = `Custom (${sp.x}, ${sp.y})`;
-            statusEl.style.color = '#00ff88';
+            statusEl.style.color = 'var(--success)';
         } else {
             statusEl.textContent = 'Auto-Detect';
             statusEl.style.color = '#ffaa00';

@@ -573,7 +573,7 @@ function showShareModal(url) {
                 <button class="modal-close" onclick="closeShareModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="margin-bottom: 12px; color: #aaa; font-size: 13px;">
+                <p style="margin-bottom: 12px; color: var(--text-2); font-size: 13px;">
                     Anyone with this link can preview your level:
                 </p>
                 <div style="display: flex; gap: 8px;">
@@ -584,7 +584,7 @@ function showShareModal(url) {
                     </button>
                 </div>
                 <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
-                    <button onclick="openShareUrl()" class="btn" style="padding: 8px 24px; background: linear-gradient(135deg, #e94560, #ff6b6b);">
+                    <button onclick="openShareUrl()" class="btn" style="padding: 8px 24px; background: var(--accent);">
                         Open Preview
                     </button>
                 </div>

@@ -23,7 +23,7 @@ function draw() {
     if (document.getElementById('show-bg').checked) {
         drawBackground();
     } else {
-        ctx.fillStyle = '#0d0d1a';
+        ctx.fillStyle = '#0f1115';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
@@ -187,7 +187,7 @@ function drawMenuLevelEditor(lvl) {
         }
     } else {
         // No background - dark fill
-        ctx.fillStyle = '#0d0d1a';
+        ctx.fillStyle = '#0f1115';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
@@ -212,7 +212,7 @@ function drawMenuLevelEditor(lvl) {
 
     // Draw editor overlay/help text
     ctx.font = '14px sans-serif';
-    ctx.fillStyle = 'rgba(233, 69, 96, 0.8)';
+    ctx.fillStyle = 'rgba(79, 140, 255, 0.85)';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText('Menu Level - Edit buttons in Level Settings', 10, 10);
@@ -1064,7 +1064,7 @@ function drawGrid() {
     }
 
     // Draw level boundary
-    ctx.strokeStyle = '#e94560';
+    ctx.strokeStyle = '#4f8cff';
     ctx.lineWidth = 2;
     ctx.strokeRect(levelLeft, levelTop, levelWidth * tileSize * zoom, levelHeight * tileSize * zoom);
 
@@ -1134,7 +1134,7 @@ function drawSelection() {
                         tileInfo.x, tileInfo.y, tileSize, tileSize,
                         screenX, screenY, scaledTileSize, scaledTileSize);
                 } else {
-                    ctx.fillStyle = '#667eea';
+                    ctx.fillStyle = '#4f8cff';
                     ctx.fillRect(screenX, screenY, scaledTileSize, scaledTileSize);
                 }
             }
@@ -1147,7 +1147,7 @@ function drawSelection() {
     ctx.fillRect(x1, y1, w, h);
 
     // Dashed border
-    ctx.strokeStyle = selectionMoving ? '#4ade80' : '#667eea';
+    ctx.strokeStyle = selectionMoving ? '#34d399' : '#4f8cff';
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 4]);
     ctx.strokeRect(x1, y1, w, h);
@@ -1156,7 +1156,7 @@ function drawSelection() {
     // Selection info label
     const cols = selection.x2 - selection.x1 + 1;
     const rows = selection.y2 - selection.y1 + 1;
-    ctx.fillStyle = '#667eea';
+    ctx.fillStyle = '#4f8cff';
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(cols + 'x' + rows, x1 + 4, y1 - 4);
@@ -1207,7 +1207,7 @@ function drawHoverHighlight() {
         return;
     }
 
-    ctx.strokeStyle = '#e94560';
+    ctx.strokeStyle = '#4f8cff';
     ctx.lineWidth = 2;
     ctx.strokeRect(screenX, screenY, scaledTileSize, scaledTileSize);
 

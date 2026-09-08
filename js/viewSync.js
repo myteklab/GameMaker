@@ -28,7 +28,7 @@ document.addEventListener('change', function(e) {
             const label = radio.closest('label');
             if (label) {
                 if (radio.checked) {
-                    label.style.border = '2px solid #667eea';
+                    label.style.border = '2px solid var(--accent)';
                     label.style.background = 'rgba(102, 126, 234, 0.15)';
                 } else {
                     label.style.border = '1px solid transparent';

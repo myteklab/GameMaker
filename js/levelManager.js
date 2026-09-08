@@ -20,7 +20,7 @@ function toggleBgmPreview() {
         bgmPreviewAudio.pause();
         bgmPreviewAudio.currentTime = 0;
         btn.innerHTML = '▶ Preview';
-        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        btn.style.background = 'var(--accent)';
         return;
     }
 
@@ -33,7 +33,7 @@ function toggleBgmPreview() {
 
     bgmPreviewAudio.play().then(() => {
         btn.innerHTML = '⏸ Stop';
-        btn.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+        btn.style.background = 'linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%)';
     }).catch(err => {
         showToast('Could not play audio: ' + err.message, 'error');
     });
@@ -41,7 +41,7 @@ function toggleBgmPreview() {
     // Update button when audio ends (shouldn't happen with loop, but just in case)
     bgmPreviewAudio.onended = function() {
         btn.innerHTML = '▶ Preview';
-        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        btn.style.background = 'var(--accent)';
     };
 }
 
@@ -64,7 +64,7 @@ function stopBgmPreview() {
     const btn = document.getElementById('level-settings-bgm-preview-btn');
     if (btn) {
         btn.innerHTML = '▶ Preview';
-        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        btn.style.background = 'var(--accent)';
     }
 }
 
@@ -531,7 +531,7 @@ function renderLevelPreview(lvl, canvasId) {
     const height = canvas.height;
 
     // Clear canvas with dark background
-    ctx.fillStyle = '#1a1a2e';
+    ctx.fillStyle = '#14171d';
     ctx.fillRect(0, 0, width, height);
 
     // If it's a menu level, render menu preview instead
@@ -736,15 +736,15 @@ function renderMenuLevelPreview(ctx, lvl, width, height) {
     } else {
         // No background, draw gradient
         const gradient = ctx.createLinearGradient(0, 0, 0, height);
-        gradient.addColorStop(0, '#1a1a2e');
-        gradient.addColorStop(1, '#16213e');
+        gradient.addColorStop(0, '#14171d');
+        gradient.addColorStop(1, '#1a1e26');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
         drawMenuButtonsPreview(ctx, lvl, width, height);
     }
 
     // Draw border
-    ctx.strokeStyle = '#e94560';
+    ctx.strokeStyle = '#4f8cff';
     ctx.lineWidth = 1;
     ctx.strokeRect(0, 0, width, height);
 }
@@ -776,7 +776,7 @@ function drawMenuButtonsPreview(ctx, lvl, width, height) {
     // Draw "MENU" label if no buttons
     if (buttons.length === 0) {
         ctx.font = 'bold 10px sans-serif';
-        ctx.fillStyle = '#e94560';
+        ctx.fillStyle = '#4f8cff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('MENU', width / 2, height / 2);
@@ -1402,7 +1402,7 @@ function renderMenuButtonsList() {
     const buttons = lvl.menuButtons || [];
 
     if (buttons.length === 0) {
-        container.innerHTML = '<p style="font-size: 11px; color: #666; text-align: center; padding: 10px;">No buttons yet. Add one to get started!</p>';
+        container.innerHTML = '<p style="font-size: 11px; color: var(--text-3); text-align: center; padding: 10px;">No buttons yet. Add one to get started!</p>';
         return;
     }
 
@@ -1435,7 +1435,7 @@ function renderMenuButtonsList() {
         }
 
         item.innerHTML = `
-            <div class="button-preview" style="background: ${button.style?.bgColor || '#e94560'}; border: 2px solid ${button.style?.borderColor || '#ffffff'}; border-radius: ${button.style?.borderRadius || 10}px;"></div>
+            <div class="button-preview" style="background: ${button.style?.bgColor || 'var(--accent)'}; border: 2px solid ${button.style?.borderColor || '#ffffff'}; border-radius: ${button.style?.borderRadius || 10}px;"></div>
             <div class="button-info">
                 <div class="button-text">${escapeHtml(button.text || 'Button')}</div>
                 <div class="button-action">${escapeHtml(actionLabel)}</div>

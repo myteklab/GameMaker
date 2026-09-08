@@ -25,7 +25,7 @@ function updateCursorInspector(tileX, tileY) {
     if (posEl) posEl.textContent = `(${tileX}, ${tileY})`;
     if (keyEl) keyEl.innerHTML = char === '.' ?
         '<span class="empty">. (empty)</span>' :
-        `"<span style="color: #e94560;">${char}</span>"`;
+        `"<span style="color: var(--accent);">${char}</span>"`;
 
     if (infoEl) {
         if (char === '.') {

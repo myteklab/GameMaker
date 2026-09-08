@@ -49,7 +49,7 @@ function renderBackgroundLayers() {
 
         div.innerHTML = `
             <div class="bg-layer-preview" id="${previewId}" style="width: 50px; height: 35px; min-width: 50px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
-                ${hasImage ? `<img src="${layer.src}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:10px;color:#666;\\'><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>'">` : '<span style="font-size: 10px; color: #555;">No img</span>'}
+                ${hasImage ? `<img src="${layer.src}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:10px;color:#666;\\'><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>'">` : '<span style="font-size: 10px; color: var(--text-3);">No img</span>'}
             </div>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
                 <input type="text" value="${layer.src || ''}" placeholder="Image URL..."
@@ -58,7 +58,7 @@ function renderBackgroundLayers() {
                     onblur="loadBackgroundImages()"
                     oninput="updateBgPreview(${index}, this.value);">
                 <div style="display: flex; align-items: center; gap: 6px;">
-                    <span style="font-size: 10px; color: #888;">Speed:</span>
+                    <span style="font-size: 10px; color: var(--text-3);">Speed:</span>
                     <input type="number" value="${layer.speed}" step="0.1" min="0" max="1" title="Parallax speed"
                         style="width: 60px; font-size: 11px;"
                         onchange="updateBgLayerSpeed(${index}, this.value)">
@@ -66,7 +66,7 @@ function renderBackgroundLayers() {
                         style="opacity:${layer.visible ? '1' : '0.4'}; background: none; border: none; cursor: pointer; font-size: 14px;">${layer.visible ? '👁' : '👁‍🗨'}</button>
                 </div>
             </div>
-            <button onclick="removeBgLayer(${index})" title="Remove layer" style="background: rgba(231,76,60,0.3); border: none; color: #e74c3c; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 14px;">×</button>
+            <button onclick="removeBgLayer(${index})" title="Remove layer" style="background: rgba(231,76,60,0.3); border: none; color: var(--danger); width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 14px;">×</button>
         `;
         list.appendChild(div);
     });
@@ -79,12 +79,12 @@ function updateBgPreview(index, url) {
 
     url = url.trim();
     if (!url) {
-        preview.innerHTML = '<span style="font-size: 10px; color: #555;">No img</span>';
+        preview.innerHTML = '<span style="font-size: 10px; color: var(--text-3);">No img</span>';
         return;
     }
 
     // Show loading state
-    preview.innerHTML = '<span style="font-size: 10px; color: #888;">...</span>';
+    preview.innerHTML = '<span style="font-size: 10px; color: var(--text-3);">...</span>';
 
     // Create test image
     const img = new Image();
@@ -92,7 +92,7 @@ function updateBgPreview(index, url) {
         preview.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover;">`;
     };
     img.onerror = function() {
-        preview.innerHTML = '<span style="font-size: 10px; color: #e74c3c;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>';
+        preview.innerHTML = '<span style="font-size: 10px; color: var(--danger);"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>';
     };
     img.src = url;
 }

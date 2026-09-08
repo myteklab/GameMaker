@@ -1502,7 +1502,7 @@ function renderTerrainZoneTemplatesList() {
                 <div class="template-info">
                     <div class="template-name">${template.name}</div>
                     <div class="template-details">${speedLabel} (${template.speedMultiplier}x) | ${damageLabel}</div>
-                    <div class="template-hint" style="font-size: 10px; color: #888; margin-top: 2px;">Click to select for placement</div>
+                    <div class="template-hint" style="font-size: 10px; color: var(--text-3); margin-top: 2px;">Click to select for placement</div>
                 </div>
                 <div class="template-actions" onclick="event.stopPropagation();">
                     <button class="btn btn-small" onclick="editTerrainZoneTemplate('${template.id}')">Edit</button>
@@ -2011,7 +2011,7 @@ function updatePlatformTilePreview() {
     }
 
     if (!tileKey) {
-        preview.innerHTML = '<span style="color:#888;font-size:11px;">Select a tile to preview</span>';
+        preview.innerHTML = '<span style="color:var(--text-3);font-size:11px;">Select a tile to preview</span>';
         return;
     }
 
@@ -2020,10 +2020,10 @@ function updatePlatformTilePreview() {
         const ct = customTiles[tileKey];
         if (ct.dataURL) {
             preview.innerHTML = `
-                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid #555;">
-                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid #555;">
-                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid #555;">
-                <span style="color:#888;font-size:11px;margin-left:5px;">Custom tile "${tileKey}"</span>
+                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--text-3);">
+                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--text-3);">
+                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--text-3);">
+                <span style="color:var(--text-3);font-size:11px;margin-left:5px;">Custom tile "${tileKey}"</span>
             `;
             return;
         }
@@ -2041,15 +2041,15 @@ function updatePlatformTilePreview() {
         ctx.drawImage(tilesetImage, tile.x, tile.y, 16, 16, 0, 0, 32, 32);
         const dataURL = canvas.toDataURL();
         preview.innerHTML = `
-            <img src="${dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid #555;">
-            <img src="${dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid #555;">
-            <img src="${dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid #555;">
-            <span style="color:#888;font-size:11px;margin-left:5px;">Tile "${tile.name || tileKey}"</span>
+            <img src="${dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--text-3);">
+            <img src="${dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--text-3);">
+            <img src="${dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--text-3);">
+            <span style="color:var(--text-3);font-size:11px;margin-left:5px;">Tile "${tile.name || tileKey}"</span>
         `;
         return;
     }
 
-    preview.innerHTML = '<span style="color:#f66;font-size:11px;">Tile not found</span>';
+    preview.innerHTML = '<span style="color:var(--danger);font-size:11px;">Tile not found</span>';
 }
 
 // ============================================
@@ -2104,7 +2104,7 @@ function updateObjectTilePreview(selectId, previewId) {
     const tileKey = select.value;
 
     if (!tileKey) {
-        preview.innerHTML = '<span style="color:#888;font-size:11px;">Select a tile to use as sprite</span>';
+        preview.innerHTML = '<span style="color:var(--text-3);font-size:11px;">Select a tile to use as sprite</span>';
         return;
     }
 
@@ -2113,8 +2113,8 @@ function updateObjectTilePreview(selectId, previewId) {
         const ct = customTiles[tileKey];
         if (ct.dataURL) {
             preview.innerHTML = `
-                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid #555;">
-                <span style="color:#888;font-size:11px;margin-left:5px;">Custom tile "${ct.name || tileKey}"</span>
+                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--text-3);">
+                <span style="color:var(--text-3);font-size:11px;margin-left:5px;">Custom tile "${ct.name || tileKey}"</span>
             `;
             return;
         }
@@ -2132,13 +2132,13 @@ function updateObjectTilePreview(selectId, previewId) {
         ctx.drawImage(tilesetImage, tile.x, tile.y, 16, 16, 0, 0, 32, 32);
         const dataURL = canvas.toDataURL();
         preview.innerHTML = `
-            <img src="${dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid #555;">
-            <span style="color:#888;font-size:11px;margin-left:5px;">Tile "${tile.name || tileKey}"</span>
+            <img src="${dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--text-3);">
+            <span style="color:var(--text-3);font-size:11px;margin-left:5px;">Tile "${tile.name || tileKey}"</span>
         `;
         return;
     }
 
-    preview.innerHTML = '<span style="color:#f66;font-size:11px;">Tile not found</span>';
+    preview.innerHTML = '<span style="color:var(--danger);font-size:11px;">Tile not found</span>';
 }
 
 // Populate all object tile selectors (call when tileset changes or modal opens)
@@ -2966,7 +2966,7 @@ function updateMysteryBlockEmptyTilePreview() {
     if (!preview) return;
 
     if (!tileKey) {
-        preview.innerHTML = '<span style="color:#888;font-size:11px;">Select a tile to preview what the block looks like when empty</span>';
+        preview.innerHTML = '<span style="color:var(--text-3);font-size:11px;">Select a tile to preview what the block looks like when empty</span>';
         return;
     }
 
@@ -2975,11 +2975,11 @@ function updateMysteryBlockEmptyTilePreview() {
         const ct = customTiles[tileKey];
         if (ct.dataURL) {
             preview.innerHTML = `
-                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid #555;">
-                <span style="color:#888;font-size:11px;margin-left:5px;">Custom tile "${tileKey}" - shown when block is empty</span>
+                <img src="${ct.dataURL}" style="width:32px;height:32px;image-rendering:pixelated;border:1px solid var(--text-3);">
+                <span style="color:var(--text-3);font-size:11px;margin-left:5px;">Custom tile "${tileKey}" - shown when block is empty</span>
             `;
         } else {
-            preview.innerHTML = '<span style="color:#888;font-size:11px;">Custom tile (no preview available)</span>';
+            preview.innerHTML = '<span style="color:var(--text-3);font-size:11px;">Custom tile (no preview available)</span>';
         }
         return;
     }
@@ -2991,7 +2991,7 @@ function updateMysteryBlockEmptyTilePreview() {
         const canvas = document.createElement('canvas');
         canvas.width = 32;
         canvas.height = 32;
-        canvas.style.border = '1px solid #555';
+        canvas.style.border = '1px solid var(--text-3)';
         canvas.style.imageRendering = 'pixelated';
         const ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = false;
@@ -3004,7 +3004,7 @@ function updateMysteryBlockEmptyTilePreview() {
         preview.innerHTML = '';
         preview.appendChild(canvas);
         const label = document.createElement('span');
-        label.style.cssText = 'color:#888;font-size:11px;margin-left:5px;';
+        label.style.cssText = 'color:var(--text-3);font-size:11px;margin-left:5px;';
         label.textContent = `${tileName} - shown when block is empty`;
         preview.appendChild(label);
         return;
@@ -3190,7 +3190,7 @@ function showObjectPlacementModal(type) {
     // Add "Add New" button
     html += `
         <div class="placement-item add-item" onclick="closeObjectPlacementModal(); ${addFuncs[type]}();">
-            <div class="placement-preview" style="background: linear-gradient(135deg, #667eea, #764ba2);">+</div>
+            <div class="placement-preview" style="background: var(--accent);">+</div>
             <div class="placement-name">${addLabels[type]}</div>
         </div>
     `;
@@ -3402,11 +3402,11 @@ function updateNpcSpritePreview() {
     stopNpcSpriteAnimation();
 
     if (!spriteUrl) {
-        container.innerHTML = '<span style="color: #555; font-size: 10px;">No sprite</span>';
+        container.innerHTML = '<span style="color: var(--text-3); font-size: 10px;">No sprite</span>';
         return;
     }
 
-    container.innerHTML = '<span style="color: #888; font-size: 10px;">Loading...</span>';
+    container.innerHTML = '<span style="color: var(--text-3); font-size: 10px;">Loading...</span>';
 
     var img = new Image();
     img.crossOrigin = 'anonymous';
@@ -3435,7 +3435,7 @@ function updateNpcSpritePreview() {
         // Size hint so the user can see the canvas matches their settings,
         // including a downscale note when the canvas can't fit at 1:1.
         var sizeHint = document.createElement('div');
-        sizeHint.style.cssText = 'position: absolute; top: 2px; left: 4px; font-size: 9px; color: #888;';
+        sizeHint.style.cssText = 'position: absolute; top: 2px; left: 4px; font-size: 9px; color: var(--text-3);';
         sizeHint.textContent = fitScale < 1
             ? targetW + 'x' + targetH + ' (fit)'
             : targetW + 'x' + targetH;
@@ -3444,7 +3444,7 @@ function updateNpcSpritePreview() {
         if (cols > 1) {
             var indicator = document.createElement('div');
             indicator.id = 'npc-template-sprite-frame-indicator';
-            indicator.style.cssText = 'position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: #888;';
+            indicator.style.cssText = 'position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: var(--text-3);';
             indicator.textContent = '1/' + cols;
             container.appendChild(indicator);
         }
@@ -3467,7 +3467,7 @@ function updateNpcSpritePreview() {
         }
     };
     img.onerror = function() {
-        container.innerHTML = '<span style="color: #f66; font-size: 10px;">Failed to load</span>';
+        container.innerHTML = '<span style="color: var(--danger); font-size: 10px;">Failed to load</span>';
     };
     img.src = spriteUrl;
 }
@@ -3557,11 +3557,11 @@ function updateEnemySpritePreview() {
     stopEnemySpriteAnimation();
 
     if (!spriteUrl) {
-        container.innerHTML = '<span style="color: #555; font-size: 10px;">No sprite</span>';
+        container.innerHTML = '<span style="color: var(--text-3); font-size: 10px;">No sprite</span>';
         return;
     }
 
-    container.innerHTML = '<span style="color: #888; font-size: 10px;">Loading...</span>';
+    container.innerHTML = '<span style="color: var(--text-3); font-size: 10px;">Loading...</span>';
 
     var img = new Image();
     img.crossOrigin = 'anonymous';
@@ -3586,7 +3586,7 @@ function updateEnemySpritePreview() {
         container.appendChild(canvas);
 
         var sizeHint = document.createElement('div');
-        sizeHint.style.cssText = 'position: absolute; top: 2px; left: 4px; font-size: 9px; color: #888;';
+        sizeHint.style.cssText = 'position: absolute; top: 2px; left: 4px; font-size: 9px; color: var(--text-3);';
         sizeHint.textContent = fitScale < 1
             ? targetW + 'x' + targetH + ' (fit)'
             : targetW + 'x' + targetH;
@@ -3595,7 +3595,7 @@ function updateEnemySpritePreview() {
         if (cols > 1) {
             var indicator = document.createElement('div');
             indicator.id = 'enemy-template-sprite-frame-indicator';
-            indicator.style.cssText = 'position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: #888;';
+            indicator.style.cssText = 'position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: var(--text-3);';
             indicator.textContent = '1/' + cols;
             container.appendChild(indicator);
         }
@@ -3618,7 +3618,7 @@ function updateEnemySpritePreview() {
         }
     };
     img.onerror = function() {
-        container.innerHTML = '<span style="color: #f66; font-size: 10px;">Failed to load</span>';
+        container.innerHTML = '<span style="color: var(--danger); font-size: 10px;">Failed to load</span>';
     };
     img.src = spriteUrl;
 }

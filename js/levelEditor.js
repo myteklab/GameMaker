@@ -179,12 +179,12 @@ function updateTileLayerUI() {
     const visBtn = document.getElementById('layer-btn-vis');
     if (terrainBtn && decorBtn) {
         const onTerrain = currentTileLayer === 'terrain';
-        terrainBtn.style.background = onTerrain ? '#667eea' : '#1a1a2e';
+        terrainBtn.style.background = onTerrain ? 'var(--accent)' : 'var(--bg-1)';
         terrainBtn.style.color = onTerrain ? '#fff' : '#888';
-        terrainBtn.style.borderColor = onTerrain ? '#667eea' : '#444';
-        decorBtn.style.background = !onTerrain ? '#9b59b6' : '#1a1a2e';
+        terrainBtn.style.borderColor = onTerrain ? 'var(--accent)' : 'var(--line)';
+        decorBtn.style.background = !onTerrain ? 'var(--success)' : 'var(--bg-1)';
         decorBtn.style.color = !onTerrain ? '#fff' : '#888';
-        decorBtn.style.borderColor = !onTerrain ? '#9b59b6' : '#444';
+        decorBtn.style.borderColor = !onTerrain ? 'var(--success)' : 'var(--line)';
     }
     if (visBtn) {
         visBtn.style.color = decorLayerVisible ? '#fff' : '#666';
