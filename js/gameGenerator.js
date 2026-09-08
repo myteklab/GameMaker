@@ -1665,231 +1665,275 @@ ${includeComments ? `    // ═════════════════�
         });
     }
 
-    // Extract emitter configs from effect data (handles both v1.0 and v2.0 formats)
+    // The game and ParticleFX have to draw the same file the same way, or a
+    // student watches an effect work in the designer and then not in the game.
+    // Everything from here to drawParticles mirrors apps/particlefx (particle.js
+    // and emitter.js): the same fields, the same speed and lifetime jitter,
+    // friction, rotation, the four emitter shapes and all six particle shapes.
     function extractEmitterConfigs(effectData) {
         if (!effectData) return [];
-
-        // v2.0 format with layers
+        function val(v, def) { return (v !== undefined && v !== null) ? v : def; }
+        function fromLayer(emitter, particle) {
+            return {
+                rate: val(emitter.rate, 50),
+                lifetime: val(particle.lifetime, val(emitter.lifetime, 1)),
+                speed: val(emitter.speed, 100),
+                spread: val(emitter.spread, 45),
+                gravity: val(emitter.gravity, 0),
+                angle: val(emitter.angle, -90),
+                friction: val(particle.friction, val(emitter.friction, 1)),
+                shape: val(particle.shape, 'circle'),
+                emoji: (particle.shape === 'emoji' && particle.emoji) ? particle.emoji : null,
+                sizeStart: val(particle.sizeStart, 10),
+                sizeEnd: val(particle.sizeEnd, 2),
+                colorStart: val(particle.colorStart, '#ffffff'),
+                colorEnd: val(particle.colorEnd, '#888888'),
+                opacityStart: val(particle.opacityStart, 1),
+                opacityEnd: val(particle.opacityEnd, 0),
+                blendMode: val(particle.blendMode, val(emitter.blendMode, 'source-over')),
+                emitterShape: val(emitter.emitterShape, 'point'),
+                emitterWidth: val(emitter.emitterWidth, 100),
+                emitterHeight: val(emitter.emitterHeight, 50),
+                emitterRadius: val(emitter.emitterRadius, 50),
+                emitterFilled: val(emitter.emitterFilled, true)
+            };
+        }
         if (effectData.version === '2.0' && Array.isArray(effectData.layers)) {
             return effectData.layers
                 .filter(function(layer) { return layer.visible !== false; })
-                .map(function(layer) {
-                    var emitter = layer.emitter || {};
-                    var particle = layer.particle || {};
-                    return {
-                        rate: emitter.rate || 50,
-                        lifetime: particle.lifetime || emitter.lifetime || 1,
-                        speed: emitter.speed || 100,
-                        spread: emitter.spread || 45,
-                        gravity: emitter.gravity || 0,
-                        angle: emitter.angle || -90,
-                        shape: particle.shape || 'circle',
-                        sizeStart: particle.sizeStart || 10,
-                        sizeEnd: particle.sizeEnd || 2,
-                        colorStart: particle.colorStart || '#ffffff',
-                        colorEnd: particle.colorEnd || '#888888',
-                        opacityStart: particle.opacityStart !== undefined ? particle.opacityStart : 1,
-                        opacityEnd: particle.opacityEnd !== undefined ? particle.opacityEnd : 0,
-                        blendMode: particle.blendMode || 'source-over'
-                    };
-                });
+                .map(function(layer) { return fromLayer(layer.emitter || {}, layer.particle || {}); });
         }
-
-        // v1.0/v1.1 format (single emitter)
-        var emitter = effectData.emitter || {};
-        var particle = effectData.particle || {};
-        return [{
-            rate: emitter.rate || 50,
-            lifetime: particle.lifetime || emitter.lifetime || 1,
-            speed: emitter.speed || 100,
-            spread: emitter.spread || 45,
-            gravity: emitter.gravity || 0,
-            angle: emitter.angle || -90,
-            shape: particle.shape || 'circle',
-            sizeStart: particle.sizeStart || 10,
-            sizeEnd: particle.sizeEnd || 2,
-            colorStart: particle.colorStart || '#ffffff',
-            colorEnd: particle.colorEnd || '#888888',
-            opacityStart: particle.opacityStart !== undefined ? particle.opacityStart : 1,
-            opacityEnd: particle.opacityEnd !== undefined ? particle.opacityEnd : 0,
-            blendMode: particle.blendMode || 'source-over'
-        }];
+        return [fromLayer(effectData.emitter || {}, effectData.particle || {})];
     }
 
-    // Spawn a particle emitter at position (by effect type for global effects)
-    function spawnParticleEffect(effectType, x, y, duration) {
-        if (!PARTICLE_EFFECTS_ENABLED) return;
-        var effectData = particleEffectsByType[effectType];
-        if (!effectData) return; // Effect not loaded
+    // Effects are authored with the character facing right. A dust kick that
+    // trails behind a right-running player would lead a left-running one, so
+    // the emission angle is mirrored when the firer faces left. Gravity stays
+    // screen-down, and the emitter shapes are symmetric so they need no flip.
+    function playerFacing() {
+        if (IS_TOPDOWN) return player.facingDirection || 'down';
+        return player.facingRight === false ? 'left' : 'right';
+    }
 
+    var MAX_PARTICLES_PER_EMITTER = 600;
+
+    function startEffectEmitters(effectData, x, y, duration, facing) {
         var configs = extractEmitterConfigs(effectData);
         var now = Date.now();
-
+        var flip = facing === 'left';
         configs.forEach(function(config) {
-            activeParticleEmitters.push({
-                x: x,
-                y: y,
-                rate: config.rate,
-                lifetime: config.lifetime,
-                speed: config.speed,
-                spread: config.spread,
-                gravity: config.gravity,
-                angle: config.angle,
-                shape: config.shape,
-                sizeStart: config.sizeStart,
-                sizeEnd: config.sizeEnd,
-                colorStart: config.colorStart,
-                colorEnd: config.colorEnd,
-                opacityStart: config.opacityStart,
-                opacityEnd: config.opacityEnd,
-                blendMode: config.blendMode,
-                particles: [],
-                accumulator: 0,
-                duration: duration || 500,
-                startTime: now
-            });
+            var e = {};
+            for (var k in config) e[k] = config[k];
+            e.x = x;
+            e.y = y;
+            if (flip) e.angle = 180 - config.angle;
+            e.particles = [];
+            // Seeded so the first particle appears on the frame the effect
+            // fires. Before this a rate under about 7/s never produced one
+            // inside the short trigger window and the effect looked broken.
+            e.accumulator = 1;
+            // A trigger runs for at least one particle lifetime. That is the
+            // moment the effect has as many particles alive as the designer
+            // shows at steady state, so a jump puff looks like the preview did.
+            e.duration = Math.max(duration || 500, config.lifetime * 1000);
+            e.startTime = now;
+            activeParticleEmitters.push(e);
         });
     }
 
+    // Spawn a particle emitter at position (by effect type for global effects)
+    function spawnParticleEffect(effectType, x, y, duration, facing) {
+        if (!PARTICLE_EFFECTS_ENABLED) return;
+        var effectData = particleEffectsByType[effectType];
+        if (!effectData) return; // Effect not loaded
+        startEffectEmitters(effectData, x, y, duration, facing);
+    }
+
     // Spawn a particle effect from a URL (for per-template effects)
-    function spawnParticleEffectFromURL(url, x, y, duration) {
+    function spawnParticleEffectFromURL(url, x, y, duration, facing) {
         if (!PARTICLE_EFFECTS_ENABLED || !url) return;
         var effectData = particleEffectsData[url];
         if (!effectData) {
-            // Try with converted pfx: URL
             var convertedUrl = convertPfxToUrl(url);
             effectData = particleEffectsData[convertedUrl];
         }
         if (!effectData) {
-            // Try with full URL
             var fullUrl = url.startsWith('http') ? url : PLATFORM_BASE_URL + url;
             effectData = particleEffectsData[fullUrl];
         }
         if (!effectData) return; // Effect not loaded
+        startEffectEmitters(effectData, x, y, duration, facing);
+    }
 
-        var configs = extractEmitterConfigs(effectData);
-        var now = Date.now();
+    function emitterSpawnPoint(e) {
+        var sx = e.x, sy = e.y;
+        switch (e.emitterShape) {
+            case 'line':
+                sx += (Math.random() - 0.5) * e.emitterWidth;
+                break;
+            case 'circle':
+                var a = Math.random() * Math.PI * 2;
+                var r = e.emitterFilled ? Math.sqrt(Math.random()) * e.emitterRadius : e.emitterRadius;
+                sx += Math.cos(a) * r;
+                sy += Math.sin(a) * r;
+                break;
+            case 'rectangle':
+                sx += (Math.random() - 0.5) * e.emitterWidth;
+                sy += (Math.random() - 0.5) * e.emitterHeight;
+                break;
+        }
+        return { x: sx, y: sy };
+    }
 
-        configs.forEach(function(config) {
-            activeParticleEmitters.push({
-                x: x,
-                y: y,
-                rate: config.rate,
-                lifetime: config.lifetime,
-                speed: config.speed,
-                spread: config.spread,
-                gravity: config.gravity,
-                angle: config.angle,
-                shape: config.shape,
-                sizeStart: config.sizeStart,
-                sizeEnd: config.sizeEnd,
-                colorStart: config.colorStart,
-                colorEnd: config.colorEnd,
-                opacityStart: config.opacityStart,
-                opacityEnd: config.opacityEnd,
-                blendMode: config.blendMode,
-                particles: [],
-                accumulator: 0,
-                duration: duration || 500,
-                startTime: now
-            });
-        });
+    function makeParticle(e, x, y) {
+        var angleRad = (e.angle + (Math.random() - 0.5) * e.spread) * Math.PI / 180;
+        var speed = e.speed * (0.7 + Math.random() * 0.6);
+        return {
+            x: x,
+            y: y,
+            vx: Math.cos(angleRad) * speed,
+            vy: Math.sin(angleRad) * speed,
+            age: 0,
+            lifetime: e.lifetime * (0.8 + Math.random() * 0.4),
+            rotation: Math.random() * Math.PI * 2,
+            rotationSpeed: e.shape === 'emoji' ? (Math.random() - 0.5) : (Math.random() - 0.5) * 4
+        };
+    }
+
+    function stepParticle(p, e, dt) {
+        p.age += dt;
+        p.vy += e.gravity * dt;
+        if (e.friction < 1) {
+            var f = Math.pow(e.friction, dt * 60); // same frame-rate independent damping as the designer
+            p.vx *= f;
+            p.vy *= f;
+        }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rotation += p.rotationSpeed * dt;
+        return p.age < p.lifetime;
     }
 
     // Update all active particle emitters
     function updateParticles(dt) {
         if (!PARTICLE_EFFECTS_ENABLED) return;
         var now = Date.now();
-
         var liveEmitters = 0;
-        for (var e = 0; e < activeParticleEmitters.length; e++) {
-            var emitter = activeParticleEmitters[e];
-            var elapsed = now - emitter.startTime;
-
-            // Spawn new particles if emitter still active
-            if (elapsed < emitter.duration) {
-                emitter.accumulator += emitter.rate * dt;
-                while (emitter.accumulator >= 1) {
-                    var angleRad = (emitter.angle + (Math.random() - 0.5) * emitter.spread) * Math.PI / 180;
-                    var speed = emitter.speed * (0.8 + Math.random() * 0.4);
-                    emitter.particles.push({
-                        x: emitter.x,
-                        y: emitter.y,
-                        vx: Math.cos(angleRad) * speed,
-                        vy: Math.sin(angleRad) * speed,
-                        age: 0,
-                        lifetime: emitter.lifetime * (0.8 + Math.random() * 0.4)
-                    });
-                    emitter.accumulator -= 1;
+        for (var i = 0; i < activeParticleEmitters.length; i++) {
+            var e = activeParticleEmitters[i];
+            var elapsed = now - e.startTime;
+            if (elapsed < e.duration) {
+                e.accumulator += e.rate * dt;
+                while (e.accumulator >= 1 && e.particles.length < MAX_PARTICLES_PER_EMITTER) {
+                    var pt = emitterSpawnPoint(e);
+                    e.particles.push(makeParticle(e, pt.x, pt.y));
+                    e.accumulator -= 1;
                 }
+                if (e.accumulator >= 1) e.accumulator = 0; // at the cap, drop the backlog instead of bursting later
             }
-
-            // Update particles (compact in-place instead of splice)
             var alive = 0;
-            for (var p = 0; p < emitter.particles.length; p++) {
-                var particle = emitter.particles[p];
-                particle.age += dt;
-                particle.vy += emitter.gravity * dt;
-                particle.x += particle.vx * dt;
-                particle.y += particle.vy * dt;
-
-                if (particle.age < particle.lifetime) {
-                    emitter.particles[alive++] = particle;
-                }
+            for (var p = 0; p < e.particles.length; p++) {
+                if (stepParticle(e.particles[p], e, dt)) e.particles[alive++] = e.particles[p];
             }
-            emitter.particles.length = alive;
-
-            // Keep emitter if still active or has particles
-            if (elapsed < emitter.duration || emitter.particles.length > 0) {
-                activeParticleEmitters[liveEmitters++] = emitter;
-            }
+            e.particles.length = alive;
+            if (elapsed < e.duration || alive > 0) activeParticleEmitters[liveEmitters++] = e;
         }
         activeParticleEmitters.length = liveEmitters;
+    }
+
+    function drawParticleShape(shape, emoji, size) {
+        var half = size / 2;
+        switch (shape) {
+            case 'square':
+                ctx.fillRect(-half, -half, size, size);
+                break;
+            case 'star':
+                drawStarPath(0, 0, 5, half, half * 0.4);
+                ctx.fill();
+                break;
+            case 'spark':
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, -half);
+                ctx.lineTo(0, half);
+                ctx.stroke();
+                break;
+            case 'snowflake':
+                drawSnowflakeStrokes(half);
+                break;
+            case 'emoji':
+                if (emoji) {
+                    ctx.font = size + 'px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(emoji, 0, 0);
+                }
+                break;
+            default:
+                ctx.beginPath();
+                ctx.arc(0, 0, half, 0, Math.PI * 2);
+                ctx.fill();
+        }
+    }
+
+    function drawParticleAt(e, p, drawX, drawY) {
+        var t = Math.min(p.age / p.lifetime, 1);
+        var size = e.sizeStart + (e.sizeEnd - e.sizeStart) * t;
+        var color = lerpColor(e.colorStart, e.colorEnd, t);
+        ctx.save();
+        ctx.globalAlpha = e.opacityStart + (e.opacityEnd - e.opacityStart) * t;
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        ctx.translate(drawX, drawY);
+        ctx.rotate(p.rotation);
+        drawParticleShape(e.shape, e.emoji, size);
+        ctx.restore();
+    }
+
+    function drawStarPath(cx, cy, spikes, outerRadius, innerRadius) {
+        var rot = Math.PI / 2 * 3;
+        var step = Math.PI / spikes;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - outerRadius);
+        for (var i = 0; i < spikes; i++) {
+            ctx.lineTo(cx + Math.cos(rot) * outerRadius, cy + Math.sin(rot) * outerRadius);
+            rot += step;
+            ctx.lineTo(cx + Math.cos(rot) * innerRadius, cy + Math.sin(rot) * innerRadius);
+            rot += step;
+        }
+        ctx.lineTo(cx, cy - outerRadius);
+        ctx.closePath();
+    }
+
+    function drawSnowflakeStrokes(size) {
+        ctx.lineWidth = 1.5;
+        for (var i = 0; i < 6; i++) {
+            ctx.save();
+            ctx.rotate(i * Math.PI / 3);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -size);
+            ctx.moveTo(0, -size * 0.6);
+            ctx.lineTo(-size * 0.3, -size * 0.8);
+            ctx.moveTo(0, -size * 0.6);
+            ctx.lineTo(size * 0.3, -size * 0.8);
+            ctx.stroke();
+            ctx.restore();
+        }
     }
 
     // Draw all active particles
     function drawParticles() {
         if (!PARTICLE_EFFECTS_ENABLED) return;
-
-        for (var e = 0; e < activeParticleEmitters.length; e++) {
-            var emitter = activeParticleEmitters[e];
-
-            // Apply blend mode for this emitter's particles
+        for (var i = 0; i < activeParticleEmitters.length; i++) {
+            var e = activeParticleEmitters[i];
+            if (e.particles.length === 0) continue;
             ctx.save();
-            if (emitter.blendMode && emitter.blendMode !== 'source-over') {
-                ctx.globalCompositeOperation = emitter.blendMode;
+            if (e.blendMode && e.blendMode !== 'source-over') ctx.globalCompositeOperation = e.blendMode;
+            for (var p = 0; p < e.particles.length; p++) {
+                var pt = e.particles[p];
+                drawParticleAt(e, pt, pt.x - cameraX, pt.y - cameraY);
             }
-
-            for (var p = 0; p < emitter.particles.length; p++) {
-                var particle = emitter.particles[p];
-                var t = particle.age / particle.lifetime; // 0 to 1
-
-                // Interpolate size
-                var size = emitter.sizeStart + (emitter.sizeEnd - emitter.sizeStart) * t;
-
-                // Interpolate opacity
-                var opacity = emitter.opacityStart + (emitter.opacityEnd - emitter.opacityStart) * t;
-
-                // Interpolate color
-                var color = lerpColor(emitter.colorStart, emitter.colorEnd, t);
-
-                ctx.globalAlpha = opacity;
-                ctx.fillStyle = color;
-
-                // Draw relative to camera
-                var drawX = particle.x - cameraX;
-                var drawY = particle.y - cameraY;
-
-                // Draw shape
-                if (emitter.shape === 'square') {
-                    ctx.fillRect(drawX - size/2, drawY - size/2, size, size);
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(drawX, drawY, size/2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-
             ctx.restore();
         }
     }
@@ -1954,221 +1998,78 @@ ${includeComments ? `    // ═════════════════�
             });
     }
 
-    // Set up the background emitter from loaded effect data
+    // Set up the background emitters from loaded effect data. Layered (v2.0)
+    // files used to fall through to defaults here and come out as white dots,
+    // so each visible layer is now its own emitter, sharing the particle code
+    // the triggered effects use.
     function setupBackgroundEmitter(effectData) {
-        var emitter = effectData.emitter || {};
-        var particle = effectData.particle || {};
+        backgroundParticleEmitter = null;
+        backgroundParticles = [];
+        var configs = extractEmitterConfigs(effectData);
+        if (configs.length === 0) return;
+        backgroundParticleEmitter = configs.map(function(config) {
+            var e = {};
+            for (var k in config) e[k] = config[k];
+            e.particles = [];
+            e.accumulator = 0;
+            return e;
+        });
+    }
 
-        // Helper to get value with proper default (handles 0 correctly)
-        function val(v, def) {
-            return (v !== undefined && v !== null) ? v : def;
+    // Where a weather layer enters the screen. The designer emits from a
+    // point; a level-wide effect has to come from an edge instead, picked
+    // from the direction the particles travel unless the level says.
+    function backgroundSpawnPoint(e) {
+        var spawnMode = backgroundParticleSpawnMode;
+        if (spawnMode === 'auto') {
+            var effectiveVy = Math.sin(e.angle * Math.PI / 180) * e.speed + e.gravity;
+            spawnMode = effectiveVy > 10 ? 'top' : (effectiveVy < -10 ? 'bottom' : 'full');
         }
-
-        backgroundParticleEmitter = {
-            rate: val(emitter.rate, 30),
-            lifetime: val(particle.lifetime, val(emitter.lifetime, 2)),
-            speed: val(emitter.speed, 50),
-            spread: val(emitter.spread, 30),
-            gravity: val(emitter.gravity, 0),
-            angle: val(emitter.angle, 90),
-            shape: val(particle.shape, 'circle'),
-            // Only use emoji if shape is 'emoji' and emoji value exists
-            emoji: (particle.shape === 'emoji' && particle.emoji) ? particle.emoji : null,
-            sizeStart: val(particle.sizeStart, 6),
-            sizeEnd: val(particle.sizeEnd, 4),
-            colorStart: val(particle.colorStart, '#ffffff'),
-            colorEnd: val(particle.colorEnd, '#cccccc'),
-            opacityStart: val(particle.opacityStart, 1),
-            opacityEnd: val(particle.opacityEnd, 0),
-            accumulator: 0
-        };
+        var x = Math.random() * (CANVAS_WIDTH + 100) - 50;
+        switch (spawnMode) {
+            case 'top': return { x: x, y: -20 };
+            case 'bottom': return { x: x, y: CANVAS_HEIGHT + 20 };
+            default: return { x: x, y: Math.random() * (CANVAS_HEIGHT + 100) - 50 };
+        }
     }
 
     // Update background particles (call every frame)
     function updateBackgroundParticles(dt) {
         if (!backgroundParticleEmitter) return;
-
-        var emitter = backgroundParticleEmitter;
-
-        // Determine spawn position based on spawn mode or auto-detect
-        var spawnMode = backgroundParticleSpawnMode;
-
-        if (spawnMode === 'auto') {
-            // Auto-detect based on particle direction
-            var angleRad = emitter.angle * Math.PI / 180;
-            var baseVy = Math.sin(angleRad) * emitter.speed;
-            var effectiveVy = baseVy + emitter.gravity;
-
-            if (effectiveVy > 10) {
-                spawnMode = 'top';
-            } else if (effectiveVy < -10) {
-                spawnMode = 'bottom';
-            } else {
-                spawnMode = 'full';
+        for (var i = 0; i < backgroundParticleEmitter.length; i++) {
+            var e = backgroundParticleEmitter[i];
+            e.accumulator += e.rate * dt;
+            while (e.accumulator >= 1 && e.particles.length < MAX_PARTICLES_PER_EMITTER) {
+                var sp = backgroundSpawnPoint(e);
+                e.particles.push(makeParticle(e, sp.x, sp.y));
+                e.accumulator -= 1;
             }
-        }
-
-        // Spawn new particles
-        emitter.accumulator += emitter.rate * dt;
-        while (emitter.accumulator >= 1) {
-            var particleAngleRad = (emitter.angle + (Math.random() - 0.5) * emitter.spread) * Math.PI / 180;
-            var speed = emitter.speed * (0.7 + Math.random() * 0.6);
-
-            var spawnX, spawnY;
-
-            switch (spawnMode) {
-                case 'top':
-                    // Spawn at top - for rain, snow
-                    spawnX = Math.random() * (CANVAS_WIDTH + 100) - 50;
-                    spawnY = -20;
-                    break;
-                case 'bottom':
-                    // Spawn at bottom - for smoke, embers
-                    spawnX = Math.random() * (CANVAS_WIDTH + 100) - 50;
-                    spawnY = CANVAS_HEIGHT + 20;
-                    break;
-                case 'full':
-                default:
-                    // Spawn across entire screen - for fog, dust
-                    spawnX = Math.random() * (CANVAS_WIDTH + 100) - 50;
-                    spawnY = Math.random() * (CANVAS_HEIGHT + 100) - 50;
-                    break;
+            if (e.accumulator >= 1) e.accumulator = 0;
+            var alive = 0;
+            for (var p = 0; p < e.particles.length; p++) {
+                var pt = e.particles[p];
+                if (stepParticle(pt, e, dt) &&
+                    pt.y <= CANVAS_HEIGHT + 50 && pt.y >= -50 &&
+                    pt.x <= CANVAS_WIDTH + 50 && pt.x >= -50) {
+                    e.particles[alive++] = pt;
+                }
             }
-
-            backgroundParticles.push({
-                x: spawnX,
-                y: spawnY,
-                vx: Math.cos(particleAngleRad) * speed,
-                vy: Math.sin(particleAngleRad) * speed,
-                age: 0,
-                lifetime: emitter.lifetime * (0.7 + Math.random() * 0.6)
-            });
-            emitter.accumulator -= 1;
+            e.particles.length = alive;
         }
-
-        // Update existing particles (compact in-place instead of splice)
-        var bgAlive = 0;
-        for (var p = 0; p < backgroundParticles.length; p++) {
-            var particle = backgroundParticles[p];
-            particle.age += dt;
-            particle.vy += emitter.gravity * dt;
-            particle.x += particle.vx * dt;
-            particle.y += particle.vy * dt;
-
-            // Keep if alive and on screen
-            if (particle.age < particle.lifetime &&
-                particle.y <= CANVAS_HEIGHT + 50 &&
-                particle.y >= -50 &&
-                particle.x <= CANVAS_WIDTH + 50 &&
-                particle.x >= -50) {
-                backgroundParticles[bgAlive++] = particle;
-            }
-        }
-        backgroundParticles.length = bgAlive;
     }
 
     // Draw background particles (call before other game elements)
     function drawBackgroundParticles() {
-        if (!backgroundParticleEmitter || backgroundParticles.length === 0) return;
-
-        var emitter = backgroundParticleEmitter;
-
-        for (var p = 0; p < backgroundParticles.length; p++) {
-            var particle = backgroundParticles[p];
-            var t = particle.age / particle.lifetime;
-
-            var size = emitter.sizeStart + (emitter.sizeEnd - emitter.sizeStart) * t;
-            var opacity = emitter.opacityStart + (emitter.opacityEnd - emitter.opacityStart) * t;
-            var color = lerpColor(emitter.colorStart, emitter.colorEnd, t);
-
+        if (!backgroundParticleEmitter) return;
+        for (var i = 0; i < backgroundParticleEmitter.length; i++) {
+            var e = backgroundParticleEmitter[i];
+            if (e.particles.length === 0) continue;
             ctx.save();
-            ctx.globalAlpha = opacity;
-            ctx.fillStyle = color;
-
-            switch (emitter.shape) {
-                case 'emoji':
-                    if (emitter.emoji) {
-                        ctx.font = size + 'px Arial, sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(emitter.emoji, particle.x, particle.y);
-                    }
-                    break;
-
-                case 'square':
-                    ctx.fillRect(particle.x - size/2, particle.y - size/2, size, size);
-                    break;
-
-                case 'star':
-                    drawBgStar(ctx, particle.x, particle.y, 5, size/2, size/2 * 0.4);
-                    break;
-
-                case 'spark':
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(particle.x, particle.y - size/2);
-                    ctx.lineTo(particle.x, particle.y + size/2);
-                    ctx.stroke();
-                    break;
-
-                case 'snowflake':
-                    drawBgSnowflake(ctx, particle.x, particle.y, size/2, color);
-                    break;
-
-                case 'circle':
-                default:
-                    ctx.beginPath();
-                    ctx.arc(particle.x, particle.y, size/2, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
+            if (e.blendMode && e.blendMode !== 'source-over') ctx.globalCompositeOperation = e.blendMode;
+            for (var p = 0; p < e.particles.length; p++) {
+                var pt = e.particles[p];
+                drawParticleAt(e, pt, pt.x, pt.y);
             }
-
-            ctx.restore();
-        }
-    }
-
-    // Helper to draw star shape for background particles
-    function drawBgStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
-        var rot = Math.PI / 2 * 3;
-        var step = Math.PI / spikes;
-
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - outerRadius);
-        for (var i = 0; i < spikes; i++) {
-            var x = cx + Math.cos(rot) * outerRadius;
-            var y = cy + Math.sin(rot) * outerRadius;
-            ctx.lineTo(x, y);
-            rot += step;
-
-            x = cx + Math.cos(rot) * innerRadius;
-            y = cy + Math.sin(rot) * innerRadius;
-            ctx.lineTo(x, y);
-            rot += step;
-        }
-        ctx.lineTo(cx, cy - outerRadius);
-        ctx.closePath();
-        ctx.fill();
-    }
-
-    // Helper to draw snowflake shape for background particles
-    function drawBgSnowflake(ctx, cx, cy, size, color) {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
-
-        for (var i = 0; i < 6; i++) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.rotate(i * Math.PI / 3);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(0, -size);
-            // Small branches
-            ctx.moveTo(0, -size * 0.6);
-            ctx.lineTo(-size * 0.3, -size * 0.8);
-            ctx.moveTo(0, -size * 0.6);
-            ctx.lineTo(size * 0.3, -size * 0.8);
-            ctx.stroke();
             ctx.restore();
         }
     }
@@ -5572,7 +5473,7 @@ ${includeComments ? `    // ═════════════════�
         triggerScreenShake(8, 15); // Strong shake (~0.25s at 60fps)
         triggerHitPause(); // Freeze frame for impact
         vibrate(150); // 150ms vibration
-        spawnParticleEffect('playerDamage', player.x + player.width/2, player.y + player.height/2, 400);
+        spawnParticleEffect('playerDamage', player.x + player.width/2, player.y + player.height/2, 400, playerFacing());
 
         if (lives <= 0) {
             // In multiplayer, death is not a session-ending event. Show a
@@ -6055,7 +5956,7 @@ ${includeComments ? `            // ──────────────�
                         player.platformGraceFrames = 0; // Use up platform grace
                         playSound('jump');
                         // Dust particle effect on jump
-                        spawnParticleEffect('playerJump', player.x + player.width/2, player.y + player.height, 150);
+                        spawnParticleEffect('playerJump', player.x + player.width/2, player.y + player.height, 150, playerFacing());
                         // Stretch effect on jump
                         if (SQUASH_STRETCH_ENABLED) {
                             player.scaleX = applySquashStretch(0.3, false);
@@ -7496,7 +7397,7 @@ ${includeComments ? `        // ────────────────
                 // Particle effect on enemy death (per-template)
                 var enemyTemplate = enemyTemplates.find(function(t) { return t.id === obj.templateId; });
                 if (enemyTemplate && enemyTemplate.particleEffect) {
-                    spawnParticleEffectFromURL(enemyTemplate.particleEffect, obj.x + obj.width/2, obj.y + obj.height/2, 300);
+                    spawnParticleEffectFromURL(enemyTemplate.particleEffect, obj.x + obj.width/2, obj.y + obj.height/2, 300, obj.direction < 0 ? 'left' : 'right');
                 }
                 // Stretch on stomp bounce
                 if (SQUASH_STRETCH_ENABLED) {
@@ -8070,7 +7971,7 @@ ${includeComments ? `        // ────────────────
                         if (SOUND_PROJECTILE_HIT) playSound(SOUND_PROJECTILE_HIT);
                         var hitEnemyTemplate = enemyTemplates.find(function(t) { return t.id === obj.templateId; });
                         if (hitEnemyTemplate && hitEnemyTemplate.particleEffect) {
-                            spawnParticleEffectFromURL(hitEnemyTemplate.particleEffect, obj.x + obj.width/2, obj.y + obj.height/2, 300);
+                            spawnParticleEffectFromURL(hitEnemyTemplate.particleEffect, obj.x + obj.width/2, obj.y + obj.height/2, 300, obj.direction < 0 ? 'left' : 'right');
                         }
                         if (goalCondition === 'score' && checkGoalCondition()) {
                             handleLevelComplete();
