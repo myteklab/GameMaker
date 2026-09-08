@@ -3612,7 +3612,7 @@
 
 <!-- Pixel Editor Help Modal -->
 <div class="template-editor" id="pixel-editor-help-modal" style="z-index: 10001;">
-    <div class="template-editor-content" style="width: 450px; max-height: 80vh; overflow-y: auto;">
+    <div class="template-editor-content" style="width: min(820px, 92vw); max-height: 80vh; overflow-y: auto;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
             <h3 id="pixel-help-title" style="margin: 0;">Help</h3>
             <button class="pixel-tool-btn" onclick="closePixelEditorHelp()" title="Close">&times;</button>
@@ -4297,7 +4297,7 @@
 
 <!-- Player Properties Modal -->
 <div class="modal-overlay template-modal" id="player-properties-modal" onclick="if(event.target === this) closePlayerPropertiesModal()">
-    <div class="modal template-editor-modal" style="max-width: 700px; max-height: 85vh; display: flex; flex-direction: column;">
+    <div class="modal template-editor-modal" style="max-width: 1040px; width: min(1040px, 94vw); max-height: 85vh; display: flex; flex-direction: column;">
         <div class="modal-header" style="flex-shrink: 0;">
             <h2><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Player Properties</h2>
             <button class="modal-close-btn" onclick="closePlayerPropertiesModal()">&times;</button>
@@ -4382,7 +4382,10 @@
                 <!-- Appearance Section -->
                 <div class="player-section" id="player-section-appearance">
                     <h3 style="color: var(--accent); font-size: 14px; margin: 0 0 12px 0;">Appearance <span class="help-icon" onclick="showHelp('playerSprite')">?</span></h3>
-                    <div class="form-row">
+                    <div class="pp-grid">
+<div class="pp-col">
+<div class="pp-block"><div class="pp-subhead">Look</div>
+<div class="form-row">
                         <div class="form-group" style="flex: 0.3;">
                             <label>Color</label>
                             <input type="color" id="setting-color" value="#ff6b6b" style="width: 100%; height: 36px;" onchange="updateGameSetting('playerColor', this.value); updateCollisionPreview();">
@@ -4396,6 +4399,101 @@
                             <input type="number" id="setting-player-height" value="32" min="8" max="128" oninput="updateGameSetting('playerHeight', this.value); updatePlayerSizeSummary(); updateCollisionPreview();">
                         </div>
                     </div>
+</div>
+<div class="pp-block"><div class="pp-subhead">Sprite</div>
+                    <!-- Custom Tile Selector for Player -->
+                    <div class="form-group">
+                        <label>Use Custom Tile (optional)</label>
+                        <select id="setting-player-custom-tile" onchange="selectPlayerCustomTile(this.value)" style="width: 100%;">
+                            <option value="">-- None (use sprite URL or color) --</option>
+                        </select>
+                        <div id="player-custom-tile-preview" style="margin-top:4px;height:24px;display:flex;align-items:center;gap:5px;">
+                            <span style="color:var(--text-3);font-size:10px;">Select a custom tile to use as player sprite</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sprite URL (optional) <span class="help-icon" onclick="showHelp('playerSprite')">?</span></label>
+                        <div style="display: flex; gap: 4px;">
+                            <input type="text" id="setting-sprite-url" placeholder="https://example.com/player.png"
+                                onchange="updateGameSetting('playerSpriteURL', this.value); updatePlayerSpritePreview(); clearPlayerCustomTileSelection();"
+                                onkeydown="if(event.key==='Enter'){ this.blur(); updatePlayerSpritePreview(); }" style="flex: 1;">
+                            <button type="button" class="browse-library-btn" onclick="openAssetPicker('setting-sprite-url', 'sprites')" style="padding: 4px 8px;">Browse</button>
+                        </div>
+                        <small style="color: var(--text-3); font-size: 9px;">Overrides color with animated sprite sheet</small>
+                    </div>
+                    <div class="form-row" style="align-items: flex-start;">
+                        <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                            <label>Cols</label>
+                            <input type="number" id="setting-sprite-cols" value="1" min="1" max="32" style="width: 60px;"
+                                oninput="updateGameSetting('playerSpritesheetCols', this.value); updatePlayerSpritePreview(); updateCollisionPreview();"
+                                title="Frames per row">
+                        </div>
+                        <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                            <label>Rows</label>
+                            <input type="number" id="setting-sprite-rows" value="1" min="1" max="16" style="width: 60px;"
+                                oninput="updateGameSetting('playerSpritesheetRows', this.value); updatePlayerSpritePreview(); updateCollisionPreview();"
+                                title="Number of rows (4 for directional: down/left/right/up)">
+                        </div>
+                        <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                            <label>Speed (fps)</label>
+                            <input type="number" id="setting-sprite-fps" value="8" min="1" max="30" style="width: 60px;"
+                                oninput="updateGameSetting('playerAnimFps', this.value); updatePlayerSpritePreview();"
+                                title="Walk animation frames per second">
+                        </div>
+                        <div class="form-group" style="flex: 0.5;">
+                            <label>Preview</label>
+                            <div id="player-sprite-preview" style="
+                                width: 80px;
+                                height: 80px;
+                                background: rgba(0,0,0,0.3);
+                                border: 1px solid rgba(255,255,255,0.1);
+                                border-radius: 6px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                overflow: hidden;
+                                position: relative;
+                            ">
+                                <span style="color: var(--text-3); font-size: 10px;">No sprite</span>
+                            </div>
+                        </div>
+                    </div>
+                    <small style="color: var(--text-3); font-size: 9px; display: block; margin: -4px 0 8px;">Speed is walk frames per second: 6 is a stroll, 8 a walk, 12 a run.</small>
+                    <!-- Frame Editor (hidden by default) -->
+                    <div id="frame-editor-section" style="display: none; margin-top: 8px;">
+                        <button type="button" id="edit-frames-btn" onclick="toggleFrameEditor()"
+                            class="btn btn-small" style="width: 100%; font-size: 10px;">
+                            Edit Frames
+                        </button>
+                        <div id="frame-editor-panel" style="display: none; margin-top: 8px;
+                            background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-size: 10px; color: var(--text-2);">Click frames in animation order:</span>
+                                <button type="button" onclick="clearFrameSelection()" class="btn btn-small"
+                                    style="font-size: 9px; padding: 2px 6px;">Clear</button>
+                            </div>
+                            <div id="frame-editor-grid" class="frame-editor-grid"></div>
+                            <div id="frame-editor-sequence" style="margin-top: 6px; font-size: 10px; color: var(--text-3);">
+                                No frames selected
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                <div id="frame-editor-preview" style="width: 64px; height: 64px;
+                                    background: rgba(0,0,0,0.3); border-radius: 4px; display: flex;
+                                    align-items: center; justify-content: center; overflow: hidden;">
+                                    <span style="color: var(--text-3); font-size: 9px;">Preview</span>
+                                </div>
+                                <button type="button" id="apply-frames-btn" onclick="applyFrameSelection()"
+                                    disabled class="btn btn-small"
+                                    style="flex: 1; padding: 6px; font-size: 11px; background: var(--success); color: #0b1a12;">
+                                    Apply Selection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+</div>
+</div>
+<div class="pp-col">
+<div class="pp-block"><div class="pp-subhead">Hitbox</div>
                     <!-- Collision Size -->
                     <div class="form-row" style="margin-top: 8px;">
                         <div class="form-group" style="flex: 0.3;">
@@ -4455,95 +4553,8 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Custom Tile Selector for Player -->
-                    <div class="form-group">
-                        <label>Use Custom Tile (optional)</label>
-                        <select id="setting-player-custom-tile" onchange="selectPlayerCustomTile(this.value)" style="width: 100%;">
-                            <option value="">-- None (use sprite URL or color) --</option>
-                        </select>
-                        <div id="player-custom-tile-preview" style="margin-top:4px;height:24px;display:flex;align-items:center;gap:5px;">
-                            <span style="color:var(--text-3);font-size:10px;">Select a custom tile to use as player sprite</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Sprite URL (optional) <span class="help-icon" onclick="showHelp('playerSprite')">?</span></label>
-                        <div style="display: flex; gap: 4px;">
-                            <input type="text" id="setting-sprite-url" placeholder="https://example.com/player.png"
-                                onchange="updateGameSetting('playerSpriteURL', this.value); updatePlayerSpritePreview(); clearPlayerCustomTileSelection();"
-                                onkeydown="if(event.key==='Enter'){ this.blur(); updatePlayerSpritePreview(); }" style="flex: 1;">
-                            <button type="button" class="browse-library-btn" onclick="openAssetPicker('setting-sprite-url', 'sprites')" style="padding: 4px 8px;">Browse</button>
-                        </div>
-                        <small style="color: var(--text-3); font-size: 9px;">Overrides color with animated sprite sheet</small>
-                    </div>
-                    <div class="form-row" style="align-items: flex-start;">
-                        <div class="form-group" style="flex: 0.4; min-width: 60px;">
-                            <label>Cols</label>
-                            <input type="number" id="setting-sprite-cols" value="1" min="1" max="32" style="width: 60px;"
-                                oninput="updateGameSetting('playerSpritesheetCols', this.value); updatePlayerSpritePreview(); updateCollisionPreview();"
-                                title="Frames per row">
-                        </div>
-                        <div class="form-group" style="flex: 0.4; min-width: 60px;">
-                            <label>Rows</label>
-                            <input type="number" id="setting-sprite-rows" value="1" min="1" max="16" style="width: 60px;"
-                                oninput="updateGameSetting('playerSpritesheetRows', this.value); updatePlayerSpritePreview(); updateCollisionPreview();"
-                                title="Number of rows (4 for directional: down/left/right/up)">
-                        </div>
-                        <div class="form-group" style="flex: 0.4; min-width: 60px;">
-                            <label>Speed (fps)</label>
-                            <input type="number" id="setting-sprite-fps" value="8" min="1" max="30" style="width: 60px;"
-                                oninput="updateGameSetting('playerAnimFps', this.value); updatePlayerSpritePreview();"
-                                title="Walk animation frames per second">
-                            <small style="color: var(--text-3); font-size: 9px;">frames per second: 6 = stroll, 8 = walk, 12 = run</small>
-                        </div>
-                        <div class="form-group" style="flex: 0.5;">
-                            <label>Preview</label>
-                            <div id="player-sprite-preview" style="
-                                width: 80px;
-                                height: 80px;
-                                background: rgba(0,0,0,0.3);
-                                border: 1px solid rgba(255,255,255,0.1);
-                                border-radius: 6px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                overflow: hidden;
-                                position: relative;
-                            ">
-                                <span style="color: var(--text-3); font-size: 10px;">No sprite</span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Frame Editor (hidden by default) -->
-                    <div id="frame-editor-section" style="display: none; margin-top: 8px;">
-                        <button type="button" id="edit-frames-btn" onclick="toggleFrameEditor()"
-                            class="btn-small" style="width: 100%; font-size: 10px;">
-                            Edit Frames
-                        </button>
-                        <div id="frame-editor-panel" style="display: none; margin-top: 8px;
-                            background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                <span style="font-size: 10px; color: var(--text-2);">Click frames in animation order:</span>
-                                <button type="button" onclick="clearFrameSelection()" class="btn-small"
-                                    style="font-size: 9px; padding: 2px 6px;">Clear</button>
-                            </div>
-                            <div id="frame-editor-grid" class="frame-editor-grid"></div>
-                            <div id="frame-editor-sequence" style="margin-top: 6px; font-size: 10px; color: var(--text-3);">
-                                No frames selected
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                                <div id="frame-editor-preview" style="width: 64px; height: 64px;
-                                    background: rgba(0,0,0,0.3); border-radius: 4px; display: flex;
-                                    align-items: center; justify-content: center; overflow: hidden;">
-                                    <span style="color: var(--text-3); font-size: 9px;">Preview</span>
-                                </div>
-                                <button type="button" id="apply-frames-btn" onclick="applyFrameSelection()"
-                                    disabled class="btn-small"
-                                    style="flex: 1; padding: 6px; font-size: 11px; background: #2a7a5a;">
-                                    Apply Selection
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+</div>
+<div class="pp-block"><div class="pp-subhead">Motion</div>
                     <!-- Squash & Stretch Animation -->
                     <div class="form-group platformer-only" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
                         <label style="display: flex; align-items: center; cursor: pointer;">
@@ -4610,7 +4621,10 @@
                             </div>
                         </div>
                     </div>
-                </div><!-- End Appearance Section -->
+                </div>
+</div>
+</div>
+</div><!-- End Appearance Section -->
 
                 <!-- Audio Section -->
                 <div class="player-section" id="player-section-audio">
