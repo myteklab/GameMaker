@@ -83,8 +83,30 @@ function sanitizeLevelData(lvl) {
     return lvl;
 }
 
+// Asset URLs picked from My Files used to be saved with the picker's
+// access token on them (?token=eyJ...). Those tokens live fifteen minutes,
+// so every such URL in a saved project is dead. Strip them on the way in;
+// the bare /a/{id} URL loads if the file is shared, which is the only way
+// it could ever load for a player anyway.
+function stripStaleAssetTokens(value) {
+    if (typeof value === 'string') {
+        if (value.indexOf('token=eyJ') === -1) return value;
+        return value.replace(/([?&])token=eyJ[A-Za-z0-9_.-]*/g, '$1').replace(/[?&]$/, '').replace(/\?&/, '?');
+    }
+    if (Array.isArray(value)) {
+        for (let i = 0; i < value.length; i++) value[i] = stripStaleAssetTokens(value[i]);
+        return value;
+    }
+    if (value && typeof value === 'object') {
+        for (const k in value) value[k] = stripStaleAssetTokens(value[k]);
+        return value;
+    }
+    return value;
+}
+
 function loadProjectData(data) {
     if (!data) return;
+    stripStaleAssetTokens(data);
 
     // Load shared data
     if (data.tileSize) tileSize = data.tileSize;
