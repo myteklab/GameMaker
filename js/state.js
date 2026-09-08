@@ -210,6 +210,12 @@ let gameSettings = {
     playerSpritesheetCols: 1,      // frames per row
     playerSpritesheetRows: 1,      // number of rows (4 for directional: down/left/right/up)
     playerAnimFps: 8,              // walk-cycle speed in frames per second
+    playerFrameW: 0,               // sheet cell size in px; 0 = derive from cols/rows
+    playerFrameH: 0,
+    // Named animation clips (spec 102): { idle, walk, jump, fall, hurt } for a
+    // platformer, { idleDown, walkDown, ... } per direction for top-down. Each
+    // is { row, startCol, frames, fps, loop }. Empty = the legacy sweep of row 0.
+    playerClips: {},
     playerWidth: 32,
     playerHeight: 32,
     playerCollisionWidth: 0,   // 0 = use playerWidth (hitbox width, centered in sprite)

@@ -283,34 +283,33 @@ const helpContent = {
         title: 'Player Sprite',
         content: `
             <h4>Custom Player Character</h4>
-            <p>Replace the default colored rectangle with your own character artwork!</p>
-
-            <h4>Sprite Sheet Animation</h4>
-            <p>For animated characters, use a <strong>horizontal sprite sheet</strong> - all frames arranged in a single row.</p>
+            <p>Replace the default colored rectangle with your own character artwork. Paste a URL or pick one from the Asset Library.</p>
+            <h4>Frame Size</h4>
+            <p>A sprite sheet is a grid of equal frames. Tell GameBuilder how big one frame is (<strong>Frame W</strong> and <strong>Frame H</strong>) and it works out the grid. Common sheets are recognized on load: a strip of square frames, or a 3x4 / 4x4 character sheet.</p>
+            <h4>Animation Clips</h4>
+            <p>A clip is a run of frames on one row that plays for a state. Open <strong>Animation Clips</strong>, pick a state, and click its frames in order.</p>
             <ul>
-                <li><strong>URL</strong> - Direct link to your sprite image</li>
-                <li><strong>Frames</strong> - Number of animation frames (1 = static image)</li>
-                <li><strong>Speed</strong> - How many frames play per second while walking. 8 is a relaxed walk, 12 to 15 is a run</li>
+                <li><strong>Idle</strong> - standing still (one frame is fine)</li>
+                <li><strong>Walk</strong> - plays while moving, at the Speed you set</li>
+                <li><strong>Jump</strong> and <strong>Fall</strong> - rising and dropping; a one-frame clip holds the pose</li>
+                <li><strong>Hurt</strong> - plays once when the player takes damage</li>
             </ul>
-
-            <h4>Example Dimensions</h4>
-            <p>A 4-frame walk animation at 32×32 pixels would be:</p>
-            <p>Image size: <code>128×32</code> (4 frames × 32px wide)</p>
-
+            <p>Top-down games get a walk and an idle for each direction instead. Any state without a clip falls back to walk, and walk falls back to the whole first row, so a plain strip works with no setup.</p>
+            <h4>Layout Buttons</h4>
+            <ul>
+                <li><strong>Horizontal strip</strong> - the row is the walk, frame 0 is idle</li>
+                <li><strong>Vertical strip</strong> - a column of frames, rebuilt into a row first</li>
+                <li><strong>Direction sheet</strong> - rows are down, left, right, up</li>
+                <li><strong>One row per state</strong> - rows are idle, walk, jump, fall, hurt</li>
+            </ul>
             <h4>Automatic Features</h4>
             <ul>
                 <li>Sprite <strong>flips horizontally</strong> when changing direction</li>
-                <li>Frames <strong>cycle automatically</strong> when walking</li>
-                <li>Animation <strong>pauses</strong> when standing still</li>
+                <li>A clip's own <strong>speed</strong> and <strong>loop</strong> setting override the walk speed</li>
             </ul>
-
-            <h4>Game Design Tip</h4>
-            <p><strong>Character silhouette</strong> is important! Players should instantly recognize their character against any background. Bright colors and distinct shapes help. Consider adding an outline if your character blends in.</p>
-
-            <div class="help-tip"><p>Start with a simple static image (1 frame). Once that works, try adding a walk animation. Free sprites at itch.io!</p></div>
+            <div class="help-tip"><p>Start with a strip and the Horizontal strip button. Once that works, add a jump pose. Free sprites at itch.io!</p></div>
         `
     },
-
     playerAppearance: {
         title: 'Player Appearance',
         content: `

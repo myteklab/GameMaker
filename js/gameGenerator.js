@@ -211,6 +211,25 @@ function formatFireKey(keyCode) {
     return keyMap[keyCode] || keyCode.replace('Key', '');
 }
 
+// Only well-formed clips reach the game: known names, integer geometry, a
+// frame count of at least one. Anything else is dropped so the runtime's
+// fallbacks apply instead of a NaN source rect.
+const PLAYER_CLIP_NAMES = ['idle', 'walk', 'jump', 'fall', 'hurt',
+    'idleDown', 'walkDown', 'idleLeft', 'walkLeft', 'idleRight', 'walkRight', 'idleUp', 'walkUp'];
+function cleanPlayerClips(clips) {
+    const out = {};
+    if (!clips || typeof clips !== 'object') return out;
+    for (const name of PLAYER_CLIP_NAMES) {
+        const c = clips[name];
+        if (!c) continue;
+        const row = parseInt(c.row), startCol = parseInt(c.startCol), frames = parseInt(c.frames);
+        if (!(row >= 0) || !(startCol >= 0) || !(frames >= 1)) continue;
+        const rawFps = parseInt(c.fps);
+        out[name] = { row, startCol, frames, fps: rawFps >= 1 ? Math.min(30, rawFps) : undefined, loop: c.loop !== false };
+    }
+    return out;
+}
+
 function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxData = {}, bundledPfxData = {}, bundledPlayerSprites = []) {
     // Auto-collect inline data if caller didn't provide any
     if (Object.keys(bundledSfxData).length === 0) {
@@ -1234,6 +1253,8 @@ ${includeComments ? `    // ═════════════════�
     // 3. Set PLAYER_SPRITE_URL to the image URL
     // 4. Set PLAYER_FRAME_COUNT to the number of frames
     // 5. PLAYER_ANIM_FPS is how many walk frames play per second (1 to 30)
+    // 6. PLAYER_CLIPS names runs of frames: idle, walk, jump, fall, hurt
+    //    (or one walk and idle per direction in a top-down game)
     // ═══════════════════════════════════════════════════════════════════════════
 ` : ''}    var PLAYER_SPRITE_URL = '${gameSettings.playerSpriteURL || ''}';
     var PLAYER_FRAME_COUNT = ${gameSettings.playerFrameCount || 1};
@@ -1241,6 +1262,76 @@ ${includeComments ? `    // ═════════════════�
     var PLAYER_SPRITESHEET_ROWS = ${gameSettings.playerSpritesheetRows || 1};
     var PLAYER_ANIM_FPS = ${Math.min(30, Math.max(1, parseInt(gameSettings.playerAnimFps) || 8))};
     var PLAYER_ANIM_TICKS = Math.max(1, Math.round(60 / PLAYER_ANIM_FPS)); // game ticks per walk frame
+    var PLAYER_CLIPS = ${JSON.stringify(cleanPlayerClips(gameSettings.playerClips))};
+    var PLAYER_HAS_CLIPS = Object.keys(PLAYER_CLIPS).length > 0;
+
+    // A clip is a run of frames along one row of the sheet. What the body is
+    // doing picks the clip; a clip the sheet does not define falls back so a
+    // sprite with only a walk cycle behaves exactly as it did before clips.
+    function legacyClip(cols, row) {
+        return { row: row || 0, startCol: 0, frames: cols, fps: PLAYER_ANIM_FPS, loop: true };
+    }
+    function stillFrameOf(clip) {
+        return { row: clip.row, startCol: clip.startCol, frames: 1, fps: clip.fps, loop: false };
+    }
+    var TOPDOWN_ROW = { down: 0, left: 1, right: 2, up: 3 };
+    function resolvePlayerClip(name, cols, rows, legacyOnly) {
+        var c = !legacyOnly && PLAYER_CLIPS[name];
+        if (c && c.frames > 0) return c;
+        if (IS_TOPDOWN) {
+            // idleDown -> walkDown held still -> legacy row for that direction
+            var dir = name.replace(/^(idle|walk)/, '');
+            var walkName = 'walk' + dir;
+            var w = !legacyOnly && PLAYER_CLIPS[walkName];
+            var dirKey = dir.charAt(0).toLowerCase() + dir.slice(1);
+            var legacyRow = rows > 1 ? Math.min(TOPDOWN_ROW[dirKey] || 0, rows - 1) : 0;
+            var base = (w && w.frames > 0) ? w : legacyClip(cols, legacyRow);
+            return name.indexOf('idle') === 0 ? stillFrameOf(base) : base;
+        }
+        var walk = (!legacyOnly && PLAYER_CLIPS.walk && PLAYER_CLIPS.walk.frames > 0) ? PLAYER_CLIPS.walk : legacyClip(cols, 0);
+        return name === 'walk' ? walk : stillFrameOf(walk);
+    }
+    // Only states the sheet actually has get picked; the rest read as walk or
+    // idle, which is what every game did before clips existed.
+    function playerClipName(moving, airborne, rising, hurt, facing) {
+        if (IS_TOPDOWN) {
+            var d = facing || 'down';
+            return (moving ? 'walk' : 'idle') + d.charAt(0).toUpperCase() + d.slice(1);
+        }
+        if (hurt && PLAYER_CLIPS.hurt) return 'hurt';
+        if (airborne) {
+            if (rising && PLAYER_CLIPS.jump) return 'jump';
+            if (!rising && PLAYER_CLIPS.fall) return 'fall';
+            if (PLAYER_CLIPS.jump) return 'jump';
+        }
+        return moving ? 'walk' : 'idle';
+    }
+    // Advances a body's clip and leaves animFrame/animRow on it for the draw.
+    function stepPlayerClip(body, name, clip) {
+        if (body.clipName !== name) {
+            body.clipName = name;
+            body.clipFrame = 0;
+            body.clipTimer = 0;
+        }
+        var ticks = Math.max(1, Math.round(60 / (clip.fps || PLAYER_ANIM_FPS)));
+        if (clip.frames > 1) {
+            body.clipTimer = (body.clipTimer || 0) + 1;
+            if (body.clipTimer >= ticks) {
+                body.clipTimer = 0;
+                if ((body.clipFrame || 0) + 1 < clip.frames) body.clipFrame = (body.clipFrame || 0) + 1;
+                else if (clip.loop !== false) body.clipFrame = 0;
+            }
+        } else {
+            body.clipFrame = 0;
+        }
+        body.animFrame = clip.startCol + (body.clipFrame || 0);
+        body.animRow = clip.row;
+    }
+    function hurtClipMs() {
+        var h = PLAYER_CLIPS.hurt;
+        if (!h) return 0;
+        return Math.max(250, h.frames / (h.fps || PLAYER_ANIM_FPS) * 1000);
+    }
 
     var playerSprite = null;
     if (PLAYER_SPRITE_URL) {
@@ -3373,22 +3464,17 @@ ${includeComments ? `    // ═════════════════�
                 rp.y += dy * REMOTE_PLAYER_LERP_SPEED;
             }
 
-            // Animate remote player sprite when moving
-            if (isMoving && PLAYER_SPRITESHEET_COLS > 1) {
-                // Initialize animation state if needed
-                if (typeof rp.animFrame === 'undefined') rp.animFrame = 0;
-                if (typeof rp.animTimer === 'undefined') rp.animTimer = 0;
-
-                rp.animTimer++;
-                if (rp.animTimer >= PLAYER_ANIM_TICKS) { // Same timing as local player
-                    rp.animTimer = 0;
-                    rp.animFrame = (rp.animFrame + 1) % PLAYER_SPRITESHEET_COLS;
-                }
-            } else {
-                // Reset to idle frame when not moving
-                rp.animFrame = 0;
-                rp.animTimer = 0;
-            }
+            // Same clip selection as the local player. The server relays only
+            // position and facing, so airborne is read off the vertical motion
+            // and remote players never show hurt.
+            var rpAirborne = !IS_TOPDOWN && Math.abs(dy) > 0.5;
+            var rpMoving = IS_TOPDOWN ? isMoving : Math.abs(dx) > 0.5;
+            var rpRoster = !!(rp.customSpriteLoaded && rp.customSpriteImage);
+            var rpClip = playerClipName(rpMoving, rpAirborne, dy < 0, false, rp.facingDirection);
+            stepPlayerClip(rp, rpClip, resolvePlayerClip(rpClip,
+                rpRoster ? PLAYER_SPRITE_COLS : PLAYER_SPRITESHEET_COLS,
+                rpRoster ? PLAYER_SPRITE_ROWS : PLAYER_SPRITESHEET_ROWS,
+                rpRoster));
         }
     }
 
@@ -3612,20 +3698,12 @@ ${includeComments ? `    // ═════════════════�
                 var frameWidth = spriteToUse.naturalWidth / frameCount;
                 var frameHeight = spriteToUse.naturalHeight / rowCount;
 
-                // Use remote player's own animation frame
-                var animFrame = rp.animFrame || 0;
-                if (animFrame >= frameCount) animFrame = 0;
-                var srcX = (animFrame % frameCount) * frameWidth;
-                var srcY = 0;
+                // stepPlayerClip left the frame and row on the remote body
+                var srcX = Math.min(rp.animFrame || 0, frameCount - 1) * frameWidth;
+                var srcY = Math.min(rp.animRow || 0, rowCount - 1) * frameHeight;
+                var rpRotate = IS_TOPDOWN && rowCount <= 1 && (useCustomSprite || !PLAYER_HAS_CLIPS);
 
-                if (IS_TOPDOWN && rowCount > 1) {
-                    // Multi-row sprite: select row based on direction (works for both game and custom sprites)
-                    var dirRow = 0;
-                    if (rp.facingDirection === 'down') dirRow = 0;
-                    else if (rp.facingDirection === 'left') dirRow = Math.min(1, rowCount - 1);
-                    else if (rp.facingDirection === 'right') dirRow = Math.min(2, rowCount - 1);
-                    else if (rp.facingDirection === 'up') dirRow = Math.min(3, rowCount - 1);
-                    srcY = dirRow * frameHeight;
+                if (IS_TOPDOWN && !rpRotate) {
                     ctx.drawImage(spriteToUse,
                         srcX, srcY, frameWidth, frameHeight,
                         screenX, screenY, player.width, player.height);
@@ -5479,6 +5557,7 @@ ${includeComments ? `    // ═════════════════�
         triggerHitPause(); // Freeze frame for impact
         vibrate(150); // 150ms vibration
         spawnParticleEffect('playerDamage', player.x + player.width/2, player.y + player.height/2, 400, playerFacing());
+        player.hurtStart = Date.now(); // the hurt clip, if the sheet has one
 
         if (lives <= 0) {
             // In multiplayer, death is not a session-ending event. Show a
@@ -5894,16 +5973,14 @@ ${includeComments ? `        // ────────────────
         var isMoving = IS_TOPDOWN
             ? (Math.abs(player.speedX) > 0.5 || Math.abs(player.speedY) > 0.5)
             : (Math.abs(player.speedX) > 0.5);
-        if (isMoving && PLAYER_SPRITESHEET_COLS > 1) {
-            player.animTimer++;
-            if (player.animTimer >= PLAYER_ANIM_TICKS) {
-                player.animTimer = 0;
-                player.animFrame = (player.animFrame + 1) % PLAYER_SPRITESHEET_COLS;
-            }
-        } else {
-            player.animFrame = 0;
-            player.animTimer = 0;
-        }
+        var airborne = !IS_TOPDOWN && (!player.onGround || JUMP_MODE === 'fly');
+        var hurtNow = !!(player.hurtStart && (Date.now() - player.hurtStart) < hurtClipMs());
+        var clipName = playerClipName(isMoving, airborne, player.speedY < 0, hurtNow, player.facingDirection);
+        var usingRoster = !!(myCustomSpriteLoaded && myCustomSpriteImage);
+        stepPlayerClip(player, clipName, resolvePlayerClip(clipName,
+            usingRoster ? PLAYER_SPRITE_COLS : PLAYER_SPRITESHEET_COLS,
+            usingRoster ? PLAYER_SPRITE_ROWS : PLAYER_SPRITESHEET_ROWS,
+            usingRoster));
 
         // Platformer-only: Jump mechanics and gravity
         if (!IS_TOPDOWN) {
@@ -8951,40 +9028,30 @@ ${includeComments ? `        // ────────────────
         var spriteRows = PLAYER_SPRITESHEET_ROWS;
 
         // Use chosen sprite if loaded
+        var usingRosterSprite = false;
         if (myCustomSpriteLoaded && myCustomSpriteImage && myCustomSpriteImage.complete && myCustomSpriteImage.naturalWidth > 0) {
             spriteToUse = myCustomSpriteImage;
             spriteCols = PLAYER_SPRITE_COLS;
             spriteRows = PLAYER_SPRITE_ROWS;
+            usingRosterSprite = true;
         }
 
         if (spriteToUse && spriteToUse.complete && spriteToUse.naturalWidth > 0) {
             // Draw sprite with animation - supports grid-based spritesheets
             var frameWidth = spriteToUse.naturalWidth / spriteCols;
             var frameHeight = spriteToUse.naturalHeight / spriteRows;
-            var srcX = player.animFrame * frameWidth;
-            var srcY = 0;
-
-            // For multi-row spritesheets, select row based on direction
-            // Convention: row 0=down, 1=left, 2=right, 3=up
-            if (spriteRows > 1) {
-                if (IS_TOPDOWN) {
-                    switch (player.facingDirection) {
-                        case 'down':  srcY = 0; break;
-                        case 'left':  srcY = frameHeight; break;
-                        case 'right': srcY = frameHeight * 2; break;
-                        case 'up':    srcY = frameHeight * 3; break;
-                        default: srcY = 0; break;
-                    }
-                } else {
-                    // Platformer: use first row, flip for left direction
-                    srcY = 0;
-                }
-            }
+            // stepPlayerClip already chose the row: a clip's own row, or the
+            // direction row (down/left/right/up) a legacy top-down sheet uses
+            var srcX = Math.min(player.animFrame || 0, spriteCols - 1) * frameWidth;
+            var srcY = Math.min(player.animRow || 0, spriteRows - 1) * frameHeight;
+            // A one-row sheet with no clips is turned to face the way the
+            // player walks; a sheet with clips draws what its clips say.
+            var rotateForFacing = IS_TOPDOWN && spriteRows <= 1 && (usingRosterSprite || !PLAYER_HAS_CLIPS);
 
             ctx.save();
             ctx.imageSmoothingEnabled = false;
 
-            if (IS_TOPDOWN && spriteRows <= 1) {
+            if (rotateForFacing) {
                 // Top-down mode with single-row sprite: rotate based on facing direction
                 var centerX = playerScreenX + player.width / 2;
                 var centerY = playerScreenY + player.height / 2;
@@ -9004,7 +9071,7 @@ ${includeComments ? `        // ────────────────
                     -player.width / 2, -player.height / 2, player.width, player.height
                 );
             } else if (IS_TOPDOWN) {
-                // Top-down mode with multi-row sprite: direction already set via srcY
+                // Top-down: the row already encodes the direction
                 ctx.drawImage(
                     spriteToUse,
                     srcX, srcY, frameWidth, frameHeight,

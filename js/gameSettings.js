@@ -195,6 +195,8 @@ function checkIncompatibleObjects(newType) {
 }
 
 function updateGameTypeUI() {
+    // the clip states differ per game type, so an open picker is stale
+    if (typeof closeFrameEditor === 'function') closeFrameEditor();
     const type = gameSettings.gameType || 'platformer';
     const isPlatformer = type === 'platformer';
     const isTopdown = type === 'topdown';
@@ -318,7 +320,7 @@ function updateGameSetting(key, value) {
     }
     // Integer values
     else if (key === 'playerFrameCount' || key === 'playerSpritesheetCols' || key === 'playerSpritesheetRows' ||
-             key === 'playerAnimFps' ||
+             key === 'playerAnimFps' || key === 'playerFrameW' || key === 'playerFrameH' ||
              key === 'playerWidth' || key === 'playerHeight' ||
              key === 'playerCollisionWidth' || key === 'playerCollisionHeight' ||
              key === 'playerCollisionOffsetX' || key === 'playerCollisionOffsetY' ||
@@ -444,6 +446,9 @@ function updateGameSettingsUI() {
     setInputValue('setting-sprite-cols', gameSettings.playerSpritesheetCols || gameSettings.playerFrameCount || 1);
     setInputValue('setting-sprite-rows', gameSettings.playerSpritesheetRows || 1);
     setInputValue('setting-sprite-fps', gameSettings.playerAnimFps || 8);
+    setInputValue('setting-sprite-frame-w', gameSettings.playerFrameW || '');
+    setInputValue('setting-sprite-frame-h', gameSettings.playerFrameH || '');
+    updateSpriteGridReadout();
     setInputValue('setting-player-width', gameSettings.playerWidth || 32);
     setInputValue('setting-player-height', gameSettings.playerHeight || 32);
     // Collision size (0 means use visual size)
@@ -1391,10 +1396,11 @@ function updateCollisionPreview() {
         const spriteRows = gameSettings.playerSpritesheetRows || 1;
         const frameWidth = playerSpriteCache.naturalWidth / spriteCols;
         const frameHeight = playerSpriteCache.naturalHeight / spriteRows;
+        const still = standingClip();
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(
             playerSpriteCache,
-            0, 0, frameWidth, frameHeight,
+            still.startCol * frameWidth, still.row * frameHeight, frameWidth, frameHeight,
             spriteX, spriteY, scaledSpriteW, scaledSpriteH
         );
     } else {
@@ -1440,115 +1446,238 @@ function updateProjectileSummary() {
 }
 
 // Same clamp the generated game applies, so the preview runs at the speed the player will
-function playerAnimIntervalMs() {
-    const fps = Math.min(30, Math.max(1, parseInt(document.getElementById('setting-sprite-fps')?.value) || gameSettings.playerAnimFps || 8));
-    return Math.round(1000 / fps);
+function playerAnimIntervalMs(fps) {
+    const v = Math.min(30, Math.max(1, fps || parseInt(document.getElementById('setting-sprite-fps')?.value) || gameSettings.playerAnimFps || 8));
+    return Math.round(1000 / v);
+}
+
+// ============================================
+// SHEET GEOMETRY: frame size <-> cols/rows
+// ============================================
+// Students describe a sheet as "32x32 frames", so that is the primary input.
+// Cols and rows are derived from it whenever the image size is known, and
+// stay the stored fields the game reads, so nothing changes in saved data.
+let playerSheetSize = null;          // { w, h } of the loaded sprite image
+let playerPreviewLoadSeq = 0;        // a slow, failing old URL must not clobber the new one
+let playerSpriteUrlPendingDetect = false;
+
+function currentSheetGrid() {
+    return {
+        cols: parseInt(document.getElementById('setting-sprite-cols')?.value) || 1,
+        rows: parseInt(document.getElementById('setting-sprite-rows')?.value) || 1
+    };
+}
+
+function setSheetGrid(cols, rows) {
+    cols = Math.max(1, Math.min(64, cols | 0));
+    rows = Math.max(1, Math.min(32, rows | 0));
+    const c = document.getElementById('setting-sprite-cols');
+    const r = document.getElementById('setting-sprite-rows');
+    if (c) c.value = cols;
+    if (r) r.value = rows;
+    updateGameSetting('playerSpritesheetCols', cols);
+    updateGameSetting('playerSpritesheetRows', rows);
+}
+
+function updateSpriteGridReadout() {
+    const el = document.getElementById('sprite-grid-readout');
+    if (!el) return;
+    const g = currentSheetGrid();
+    if (!playerSheetSize) {
+        el.textContent = 'Frame size is read from the image. Speed is walk frames per second: 6 is a stroll, 8 a walk, 12 a run.';
+        return;
+    }
+    const fw = Math.floor(playerSheetSize.w / g.cols);
+    const fh = Math.floor(playerSheetSize.h / g.rows);
+    el.textContent = playerSheetSize.w + 'x' + playerSheetSize.h + ' image, ' + fw + 'x' + fh + ' frames, ' + g.cols + ' x ' + g.rows + ' grid. Speed is walk frames per second.';
+}
+
+// Frame W/H typed: derive the grid from the image
+function onPlayerFrameSizeInput() {
+    const fw = parseInt(document.getElementById('setting-sprite-frame-w')?.value) || 0;
+    const fh = parseInt(document.getElementById('setting-sprite-frame-h')?.value) || 0;
+    updateGameSetting('playerFrameW', fw);
+    updateGameSetting('playerFrameH', fh);
+    if (playerSheetSize && fw > 0 && fh > 0) {
+        setSheetGrid(Math.floor(playerSheetSize.w / fw), Math.floor(playerSheetSize.h / fh));
+        refreshSpriteViews();
+    }
+    updateSpriteGridReadout();
+}
+
+// Cols/Rows typed directly: they win, and the frame size follows
+function onPlayerGridInput() {
+    const g = currentSheetGrid();
+    updateGameSetting('playerSpritesheetCols', g.cols);
+    updateGameSetting('playerSpritesheetRows', g.rows);
+    const fwEl = document.getElementById('setting-sprite-frame-w');
+    const fhEl = document.getElementById('setting-sprite-frame-h');
+    if (playerSheetSize) {
+        const fw = Math.floor(playerSheetSize.w / g.cols), fh = Math.floor(playerSheetSize.h / g.rows);
+        if (fwEl) fwEl.value = fw;
+        if (fhEl) fhEl.value = fh;
+        updateGameSetting('playerFrameW', fw);
+        updateGameSetting('playerFrameH', fh);
+    }
+    refreshSpriteViews();
+    updateSpriteGridReadout();
+}
+
+function refreshSpriteViews() {
+    updatePlayerSpritePreview();
+    updateCollisionPreview();
+}
+
+// A different image means different geometry: clips and frame size belong
+// to the old sheet, so they go, and the new one is measured on load.
+function onPlayerSpriteUrlChanged() {
+    playerSpriteUrlPendingDetect = true;
+    if (gameSettings.playerClips && Object.keys(gameSettings.playerClips).length) {
+        gameSettings.playerClips = {};
+        if (typeof showToast === 'function') showToast('Animation clips cleared for the new sheet', 'info');
+    }
+    gameSettings.playerFrameW = 0;
+    gameSettings.playerFrameH = 0;
+    const fwEl = document.getElementById('setting-sprite-frame-w');
+    const fhEl = document.getElementById('setting-sprite-frame-h');
+    if (fwEl) fwEl.value = '';
+    if (fhEl) fhEl.value = '';
+    updatePlayerSpritePreview();
+}
+
+// Guess a grid from the image alone: the 3x4 character sheet the enemy and
+// NPC pickers already recognise, then square cells in a strip, else 1x1.
+function detectSheetGrid(w, h) {
+    if (w % 3 === 0 && h % 4 === 0 && Math.abs(w / 3 - h / 4) <= 4) return { cols: 3, rows: 4, why: '3x4 character sheet' };
+    if (w % 4 === 0 && h % 4 === 0 && w / 4 === h / 4 && w >= 64) return { cols: 4, rows: 4, why: '4x4 character sheet' };
+    if (h > 0 && w % h === 0 && w / h > 1) return { cols: w / h, rows: 1, why: 'horizontal strip of square frames' };
+    if (w > 0 && h % w === 0 && h / w > 1) return { cols: 1, rows: h / w, why: 'vertical strip of square frames' };
+    // square cells of the largest size that tiles both edges, if that reads as a sheet
+    const gcd = (a, b) => b ? gcd(b, a % b) : a;
+    const cell = gcd(w, h);
+    if (cell >= 8 && (w / cell) * (h / cell) >= 2 && w / cell <= 64 && h / cell <= 32) {
+        return { cols: w / cell, rows: h / cell, why: 'grid of ' + cell + 'px frames' };
+    }
+    return { cols: 1, rows: 1, why: null };
+}
+
+// ============================================
+// SPRITE PREVIEW (plays the walk clip)
+// ============================================
+function walkPreviewClip() {
+    const g = currentSheetGrid();
+    const clips = gameSettings.playerClips || {};
+    const c = gameSettings.gameType === 'topdown' ? clips.walkDown : clips.walk;
+    if (c && c.frames > 0) return c;
+    return { row: 0, startCol: 0, frames: g.cols, fps: 0, loop: true };
+}
+
+// The frame the player shows standing still: the idle clip if there is one
+function standingClip() {
+    const clips = gameSettings.playerClips || {};
+    const topdown = gameSettings.gameType === 'topdown';
+    const idle = topdown ? clips.idleDown : clips.idle;
+    if (idle && idle.frames > 0) return { row: idle.row, startCol: idle.startCol };
+    const w = walkPreviewClip();
+    return { row: w.row, startCol: w.startCol };
 }
 
 function updatePlayerSpritePreview() {
     const previewContainer = document.getElementById('player-sprite-preview');
     const spriteUrl = document.getElementById('setting-sprite-url').value.trim();
-    // Use new cols/rows inputs for grid-based spritesheets
-    const spriteCols = parseInt(document.getElementById('setting-sprite-cols')?.value) || 1;
-    const spriteRows = parseInt(document.getElementById('setting-sprite-rows')?.value) || 1;
-    const frameCount = spriteCols; // Animate across the first row
 
-    // Stop any existing animation and close frame editor
     stopPlayerSpriteAnimation();
     closeFrameEditor();
 
-    // Show/hide frame editor button
-    const frameEditorSection = document.getElementById('frame-editor-section');
-    if (frameEditorSection) {
-        const totalFrames = spriteCols * spriteRows;
-        frameEditorSection.style.display = (spriteUrl && totalFrames > 1) ? 'block' : 'none';
-    }
-
     if (!spriteUrl) {
+        playerSheetSize = null;
+        const frameEditorSection = document.getElementById('frame-editor-section');
+        if (frameEditorSection) frameEditorSection.style.display = 'none';
         previewContainer.innerHTML = '<span style="color: var(--text-3); font-size: 10px;">No sprite</span>';
+        updateSpriteGridReadout();
         return;
     }
 
-    // Show loading state
     previewContainer.innerHTML = '<span style="color: var(--text-3); font-size: 10px;">Loading...</span>';
 
-    // Load the image
-    playerPreviewImage = new Image();
-    playerPreviewImage.crossOrigin = 'anonymous';
+    const seq = ++playerPreviewLoadSeq;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    playerPreviewImage = img;
 
-    playerPreviewImage.onload = function() {
-        // Grid-based spritesheet: divide by cols and rows
-        const frameWidth = playerPreviewImage.width / spriteCols;
-        const frameHeight = playerPreviewImage.height / spriteRows;
+    img.onload = function() {
+        if (seq !== playerPreviewLoadSeq) return;
+        playerSheetSize = { w: img.width, h: img.height };
 
-        // Calculate display size (fit within 80x80 while maintaining aspect ratio)
+        if (playerSpriteUrlPendingDetect) {
+            playerSpriteUrlPendingDetect = false;
+            const guess = detectSheetGrid(playerSheetSize.w, playerSheetSize.h);
+            setSheetGrid(guess.cols, guess.rows);
+            if (guess.why && typeof showToast === 'function') showToast('Looks like a ' + guess.why + ': ' + guess.cols + ' x ' + guess.rows, 'info');
+        }
+        const g = currentSheetGrid();
+        // frame size follows the grid when it was not typed
+        const fwEl = document.getElementById('setting-sprite-frame-w');
+        const fhEl = document.getElementById('setting-sprite-frame-h');
+        if (fwEl && !fwEl.value) fwEl.value = Math.floor(playerSheetSize.w / g.cols);
+        if (fhEl && !fhEl.value) fhEl.value = Math.floor(playerSheetSize.h / g.rows);
+        updateSpriteGridReadout();
+
+        const frameEditorSection = document.getElementById('frame-editor-section');
+        if (frameEditorSection) frameEditorSection.style.display = (g.cols * g.rows > 1) ? 'block' : 'none';
+
+        const frameWidth = playerSheetSize.w / g.cols;
+        const frameHeight = playerSheetSize.h / g.rows;
         const maxSize = 70;
-        const scale = Math.min(maxSize / frameWidth, maxSize / frameHeight, 2); // Max 2x scale
+        const scale = Math.min(maxSize / frameWidth, maxSize / frameHeight, 2);
         const displayWidth = Math.round(frameWidth * scale);
         const displayHeight = Math.round(frameHeight * scale);
 
-        // Create canvas for animation
         const canvas = document.createElement('canvas');
         canvas.width = displayWidth;
         canvas.height = displayHeight;
         canvas.style.imageRendering = 'pixelated';
-        canvas.style.imageRendering = 'crisp-edges';
-
         const ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = false;
-
         previewContainer.innerHTML = '';
         previewContainer.appendChild(canvas);
 
-        // Add frame indicator if animated
-        if (frameCount > 1) {
+        const clip = walkPreviewClip();
+        if (clip.frames > 1) {
             const frameIndicator = document.createElement('div');
             frameIndicator.id = 'frame-indicator';
             frameIndicator.style.cssText = 'position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: var(--text-3);';
-            frameIndicator.textContent = '1/' + frameCount;
+            frameIndicator.textContent = '1/' + clip.frames;
             previewContainer.appendChild(frameIndicator);
         }
 
-        // Draw initial frame
         playerPreviewFrame = 0;
-        drawPlayerPreviewFrame(ctx, frameWidth, frameHeight, displayWidth, displayHeight, spriteCols);
-
-        // Start animation if multiple frames
-        if (frameCount > 1) {
+        const drawFrame = () => {
+            ctx.clearRect(0, 0, displayWidth, displayHeight);
+            ctx.drawImage(playerPreviewImage,
+                (clip.startCol + playerPreviewFrame) * frameWidth, clip.row * frameHeight, frameWidth, frameHeight,
+                0, 0, displayWidth, displayHeight);
+        };
+        drawFrame();
+        if (clip.frames > 1) {
             playerSpritePreviewInterval = setInterval(() => {
-                playerPreviewFrame = (playerPreviewFrame + 1) % frameCount;
-                drawPlayerPreviewFrame(ctx, frameWidth, frameHeight, displayWidth, displayHeight, spriteCols);
-
-                // Update frame indicator
+                playerPreviewFrame = (playerPreviewFrame + 1) % clip.frames;
+                drawFrame();
                 const indicator = document.getElementById('frame-indicator');
-                if (indicator) {
-                    indicator.textContent = (playerPreviewFrame + 1) + '/' + frameCount;
-                }
-            }, playerAnimIntervalMs());
+                if (indicator) indicator.textContent = (playerPreviewFrame + 1) + '/' + clip.frames;
+            }, playerAnimIntervalMs(clip.fps));
         }
+        updateCollisionPreview();
     };
 
-    playerPreviewImage.onerror = function() {
+    img.onerror = function() {
+        if (seq !== playerPreviewLoadSeq) return;
+        playerSheetSize = null;
         previewContainer.innerHTML = '<span style="color: var(--danger); font-size: 10px;">Failed to load</span>';
+        updateSpriteGridReadout();
     };
 
-    playerPreviewImage.src = spriteUrl;
-}
-
-function drawPlayerPreviewFrame(ctx, frameWidth, frameHeight, displayWidth, displayHeight, spriteCols) {
-    if (!playerPreviewImage) return;
-
-    // Calculate source position in grid (first row only for preview)
-    const col = playerPreviewFrame % spriteCols;
-    const srcX = col * frameWidth;
-    const srcY = 0; // Always use first row for preview animation
-
-    ctx.clearRect(0, 0, displayWidth, displayHeight);
-    ctx.drawImage(
-        playerPreviewImage,
-        srcX, srcY, frameWidth, frameHeight,  // Source from grid
-        0, 0, displayWidth, displayHeight  // Destination
-    );
+    img.src = spriteUrl;
 }
 
 function stopPlayerSpriteAnimation() {
@@ -1560,38 +1689,56 @@ function stopPlayerSpriteAnimation() {
 }
 
 // ============================================
-// FRAME EDITOR
+// ANIMATION CLIPS (spec 102)
 // ============================================
+// The frame grid is the picker: pick a state tab, click its frames in
+// order. A clip is one row of consecutive frames, which is what the game
+// runtime plays; anything else is rebuilt into a single row first.
+const CLIP_STATES_PLATFORMER = [
+    { key: 'idle', label: 'Idle' }, { key: 'walk', label: 'Walk' }, { key: 'jump', label: 'Jump' },
+    { key: 'fall', label: 'Fall' }, { key: 'hurt', label: 'Hurt' }
+];
+const CLIP_STATES_TOPDOWN = [
+    { key: 'idleDown', label: 'Idle down' }, { key: 'walkDown', label: 'Walk down' },
+    { key: 'idleLeft', label: 'Idle left' }, { key: 'walkLeft', label: 'Walk left' },
+    { key: 'idleRight', label: 'Idle right' }, { key: 'walkRight', label: 'Walk right' },
+    { key: 'idleUp', label: 'Idle up' }, { key: 'walkUp', label: 'Walk up' }
+];
+let activeClipState = 'walk';
+
+function clipStates() {
+    return gameSettings.gameType === 'topdown' ? CLIP_STATES_TOPDOWN : CLIP_STATES_PLATFORMER;
+}
+
+function playerClips() {
+    if (!gameSettings.playerClips || typeof gameSettings.playerClips !== 'object' || Array.isArray(gameSettings.playerClips)) {
+        gameSettings.playerClips = {};
+    }
+    return gameSettings.playerClips;
+}
 
 function toggleFrameEditor() {
-    if (frameEditorOpen) {
-        closeFrameEditor();
-    } else {
-        openFrameEditor();
-    }
+    if (frameEditorOpen) closeFrameEditor(); else openFrameEditor();
 }
 
 function openFrameEditor() {
     const panel = document.getElementById('frame-editor-panel');
     const btn = document.getElementById('edit-frames-btn');
     if (!panel) return;
-
     const spriteUrl = document.getElementById('setting-sprite-url').value.trim();
-    const spriteCols = parseInt(document.getElementById('setting-sprite-cols')?.value) || 1;
-    const spriteRows = parseInt(document.getElementById('setting-sprite-rows')?.value) || 1;
-
-    if (!spriteUrl || (spriteCols * spriteRows) <= 1) return;
-
+    const g = currentSheetGrid();
+    if (!spriteUrl || (g.cols * g.rows) <= 1) return;
     frameEditorOpen = true;
     panel.style.display = 'block';
-    btn.textContent = 'Close Frame Editor';
-    frameEditorSelectedFrames = [];
+    btn.textContent = 'Close Animation Clips';
+    if (!clipStates().some(st => st.key === activeClipState)) activeClipState = clipStates()[1].key;
 
-    // Load sprite image and populate grid
     frameEditorImage = new Image();
     frameEditorImage.crossOrigin = 'anonymous';
     frameEditorImage.onload = function() {
-        populateFrameGrid(frameEditorImage, spriteCols, spriteRows);
+        populateFrameGrid(frameEditorImage, g.cols, g.rows);
+        renderClipTabs();
+        loadClipIntoSelection(activeClipState);
     };
     frameEditorImage.onerror = function() {
         document.getElementById('frame-editor-grid').innerHTML =
@@ -1606,182 +1753,237 @@ function closeFrameEditor() {
     stopFrameEditorPreview();
     frameEditorSelectedFrames = [];
     frameEditorImage = null;
-
     const panel = document.getElementById('frame-editor-panel');
     const btn = document.getElementById('edit-frames-btn');
     if (panel) panel.style.display = 'none';
-    if (btn) btn.textContent = 'Edit Frames';
+    if (btn) btn.textContent = 'Animation Clips';
 }
+
+function renderClipTabs() {
+    const tabs = document.getElementById('clip-tabs');
+    if (!tabs) return;
+    const clips = playerClips();
+    tabs.innerHTML = '';
+    clipStates().forEach(st => {
+        const t = document.createElement('button');
+        t.type = 'button';
+        t.className = 'clip-tab' + (st.key === activeClipState ? ' active' : '') + (clips[st.key] ? ' has-clip' : '');
+        t.textContent = st.label;
+        t.onclick = () => selectClipState(st.key);
+        tabs.appendChild(t);
+    });
+}
+
+function selectClipState(key) {
+    activeClipState = key;
+    renderClipTabs();
+    loadClipIntoSelection(key);
+}
+
+function loadClipIntoSelection(key) {
+    const c = playerClips()[key];
+    frameEditorSelectedFrames = [];
+    if (c && c.frames > 0) {
+        for (let i = 0; i < c.frames; i++) frameEditorSelectedFrames.push({ col: c.startCol + i, row: c.row });
+    }
+    const fpsEl = document.getElementById('clip-fps');
+    const loopEl = document.getElementById('clip-loop');
+    if (fpsEl) fpsEl.value = (c && c.fps) ? c.fps : '';
+    if (loopEl) loopEl.checked = c ? c.loop !== false : !/^(jump|hurt)$/.test(key);
+    setClipHint(null);
+    updateFrameSelectionUI();
+    updateFrameEditorPreview();
+}
+
+function setClipHint(problem) {
+    const el = document.getElementById('clip-hint');
+    if (!el) return;
+    if (problem) {
+        el.textContent = problem;
+        el.classList.add('bad');
+    } else {
+        const label = (clipStates().find(st => st.key === activeClipState) || {}).label || activeClipState;
+        el.textContent = label + ': click its frames in order, left to right on one row.';
+        el.classList.remove('bad');
+    }
+}
+
+// A selection is a clip when it runs left to right along one row
+function selectionAsClip() {
+    const sel = frameEditorSelectedFrames;
+    if (sel.length === 0) return null;
+    const row = sel[0].row;
+    for (let i = 0; i < sel.length; i++) {
+        if (sel[i].row !== row || sel[i].col !== sel[0].col + i) return false;
+    }
+    const fps = parseInt(document.getElementById('clip-fps')?.value) || 0;
+    const loop = document.getElementById('clip-loop') ? document.getElementById('clip-loop').checked : true;
+    return { row: row, startCol: sel[0].col, frames: sel.length, fps: fps || undefined, loop: loop };
+}
+
+function saveClipFromSelection() {
+    const clips = playerClips();
+    const clip = selectionAsClip();
+    if (clip === null) {
+        delete clips[activeClipState];
+        setClipHint(null);
+    } else if (clip === false) {
+        setClipHint('A clip is one row of frames in order. Pick them left to right, or use Rebuild sheet to line these up.');
+        delete clips[activeClipState];
+    } else {
+        clips[activeClipState] = clip;
+        setClipHint(null);
+    }
+    renderClipTabs();
+    markDirty();
+    // the small preview plays the walk clip, keep it honest
+    if (activeClipState === 'walk' || activeClipState === 'walkDown') restartWalkPreviewOnly();
+}
+
+// re-run the preview without closing the clips panel
+function restartWalkPreviewOnly() {
+    const wasOpen = frameEditorOpen;
+    frameEditorOpen = false;      // updatePlayerSpritePreview would close the panel otherwise
+    const savedImg = frameEditorImage, savedSel = frameEditorSelectedFrames.slice();
+    updatePlayerSpritePreview();
+    frameEditorOpen = wasOpen;
+    frameEditorImage = savedImg;
+    frameEditorSelectedFrames = savedSel;
+}
+
+function onClipFpsInput() { if (frameEditorSelectedFrames.length) saveClipFromSelection(); updateFrameEditorPreview(); }
+function onClipLoopChange() { if (frameEditorSelectedFrames.length) saveClipFromSelection(); }
 
 function populateFrameGrid(img, cols, rows) {
     const grid = document.getElementById('frame-editor-grid');
     if (!grid) return;
     grid.innerHTML = '';
-
     const frameWidth = img.width / cols;
     const frameHeight = img.height / rows;
-
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
-            const cellIndex = row * cols + col;
             const cell = document.createElement('div');
             cell.className = 'frame-cell';
             cell.dataset.col = col;
             cell.dataset.row = row;
             cell.onclick = function() { toggleFrameSelection(col, row); };
-
-            // Draw frame into a small canvas
             const canvas = document.createElement('canvas');
             canvas.width = frameWidth;
             canvas.height = frameHeight;
             const ctx = canvas.getContext('2d');
             ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(img,
-                col * frameWidth, row * frameHeight, frameWidth, frameHeight,
-                0, 0, frameWidth, frameHeight
-            );
+            ctx.drawImage(img, col * frameWidth, row * frameHeight, frameWidth, frameHeight, 0, 0, frameWidth, frameHeight);
             cell.appendChild(canvas);
-
-            // Frame index label
             const indexLabel = document.createElement('div');
             indexLabel.className = 'frame-cell-index';
-            indexLabel.textContent = cellIndex;
+            indexLabel.textContent = row * cols + col;
             cell.appendChild(indexLabel);
-
             grid.appendChild(cell);
         }
     }
-
     updateFrameSelectionUI();
 }
 
 function toggleFrameSelection(col, row) {
-    // Check if this frame is already selected
     const idx = frameEditorSelectedFrames.findIndex(f => f.col === col && f.row === row);
-
     if (idx === -1) {
-        // Not selected: add to sequence
         frameEditorSelectedFrames.push({ col, row });
     } else if (idx === frameEditorSelectedFrames.length - 1) {
-        // Last selected: remove it (undo from end)
         frameEditorSelectedFrames.pop();
     } else {
-        // Selected but not last: show toast
-        if (typeof showToast === 'function') {
-            showToast('Deselect from the end, or use Clear', 'info');
-        }
+        if (typeof showToast === 'function') showToast('Deselect from the end, or use Clear clip', 'info');
         return;
     }
-
     updateFrameSelectionUI();
     updateFrameEditorPreview();
+    saveClipFromSelection();
 }
 
 function clearFrameSelection() {
     frameEditorSelectedFrames = [];
     updateFrameSelectionUI();
     stopFrameEditorPreview();
-
     const previewEl = document.getElementById('frame-editor-preview');
-    if (previewEl) {
-        previewEl.innerHTML = '<span style="color: var(--text-3); font-size: 9px;">Preview</span>';
-    }
-    const seqEl = document.getElementById('frame-editor-sequence');
-    if (seqEl) seqEl.textContent = 'No frames selected';
-
-    const applyBtn = document.getElementById('apply-frames-btn');
-    if (applyBtn) applyBtn.disabled = true;
+    if (previewEl) previewEl.innerHTML = '<span style="color: var(--text-3); font-size: 9px;">Preview</span>';
+    saveClipFromSelection();
 }
 
 function updateFrameSelectionUI() {
     const grid = document.getElementById('frame-editor-grid');
     if (!grid) return;
-
-    const cells = grid.querySelectorAll('.frame-cell');
-    cells.forEach(cell => {
+    const clips = playerClips();
+    // cells other clips use get a faint outline, so a sheet reads at a glance
+    const used = new Set();
+    Object.keys(clips).forEach(k => {
+        if (k === activeClipState) return;
+        const c = clips[k];
+        for (let i = 0; i < c.frames; i++) used.add(c.row + ':' + (c.startCol + i));
+    });
+    grid.querySelectorAll('.frame-cell').forEach(cell => {
         const col = parseInt(cell.dataset.col);
         const row = parseInt(cell.dataset.row);
-
-        // Remove existing order badge
         const existingBadge = cell.querySelector('.frame-cell-order');
         if (existingBadge) existingBadge.remove();
-
-        // Check if selected
         const idx = frameEditorSelectedFrames.findIndex(f => f.col === col && f.row === row);
+        cell.classList.toggle('selected', idx !== -1);
+        cell.classList.toggle('in-other-clip', used.has(row + ':' + col));
         if (idx !== -1) {
-            cell.classList.add('selected');
             const badge = document.createElement('div');
             badge.className = 'frame-cell-order';
             badge.textContent = idx + 1;
             cell.appendChild(badge);
-        } else {
-            cell.classList.remove('selected');
         }
     });
-
-    // Update sequence text
     const seqEl = document.getElementById('frame-editor-sequence');
     if (seqEl) {
         if (frameEditorSelectedFrames.length === 0) {
             seqEl.textContent = 'No frames selected';
         } else {
-            const cols = parseInt(document.getElementById('setting-sprite-cols')?.value) || 1;
+            const cols = currentSheetGrid().cols;
             const indices = frameEditorSelectedFrames.map(f => f.row * cols + f.col);
-            seqEl.textContent = 'Sequence: ' + indices.join(' \u2192 ') + ' (' + frameEditorSelectedFrames.length + ' frames)';
+            seqEl.textContent = 'Frames: ' + indices.join(', ') + ' (' + frameEditorSelectedFrames.length + ')';
         }
     }
-
-    // Enable/disable apply button
     const applyBtn = document.getElementById('apply-frames-btn');
     if (applyBtn) applyBtn.disabled = frameEditorSelectedFrames.length === 0;
 }
 
 function updateFrameEditorPreview() {
     stopFrameEditorPreview();
-
     if (frameEditorSelectedFrames.length === 0 || !frameEditorImage) return;
-
     const previewEl = document.getElementById('frame-editor-preview');
     if (!previewEl) return;
-
-    const spriteCols = parseInt(document.getElementById('setting-sprite-cols')?.value) || 1;
-    const spriteRows = parseInt(document.getElementById('setting-sprite-rows')?.value) || 1;
-    const frameWidth = frameEditorImage.width / spriteCols;
-    const frameHeight = frameEditorImage.height / spriteRows;
-
-    // Calculate display size to fit 64x64
+    const g = currentSheetGrid();
+    const frameWidth = frameEditorImage.width / g.cols;
+    const frameHeight = frameEditorImage.height / g.rows;
     const maxSize = 56;
     const scale = Math.min(maxSize / frameWidth, maxSize / frameHeight, 3);
     const displayWidth = Math.round(frameWidth * scale);
     const displayHeight = Math.round(frameHeight * scale);
-
     const canvas = document.createElement('canvas');
     canvas.width = displayWidth;
     canvas.height = displayHeight;
     canvas.style.imageRendering = 'pixelated';
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
-
     previewEl.innerHTML = '';
     previewEl.appendChild(canvas);
-
     let currentFrame = 0;
+    const loop = document.getElementById('clip-loop') ? document.getElementById('clip-loop').checked : true;
     const drawFrame = () => {
         const f = frameEditorSelectedFrames[currentFrame];
         ctx.clearRect(0, 0, displayWidth, displayHeight);
-        ctx.drawImage(frameEditorImage,
-            f.col * frameWidth, f.row * frameHeight, frameWidth, frameHeight,
-            0, 0, displayWidth, displayHeight
-        );
+        ctx.drawImage(frameEditorImage, f.col * frameWidth, f.row * frameHeight, frameWidth, frameHeight, 0, 0, displayWidth, displayHeight);
     };
-
     drawFrame();
-
     if (frameEditorSelectedFrames.length > 1) {
+        const fps = parseInt(document.getElementById('clip-fps')?.value) || 0;
         frameEditorPreviewInterval = setInterval(() => {
-            currentFrame = (currentFrame + 1) % frameEditorSelectedFrames.length;
+            if (currentFrame + 1 < frameEditorSelectedFrames.length) currentFrame++;
+            else if (loop) currentFrame = 0;
+            else { currentFrame = 0; }   // a held clip replays so the preview stays alive
             drawFrame();
-        }, playerAnimIntervalMs());
+        }, playerAnimIntervalMs(fps));
     }
 }
 
@@ -1792,62 +1994,93 @@ function stopFrameEditorPreview() {
     }
 }
 
-function applyFrameSelection() {
+// One click for the layouts a sheet usually has. Each writes the clips
+// directly; the student can still retouch any state afterwards.
+function applyClipPreset(kind) {
+    const g = currentSheetGrid();
+    const topdown = gameSettings.gameType === 'topdown';
+    const clips = {};
+    const run = (row, startCol, frames, loop) => ({ row, startCol, frames, loop: loop !== false });
+    const still = (row, col) => ({ row, startCol: col, frames: 1, loop: false });
+    if (kind === 'vertical') {
+        if (g.cols !== 1 || g.rows < 2) { if (typeof showToast === 'function') showToast('Vertical strip needs a 1-column sheet', 'warning'); return; }
+        // rebuild the column into a row, then treat it as a strip
+        frameEditorSelectedFrames = [];
+        for (let r = 0; r < g.rows; r++) frameEditorSelectedFrames.push({ col: 0, row: r });
+        applyFrameSelection(() => applyClipPreset('strip'));
+        return;
+    }
+    if (kind === 'strip') {
+        const walk = run(0, 0, g.cols);
+        if (topdown) { ['Down', 'Left', 'Right', 'Up'].forEach(d => { clips['walk' + d] = walk; clips['idle' + d] = still(0, 0); }); }
+        else { clips.walk = walk; clips.idle = still(0, 0); }
+    } else if (kind === 'directions') {
+        if (g.rows < 4) { if (typeof showToast === 'function') showToast('A direction sheet needs 4 rows: down, left, right, up', 'warning'); return; }
+        const idleCol = g.cols === 3 ? 1 : 0;   // the standing pose in 3-wide RPG sheets is the middle column
+        const dirs = ['Down', 'Left', 'Right', 'Up'];
+        if (topdown) {
+            dirs.forEach((d, r) => { clips['walk' + d] = run(r, 0, g.cols); clips['idle' + d] = still(r, idleCol); });
+        } else {
+            clips.walk = run(2, 0, g.cols);      // the right-facing row; the game flips it for left
+            clips.idle = still(2, idleCol);
+        }
+    } else if (kind === 'rows') {
+        if (topdown) { applyClipPreset('directions'); return; }
+        const order = ['idle', 'walk', 'jump', 'fall', 'hurt'];
+        for (let r = 0; r < Math.min(g.rows, order.length); r++) {
+            clips[order[r]] = run(r, 0, g.cols, order[r] === 'idle' || order[r] === 'walk' || order[r] === 'fall');
+        }
+        if (g.rows < 2 && typeof showToast === 'function') showToast('One row per state needs at least two rows', 'warning');
+    } else {
+        return;
+    }
+    gameSettings.playerClips = clips;
+    markDirty();
+    if (frameEditorOpen) { renderClipTabs(); loadClipIntoSelection(activeClipState); }
+    restartWalkPreviewOnly();
+    if (typeof showToast === 'function') showToast('Clips set: ' + Object.keys(clips).join(', '), 'success');
+}
+
+// Escape hatch: rebuild the selected cells into a single-row sheet. Kept
+// for sheets whose frames are scattered; afterwards the strip preset (or a
+// hand-picked clip) describes the new sheet.
+function applyFrameSelection(afterwards) {
     if (frameEditorSelectedFrames.length === 0 || !frameEditorImage) return;
-
-    const spriteCols = parseInt(document.getElementById('setting-sprite-cols')?.value) || 1;
-    const spriteRows = parseInt(document.getElementById('setting-sprite-rows')?.value) || 1;
-    const frameWidth = frameEditorImage.width / spriteCols;
-    const frameHeight = frameEditorImage.height / spriteRows;
+    const g = currentSheetGrid();
+    const frameWidth = frameEditorImage.width / g.cols;
+    const frameHeight = frameEditorImage.height / g.rows;
     const selectedCount = frameEditorSelectedFrames.length;
-
-    // Build a 1-row horizontal sprite sheet from selected frames
     const canvas = document.createElement('canvas');
     canvas.width = frameWidth * selectedCount;
     canvas.height = frameHeight;
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
-
     frameEditorSelectedFrames.forEach((f, i) => {
-        ctx.drawImage(frameEditorImage,
-            f.col * frameWidth, f.row * frameHeight, frameWidth, frameHeight,
-            i * frameWidth, 0, frameWidth, frameHeight
-        );
+        ctx.drawImage(frameEditorImage, f.col * frameWidth, f.row * frameHeight, frameWidth, frameHeight, i * frameWidth, 0, frameWidth, frameHeight);
     });
-
     const dataUrl = canvas.toDataURL('image/png');
-
-    // Update sprite URL
     const urlInput = document.getElementById('setting-sprite-url');
     if (urlInput) {
         urlInput.value = dataUrl;
         updateGameSetting('playerSpriteURL', dataUrl);
     }
-
-    // Update cols/rows
-    const colsInput = document.getElementById('setting-sprite-cols');
-    const rowsInput = document.getElementById('setting-sprite-rows');
-    if (colsInput) {
-        colsInput.value = selectedCount;
-        updateGameSetting('playerSpritesheetCols', selectedCount);
-    }
-    if (rowsInput) {
-        rowsInput.value = 1;
-        updateGameSetting('playerSpritesheetRows', 1);
-    }
-
-    // Clear custom tile selection since we have a new sprite
-    if (typeof clearPlayerCustomTileSelection === 'function') {
-        clearPlayerCustomTileSelection();
-    }
-
-    // Close the frame editor and refresh preview
+    // the rebuilt sheet is one row; old clips pointed at the old grid
+    gameSettings.playerClips = {};
+    gameSettings.playerFrameW = Math.round(frameWidth);
+    gameSettings.playerFrameH = Math.round(frameHeight);
+    const fwEl = document.getElementById('setting-sprite-frame-w');
+    const fhEl = document.getElementById('setting-sprite-frame-h');
+    if (fwEl) fwEl.value = Math.round(frameWidth);
+    if (fhEl) fhEl.value = Math.round(frameHeight);
+    setSheetGrid(selectedCount, 1);
+    if (typeof clearPlayerCustomTileSelection === 'function') clearPlayerCustomTileSelection();
     closeFrameEditor();
     updatePlayerSpritePreview();
     markDirty();
-
-    if (typeof showToast === 'function') {
-        showToast('Sprite sheet rebuilt with ' + selectedCount + ' frames', 'success');
+    if (typeof showToast === 'function') showToast('Sprite sheet rebuilt with ' + selectedCount + ' frames', 'success');
+    if (typeof afterwards === 'function') {
+        // the preview image reloads asynchronously; the strip preset only needs the grid
+        setTimeout(afterwards, 50);
     }
 }
 
