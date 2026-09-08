@@ -290,6 +290,7 @@ const helpContent = {
             <ul>
                 <li><strong>URL</strong> - Direct link to your sprite image</li>
                 <li><strong>Frames</strong> - Number of animation frames (1 = static image)</li>
+                <li><strong>Speed</strong> - How many frames play per second while walking. 8 is a relaxed walk, 12 to 15 is a run</li>
             </ul>
 
             <h4>Example Dimensions</h4>

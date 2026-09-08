@@ -204,6 +204,7 @@ let gameSettings = {
     playerFrameCount: 1,           // DEPRECATED - use playerSpritesheetCols instead
     playerSpritesheetCols: 1,      // frames per row
     playerSpritesheetRows: 1,      // number of rows (4 for directional: down/left/right/up)
+    playerAnimFps: 8,              // walk-cycle speed in frames per second
     playerWidth: 32,
     playerHeight: 32,
     playerCollisionWidth: 0,   // 0 = use playerWidth (hitbox width, centered in sprite)

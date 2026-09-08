@@ -1233,11 +1233,14 @@ ${includeComments ? `    // ═════════════════�
     // 2. Host the image online or convert to Base64
     // 3. Set PLAYER_SPRITE_URL to the image URL
     // 4. Set PLAYER_FRAME_COUNT to the number of frames
+    // 5. PLAYER_ANIM_FPS is how many walk frames play per second (1 to 30)
     // ═══════════════════════════════════════════════════════════════════════════
 ` : ''}    var PLAYER_SPRITE_URL = '${gameSettings.playerSpriteURL || ''}';
     var PLAYER_FRAME_COUNT = ${gameSettings.playerFrameCount || 1};
     var PLAYER_SPRITESHEET_COLS = ${gameSettings.playerSpritesheetCols || gameSettings.playerFrameCount || 1};
     var PLAYER_SPRITESHEET_ROWS = ${gameSettings.playerSpritesheetRows || 1};
+    var PLAYER_ANIM_FPS = ${Math.min(30, Math.max(1, parseInt(gameSettings.playerAnimFps) || 8))};
+    var PLAYER_ANIM_TICKS = Math.max(1, Math.round(60 / PLAYER_ANIM_FPS)); // game ticks per walk frame
 
     var playerSprite = null;
     if (PLAYER_SPRITE_URL) {
@@ -3476,7 +3479,7 @@ ${includeComments ? `    // ═════════════════�
                 if (typeof rp.animTimer === 'undefined') rp.animTimer = 0;
 
                 rp.animTimer++;
-                if (rp.animTimer >= 8) { // Same timing as local player
+                if (rp.animTimer >= PLAYER_ANIM_TICKS) { // Same timing as local player
                     rp.animTimer = 0;
                     rp.animFrame = (rp.animFrame + 1) % PLAYER_SPRITESHEET_COLS;
                 }
@@ -5987,7 +5990,7 @@ ${includeComments ? `        // ────────────────
             : (Math.abs(player.speedX) > 0.5);
         if (isMoving && PLAYER_SPRITESHEET_COLS > 1) {
             player.animTimer++;
-            if (player.animTimer >= 8) {
+            if (player.animTimer >= PLAYER_ANIM_TICKS) {
                 player.animTimer = 0;
                 player.animFrame = (player.animFrame + 1) % PLAYER_SPRITESHEET_COLS;
             }

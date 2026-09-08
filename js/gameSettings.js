@@ -318,6 +318,7 @@ function updateGameSetting(key, value) {
     }
     // Integer values
     else if (key === 'playerFrameCount' || key === 'playerSpritesheetCols' || key === 'playerSpritesheetRows' ||
+             key === 'playerAnimFps' ||
              key === 'playerWidth' || key === 'playerHeight' ||
              key === 'playerCollisionWidth' || key === 'playerCollisionHeight' ||
              key === 'playerCollisionOffsetX' || key === 'playerCollisionOffsetY' ||
@@ -442,6 +443,7 @@ function updateGameSettingsUI() {
     }
     setInputValue('setting-sprite-cols', gameSettings.playerSpritesheetCols || gameSettings.playerFrameCount || 1);
     setInputValue('setting-sprite-rows', gameSettings.playerSpritesheetRows || 1);
+    setInputValue('setting-sprite-fps', gameSettings.playerAnimFps || 8);
     setInputValue('setting-player-width', gameSettings.playerWidth || 32);
     setInputValue('setting-player-height', gameSettings.playerHeight || 32);
     // Collision size (0 means use visual size)
@@ -1437,6 +1439,12 @@ function updateProjectileSummary() {
     }
 }
 
+// Same clamp the generated game applies, so the preview runs at the speed the player will
+function playerAnimIntervalMs() {
+    const fps = Math.min(30, Math.max(1, parseInt(document.getElementById('setting-sprite-fps')?.value) || gameSettings.playerAnimFps || 8));
+    return Math.round(1000 / fps);
+}
+
 function updatePlayerSpritePreview() {
     const previewContainer = document.getElementById('player-sprite-preview');
     const spriteUrl = document.getElementById('setting-sprite-url').value.trim();
@@ -1516,7 +1524,7 @@ function updatePlayerSpritePreview() {
                 if (indicator) {
                     indicator.textContent = (playerPreviewFrame + 1) + '/' + frameCount;
                 }
-            }, 150); // ~6.6 fps animation
+            }, playerAnimIntervalMs());
         }
     };
 
@@ -1773,7 +1781,7 @@ function updateFrameEditorPreview() {
         frameEditorPreviewInterval = setInterval(() => {
             currentFrame = (currentFrame + 1) % frameEditorSelectedFrames.length;
             drawFrame();
-        }, 150);
+        }, playerAnimIntervalMs());
     }
 }
 
