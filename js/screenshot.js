@@ -2,8 +2,80 @@
 // SCREENSHOT GENERATION
 // ============================================
 
-// Generate a preview screenshot of the current editor viewport
+// A card should show the game, not wherever the student happened to scroll.
+// With a flat sky, a view holding nothing captures as one color and the
+// server's blank guard refuses it (27 times on 2026-09-08, all fresh levels).
+// If the current view has no tiles or objects, the snapshot is taken from the
+// spawn point, or the first tiles, and the camera is put back afterwards.
+function snapshotViewHasContent(left, top, width, height) {
+    const c0 = Math.max(0, Math.floor(left / tileSize));
+    const c1 = Math.ceil((left + width) / tileSize);
+    const r0 = Math.max(0, Math.floor(top / tileSize));
+    const r1 = Math.ceil((top + height) / tileSize);
+    const layers = [level];
+    if (typeof decorTiles !== 'undefined' && Array.isArray(decorTiles)) layers.push(decorTiles);
+    for (const rows of layers) {
+        for (let y = r0; y < Math.min(rows.length, r1); y++) {
+            const row = rows[y];
+            if (!row) continue;
+            for (let x = c0; x < Math.min(row.length, c1); x++) {
+                const ch = row[x];
+                if (ch !== '.' && ch !== ' ') return true;
+            }
+        }
+    }
+    for (let i = 0; i < gameObjects.length; i++) {
+        const o = gameObjects[i];
+        if (o.x >= c0 && o.x < c1 && o.y >= r0 && o.y < r1) return true;
+    }
+    return false;
+}
+
+function snapshotFocusTarget() {
+    const sp = typeof getSpawnPosition === 'function' ? getSpawnPosition() : spawnPoint;
+    if (sp) return sp;
+    for (let y = 0; y < level.length; y++) {
+        const row = level[y];
+        if (!row) continue;
+        for (let x = 0; x < row.length; x++) {
+            if (row[x] !== '.' && row[x] !== ' ') return { x: x, y: y };
+        }
+    }
+    if (gameObjects.length) return { x: gameObjects[0].x, y: gameObjects[0].y };
+    return null;
+}
+
+// Returns the camera to restore, or null when the view was fine as it was
+function snapshotAimCamera() {
+    if (!canvas || !canvas.width) return null;
+    const viewW = canvas.width / zoom;
+    const viewH = canvas.height / zoom;
+    if (snapshotViewHasContent(cameraX, cameraY, viewW, viewH)) return null;
+    const target = snapshotFocusTarget();
+    if (!target) return null;
+    const saved = { x: cameraX, y: cameraY };
+    cameraX = Math.max(0, target.x * tileSize - viewW / 2);
+    cameraY = Math.max(0, target.y * tileSize - viewH / 2);
+    if (typeof clampCamera === 'function') clampCamera();
+    return saved;
+}
+
 function generateScreenshot() {
+    const saved = snapshotAimCamera();
+    try {
+        return generateScreenshotFromView();
+    } finally {
+        if (saved) {
+            cameraX = saved.x;
+            cameraY = saved.y;
+            if (typeof updateScrollbars === 'function') updateScrollbars();
+            if (typeof draw === 'function') draw();
+        }
+    }
+}
+
+// Generate a preview screenshot of the current editor viewport
+function generateScreenshotFromView() {
     const previewWidth = 800;
     const previewHeight = 500;
 
