@@ -831,7 +831,8 @@ function drawSelectedTilePreview() {
     if (isCustomTile(key) && customTiles[key]) {
         tile = customTiles[key];
         img = getCustomTileImage(key);
-        srcSize = tileSize;
+        // a tile kept at its original detail is larger than the grid: use all of it
+        srcSize = (img && img.naturalWidth) || tileSize;
     } else if (tiles[key]) {
         tile = tiles[key];
         img = tilesetImage;
@@ -900,7 +901,10 @@ function drawSelectedTilePreview() {
                 break;
         }
     }
+    var smoothWas = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = !!(tile && tile.detail);
     ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, SIZE, SIZE);
+    ctx.imageSmoothingEnabled = smoothWas;
     if (saved) ctx.restore();
 }
 

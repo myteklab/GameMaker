@@ -244,7 +244,9 @@ function generateScreenshotFromView() {
         if (isCustom) {
             var customImg = customTileImageCache[char];
             if (customImg && customImg.complete && customImg.naturalWidth > 0) {
+                sctx.imageSmoothingEnabled = !!(customTiles[char] && customTiles[char].detail);
                 sctx.drawImage(customImg, screenX, screenY, tileScreenSize, tileScreenSize);
+                sctx.imageSmoothingEnabled = false;
             } else {
                 sctx.fillStyle = '#4a90d9';
                 sctx.fillRect(screenX, screenY, tileScreenSize, tileScreenSize);

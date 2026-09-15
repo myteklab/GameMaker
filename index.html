@@ -3372,6 +3372,12 @@
             </div>
         </div>
 
+        <!-- Only shown for a tile that came from an image -->
+        <div id="pixel-editor-detail-row" class="pixel-editor-detail-row" style="display: none;">
+            <label><input type="checkbox" id="pixel-editor-keep-detail" onchange="onKeepDetailChange()"> Keep original detail</label>
+            <span id="pixel-editor-detail-hint">Saves the pixel art shown in the grid.</span>
+        </div>
+
         <!-- Color Picker Row - Always visible, not in scrollable area -->
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px 10px; background: rgba(0,0,0,0.25); border-radius: 6px;">
             <label style="font-size: 11px; color: var(--text-2); white-space: nowrap;">Color:</label>

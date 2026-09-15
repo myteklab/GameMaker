@@ -10,6 +10,10 @@ let pixelEditorCanvas = null;
 let pixelEditorCtx = null;
 let pixelEditorPreview = null;
 let pixelEditorPreviewCtx = null;
+// Set when the tile came from an image: { source: dataURL at up to 4x tile size,
+// baseline: the grid as imported, on: keep the image instead of pixel art }
+let pixelEditorDetail = null;
+let pixelEditorPendingDetail = null;
 let pixelEditorData = null; // ImageData for the actual tile
 let pixelEditorDataBackup = null; // Backup for shape preview
 let pixelEditorTileSize = 16; // Will match current tileSize
@@ -1005,6 +1009,9 @@ function initPixelEditor() {
 
 function openPixelEditor(editKey = null) {
     pixelEditorEditingKey = editKey;
+    pixelEditorDetail = null;
+    pixelEditorPendingDetail = null;
+    showDetailRow(false);
 
     // Ensure initialization (in case DOMContentLoaded ran before modal was in DOM)
     if (!pixelEditorCanvas || !pixelEditorCtx) {
@@ -1057,6 +1064,11 @@ function openPixelEditor(editKey = null) {
             if (fpsValue) fpsValue.textContent = pixelEditorFps + ' fps';
         } else {
             pixelEditorFps = 8;
+        }
+
+        // A tile saved with its original detail reopens with the option on
+        if (customTiles[editKey].detail && !(customTiles[editKey].frames && customTiles[editKey].frames.length > 1)) {
+            pixelEditorPendingDetail = customTiles[editKey].dataURL;
         }
 
         // Load existing tile (handles both static and animated)
@@ -1137,6 +1149,8 @@ function closePixelEditor() {
 
     document.getElementById('pixel-editor-modal').classList.remove('visible');
     pixelEditorEditingKey = null;
+    pixelEditorDetail = null;
+    pixelEditorPendingDetail = null;
 
     // Reset save guard and re-enable button
     window.pixelEditorSaveInProgress = false;
@@ -1175,6 +1189,10 @@ function loadSingleFrameFromDataURL(dataURL, isInitial = false) {
         if (isInitial) {
             pixelEditorFrames = [cloneImageData(pixelEditorData)];
             pixelEditorCurrentFrame = 0;
+        }
+        if (isInitial && pixelEditorPendingDetail) {
+            beginDetailSource(pixelEditorPendingDetail, cloneImageData(pixelEditorData), true);
+            pixelEditorPendingDetail = null;
         }
 
         // Save initial state to history (after async load completes)
@@ -2189,6 +2207,65 @@ function clearPixelCanvas() {
 }
 
 // ============================================
+// KEEP ORIGINAL DETAIL
+// ============================================
+
+// Called once an imported image has been squeezed into the tile grid. Keeps a
+// copy at up to 4x the tile size (128px at most) so the student can save the
+// image itself instead of the pixel-art version. An image no bigger than the
+// tile gains nothing, so it gets no option.
+function beginDetailSourceFromImage(img) {
+    const cap = Math.min(128, pixelEditorTileSize * 4);
+    const size = Math.min(cap, Math.max(img.naturalWidth || 0, img.naturalHeight || 0));
+    if (size <= pixelEditorTileSize) {
+        showDetailRow(false);
+        return;
+    }
+    const c = document.createElement('canvas');
+    c.width = size;
+    c.height = size;
+    const cctx = c.getContext('2d');
+    cctx.imageSmoothingQuality = 'high';
+    cctx.drawImage(img, 0, 0, size, size);
+    beginDetailSource(c.toDataURL('image/png'), cloneImageData(pixelEditorData), false);
+}
+
+function beginDetailSource(dataURL, baseline, on) {
+    pixelEditorDetail = { source: dataURL, baseline: baseline, on: !!on };
+    const box = document.getElementById('pixel-editor-keep-detail');
+    if (box) box.checked = !!on;
+    showDetailRow(true);
+    updateDetailHint();
+}
+
+function showDetailRow(show) {
+    const row = document.getElementById('pixel-editor-detail-row');
+    if (row) row.style.display = show ? 'flex' : 'none';
+}
+
+function onKeepDetailChange() {
+    if (!pixelEditorDetail) return;
+    pixelEditorDetail.on = document.getElementById('pixel-editor-keep-detail').checked;
+    updateDetailHint();
+}
+
+function updateDetailHint() {
+    const hint = document.getElementById('pixel-editor-detail-hint');
+    if (!hint || !pixelEditorDetail) return;
+    hint.textContent = pixelEditorDetail.on
+        ? 'Saves the image as it is. Drawing on the grid turns it back into pixel art.'
+        : 'Saves the pixel art shown in the grid.';
+}
+
+function imageDataEqual(a, b) {
+    if (!a || !b || a.data.length !== b.data.length) return false;
+    for (let i = 0; i < a.data.length; i++) {
+        if (a.data[i] !== b.data[i]) return false;
+    }
+    return true;
+}
+
+// ============================================
 // SAVE CUSTOM TILE
 // ============================================
 
@@ -2258,6 +2335,9 @@ function saveCustomTile() {
     const isAnimated = pixelEditorFrames.length > 1;
 
     if (isAnimated) {
+        if (pixelEditorDetail && pixelEditorDetail.on) {
+            showToast('Animated tiles are saved as pixel art', 'info');
+        }
         // Save as animated tile with all frames
         const frames = pixelEditorFrames.map(frame => imageDataToDataURL(frame));
 
@@ -2296,7 +2376,16 @@ function saveCustomTile() {
         showToast(`Animated tile saved! (${frames.length} frames at ${pixelEditorFps} fps)`, 'success');
     } else {
         // Save as static tile (single frame)
-        const dataURL = imageDataToDataURL(pixelEditorFrames[0]);
+        let dataURL = imageDataToDataURL(pixelEditorFrames[0]);
+        let keepDetail = false;
+        if (pixelEditorDetail && pixelEditorDetail.on) {
+            if (imageDataEqual(pixelEditorFrames[0], pixelEditorDetail.baseline)) {
+                dataURL = pixelEditorDetail.source;
+                keepDetail = true;
+            } else {
+                showToast('You drew on the tile, so it was saved as pixel art', 'info');
+            }
+        }
 
         customTiles[key] = {
             dataURL: dataURL,
@@ -2307,6 +2396,7 @@ function saveCustomTile() {
             effectIntensity: effectIntensity,
             effectSpeed: effectSpeed
         };
+        if (keepDetail) customTiles[key].detail = true;
 
         // Update image cache
         const img = new Image();

@@ -344,7 +344,7 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
         if (customTile.animated && customTile.frames && customTile.frames.length > 1) {
             tileTypesCode += `        '${escapedKey}': { custom: true, solid: ${customTile.solid !== false}${hitboxData}, animated: true, fps: ${customTile.fps || 8}, frameCount: ${customTile.frames.length} },\n`;
         } else {
-            tileTypesCode += `        '${escapedKey}': { custom: true, solid: ${customTile.solid !== false}${hitboxData} },\n`;
+            tileTypesCode += `        '${escapedKey}': { custom: true, solid: ${customTile.solid !== false}${hitboxData}${customTile.detail && !(customTile.frames && customTile.frames.length > 1) ? ', detail: true' : ''} },\n`;
         }
     }
     tileTypesCode += '    };\n';
@@ -3844,6 +3844,18 @@ ${includeComments ? `    // ═════════════════�
     var powerupTemplates = ${JSON.stringify(powerupTemplates)};
     var springTemplates = ${JSON.stringify(springTemplates)};
     var movingPlatformTemplates = ${JSON.stringify(movingPlatformTemplates)};
+
+    // A custom tile saved with "Keep original detail" is a larger image than the
+    // tile grid. Source rectangles are given in grid pixels and scaled to the
+    // image here, so the whole picture (or the matching part of it) lands on the
+    // tile, smoothed so it scales down cleanly. Pixel-art tiles scale by 1.
+    function drawCustomTileImage(img, tile, sx, sy, sw, sh, dx, dy, dw, dh) {
+        var kx = img.naturalWidth / TILE_SIZE, ky = img.naturalHeight / TILE_SIZE;
+        var smooth = ctx.imageSmoothingEnabled;
+        if (tile && tile.detail) ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(img, sx * kx, sy * ky, sw * kx, sh * ky, dx, dy, dw, dh);
+        ctx.imageSmoothingEnabled = smooth;
+    }
 
     // Pulsing outline on a touch-activated platform nobody has stepped on yet.
     // Shared by the sprite draw and the drawn-platform fallback, so a platform
@@ -8862,7 +8874,7 @@ ${includeComments ? `        // ────────────────
                         }
                         if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
                             var didSave = hasTileEffects && typeof applyTileEffect === 'function' && applyTileEffect(char, x, y, screenX, screenY);
-                            ctx.drawImage(ctImg, 0, 0, TILE_SIZE, TILE_SIZE,
+                            drawCustomTileImage(ctImg, tile, 0, 0, TILE_SIZE, TILE_SIZE,
                                 screenX, screenY, RENDER_SIZE, RENDER_SIZE);
                             if (didSave) ctx.restore();
                         } else {
@@ -8912,7 +8924,7 @@ ${includeComments ? `        // ────────────────
                         }
                         if (dctImg && dctImg.complete && dctImg.naturalWidth > 0) {
                             var dSaved = hasTileEffects && typeof applyTileEffect === 'function' && applyTileEffect(dchar, dx, dy, dScreenX, dScreenY);
-                            ctx.drawImage(dctImg, 0, 0, TILE_SIZE, TILE_SIZE,
+                            drawCustomTileImage(dctImg, dtile, 0, 0, TILE_SIZE, TILE_SIZE,
                                 dScreenX, dScreenY, RENDER_SIZE, RENDER_SIZE);
                             if (dSaved) ctx.restore();
                         }
@@ -9470,7 +9482,7 @@ ${includeComments ? `        // ────────────────
                         ctImg = customTileImages[obj.tileKey];
                     }
                     if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
-                        ctx.drawImage(ctImg, 0, 0, ctImg.naturalWidth, ctImg.naturalHeight, screenX, screenY, objW, objH);
+                        drawCustomTileImage(ctImg, tile, 0, 0, TILE_SIZE, TILE_SIZE, screenX, screenY, objW, objH);
                         tileDrawn = true;
                     }
                 } else if (tileset.complete && tileset.naturalWidth > 0) {
@@ -9868,7 +9880,7 @@ ${includeComments ? `        // ────────────────
                                         ctImg = customTileImages[obj.tileKey];
                                     }
                                     if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
-                                        ctx.drawImage(ctImg, 0, 0, ctImg.naturalWidth, ctImg.naturalHeight, platX, platY, objW, objH);
+                                        drawCustomTileImage(ctImg, tile, 0, 0, TILE_SIZE, TILE_SIZE, platX, platY, objW, objH);
                                         tileDrawn = true;
                                     }
                                 } else if (tileset.complete && tileset.naturalWidth > 0) {
@@ -9900,7 +9912,7 @@ ${includeComments ? `        // ────────────────
                                                 ctImg = customTileImages[obj.tileKey];
                                             }
                                             if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
-                                                ctx.drawImage(ctImg, 0, 0, srcW, srcH, drawX, drawY, destW, destH);
+                                                drawCustomTileImage(ctImg, tile, 0, 0, srcW, srcH, drawX, drawY, destW, destH);
                                                 tileDrawn = true;
                                             }
                                         } else if (tileset.complete && tileset.naturalWidth > 0) {
@@ -10024,7 +10036,7 @@ ${includeComments ? `        // ────────────────
                                 }
                                 if (ctImg && ctImg.complete && ctImg.naturalWidth > 0) {
                                     ctx.imageSmoothingEnabled = false;
-                                    ctx.drawImage(ctImg, 0, 0, srcW, srcH, screenX, screenY, objW, objH);
+                                    drawCustomTileImage(ctImg, emptyTile, 0, 0, srcW, srcH, screenX, screenY, objW, objH);
                                     emptyDrawn = true;
                                 }
                             } else if (tileset.complete && tileset.naturalWidth > 0) {

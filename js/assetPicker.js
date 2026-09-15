@@ -708,6 +708,11 @@
                     savePixelEditorHistory();
                 }
 
+                // Offer to keep the image's own detail instead of the pixel art
+                if (typeof beginDetailSourceFromImage === 'function') {
+                    beginDetailSourceFromImage(img);
+                }
+
                 // Render the editor with the new data
                 if (typeof renderPixelEditor === 'function') {
                     renderPixelEditor();

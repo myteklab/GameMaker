@@ -967,9 +967,12 @@ function drawTileGrid(grid, isDecor) {
                 const customTile = customTiles[char];
                 const img = getCustomTileImage(char);
                 if (img && img.complete) {
-                    ctx.imageSmoothingEnabled = false;
-                    ctx.drawImage(img, 0, 0, tileSize, tileSize,
+                    // A detailed tile is a larger image than the grid: map all of it
+                    // onto the tile, smoothed so it scales down cleanly
+                    ctx.imageSmoothingEnabled = !!customTile.detail;
+                    ctx.drawImage(img, 0, 0, img.naturalWidth || tileSize, img.naturalHeight || tileSize,
                         screenX, screenY, scaledTileSize, scaledTileSize);
+                    ctx.imageSmoothingEnabled = false;
                 } else {
                     // Fallback while image loads
                     ctx.fillStyle = '#6b5b95';
@@ -1131,7 +1134,9 @@ function drawSelection() {
                 if (isCustom && customTileImageCache[tKey]) {
                     var ctImg = customTileImageCache[tKey];
                     if (ctImg.complete && ctImg.naturalWidth > 0) {
+                        ctx.imageSmoothingEnabled = !!(customTiles[tKey] && customTiles[tKey].detail);
                         ctx.drawImage(ctImg, screenX, screenY, scaledTileSize, scaledTileSize);
+                        ctx.imageSmoothingEnabled = false;
                     }
                 } else if (tileInfo && tilesetImage && tilesetImage.complete) {
                     ctx.drawImage(tilesetImage,
