@@ -56,6 +56,11 @@ document.addEventListener('keydown', function(e) {
     if (typeof selection !== 'undefined' && selection) {
         return;
     }
+    // Same for the platform path bar. This listener and events.js can run in
+    // either order, so check both the path state and whether Esc was already used.
+    if (e.defaultPrevented || (typeof platformPathUsesEscape === 'function' && platformPathUsesEscape())) {
+        return;
+    }
 
     // Check if any other modal is open (not play test)
     const otherModals = document.querySelectorAll('.modal-overlay.visible:not(#playtest-modal)');

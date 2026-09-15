@@ -962,6 +962,7 @@
     <div id="main">
         <div id="canvas-container">
             <canvas id="level-canvas"></canvas>
+            <div id="platform-path-bar" class="platform-path-bar" hidden></div>
             <!-- Scrollbars for panning -->
             <div id="scrollbar-horizontal" class="editor-scrollbar horizontal">
                 <div id="scrollbar-h-thumb" class="scrollbar-thumb"></div>
@@ -2684,6 +2685,7 @@
                         <option value="circle">Circle</option>
                         <option value="figure8">Figure eight</option>
                     </select>
+                    <small style="display: block; margin-top: 4px; color: var(--text-3); font-size: 10px;">Want a custom route? Click a placed platform in the level and choose Draw path.</small>
                 </div>
 
                 <div class="form-row">
@@ -5407,6 +5409,7 @@ const URL_BACKGROUNDS = [];
 <script src="js/panelResize.js"></script>
 <script src="js/codeSnippets.js"></script>
 <script src="js/codePreview.js"></script>
+<script src="js/platformPaths.js"></script>
 <script src="js/init.js"></script>
 <script src="js/dropdown.js"></script>
 <script src="js/viewSync.js"></script>

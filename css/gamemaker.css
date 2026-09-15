@@ -4321,3 +4321,14 @@
 .bgp-seg button:hover { color: var(--text); }
 .bgp-seg button.active { background: var(--accent); color: #fff; }
 @media (max-width: 860px) { .bgp { grid-template-columns: 1fr; } .bgp-list { position: static; } }
+
+/* Path tools for a placed moving platform, floating over the level canvas */
+.platform-path-bar { position: absolute; z-index: 20; display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); font-size: 11px; white-space: nowrap; }
+.platform-path-bar .ppb-btn { padding: 4px 10px; border-radius: 5px; border: 1px solid var(--line); background: var(--bg-3); color: var(--text); font-size: 11px; cursor: pointer; }
+.platform-path-bar .ppb-btn:hover { background: var(--bg-4); }
+.platform-path-bar .ppb-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.platform-path-bar .ppb-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-1); }
+.platform-path-bar .ppb-seg button { padding: 3px 8px; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 11px; cursor: pointer; }
+.platform-path-bar .ppb-seg button.active { background: var(--accent); color: #fff; }
+.platform-path-bar .ppb-close { width: 22px; height: 22px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 15px; line-height: 1; cursor: pointer; }
+.platform-path-bar .ppb-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }

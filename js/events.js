@@ -41,6 +41,8 @@ function onCanvasMouseMove(e) {
 
     document.getElementById('coordinates').textContent = `X: ${tile.x}, Y: ${tile.y}`;
 
+    if (typeof platformPathMouse === 'function' && platformPathMouse('move', e, x, y)) return;
+
     // Update rectangle selection drag
     if (selectionDragging) {
         var sx1 = Math.min(selectionStartX, tile.x);
@@ -252,6 +254,8 @@ function onCanvasMouseDown(e) {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const tile = screenToTile(x, y);
+
+    if (typeof platformPathMouse === 'function' && platformPathMouse('down', e, x, y)) return;
 
     // Shift+left-click: start rectangle selection
     if (e.button === 0 && e.shiftKey && !isDraggingObject) {
@@ -779,6 +783,7 @@ function updateLevelSpawnUI() {
 }
 
 function onCanvasMouseUp(e) {
+    if (typeof platformPathMouse === 'function' && platformPathMouse('up', e)) return;
     // Finish selection move - place tiles at new position
     if (selectionMoving && selectionTileData && selectionMoveOffset) {
         var dx = selectionMoveOffset.dx;
@@ -902,11 +907,15 @@ function onCanvasMouseUp(e) {
             draggedTileOrigin = null;
         }
 
-        // Clear object selection
+        // Clear object selection; a moving platform offers its path tools
+        const droppedObject = selectedMoveObject !== null ? gameObjects[selectedMoveObject] : null;
         selectedMoveObject = null;
         stopPulseAnimation();
         markDirty();
         draw();
+        if (droppedObject && droppedObject.type === 'movingPlatform' && typeof showPlatformPathBar === 'function') {
+            showPlatformPathBar(droppedObject);
+        }
         return;
     }
 
@@ -921,6 +930,7 @@ function onCanvasMouseUp(e) {
 }
 
 function onCanvasMouseLeave() {
+    if (typeof platformPathMouse === 'function') platformPathMouse('leave', null);
     hoverX = -1;
     hoverY = -1;
     isDragging = false;
@@ -1079,6 +1089,10 @@ function onKeyDown(e) {
 
     // Escape key - deselect object placement, brush, selection, etc.
     if (!isTyping && e.key === 'Escape') {
+        if (typeof cancelPlatformPath === 'function' && cancelPlatformPath()) {
+            e.preventDefault();
+            return;
+        }
         // Clear multi-cell stamp brush first if active
         if (tileBrush) {
             clearTileBrush();

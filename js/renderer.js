@@ -87,6 +87,8 @@ function draw() {
     // play-testing.
     drawDoorSpawnMarkers();
 
+    if (typeof drawPlatformPathOverlay === 'function') drawPlatformPathOverlay();
+
     // Update scrollbars to reflect current camera position
     if (typeof updateScrollbars === 'function') {
         updateScrollbars();
@@ -424,14 +426,17 @@ function drawGameObjects() {
             }
             ctx.restore();
 
-            // Draw movement direction indicator
-            const axis = template?.axis || 'x';
+            // Draw movement direction indicator: the platform's own sketched path when it has one
+            const ownPath = typeof validPlatformPath === 'function' ? validPlatformPath(obj.path) : null;
+            const axis = ownPath ? 'own' : (template?.axis || 'x');
             const distance = gameToEditorPx(template?.distance || 100) * zoom;
             ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
             ctx.lineWidth = 2;
             ctx.setLineDash([4, 4]);
             ctx.beginPath();
-            if (axis === 'circle') {
+            if (axis === 'own') {
+                tracePlatformOwnPath(ctx, ownPath, centerX, centerY);
+            } else if (axis === 'circle') {
                 // the whole loop, matching placePlatformOnLoop in the game
                 ctx.arc(centerX + distance, centerY, distance, 0, Math.PI * 2);
             } else if (axis === 'figure8') {

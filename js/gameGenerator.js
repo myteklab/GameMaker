@@ -5167,7 +5167,12 @@ ${includeComments ? `    // ═════════════════�
                         gameObj.direction = 1; // 1 = forward, -1 = backward
                     }
 
-                    if (gameObj.axis === 'circle' || gameObj.axis === 'figure8') {
+                    // a path sketched on this placed platform replaces its type's movement
+                    gameObj.path = preparePlatformPath(obj.path);
+                    if (gameObj.path) {
+                        gameObj.pathDist = (template.randomizeStart && template.activation === 'always') ? Math.random() * gameObj.path.total : 0;
+                        placePlatformOnPath(gameObj);
+                    } else if (gameObj.axis === 'circle' || gameObj.axis === 'figure8') {
                         gameObj.angle = gameObj.angle || 0;
                         placePlatformOnLoop(gameObj);
                     }
@@ -8028,6 +8033,53 @@ ${includeComments ? `        // ────────────────
         }
     }
 
+    // A path sketched on a placed platform: points in game pixels from its start,
+    // the first one [0, 0]. Distances along it are worked out once so the platform
+    // keeps one speed on long and short segments alike.
+    function preparePlatformPath(p) {
+        if (!p || !Array.isArray(p.points)) return null;
+        var pts = [];
+        for (var i = 0; i < p.points.length && pts.length < 400; i++) {
+            var q = p.points[i];
+            if (!q) continue;
+            var x = parseFloat(q[0]), y = parseFloat(q[1]);
+            if (isFinite(x) && isFinite(y)) pts.push([Math.max(-8000, Math.min(8000, x)), Math.max(-8000, Math.min(8000, y))]);
+        }
+        if (pts.length < 2) return null;
+        var loop = !!p.loop;
+        if (loop) pts.push(pts[0]);
+        var cum = [0];
+        for (var j = 1; j < pts.length; j++) cum.push(cum[j - 1] + Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]));
+        var total = cum[cum.length - 1];
+        if (!(total > 1)) return null;
+        return { pts: pts, cum: cum, total: total, loop: loop, seg: 0 };
+    }
+    function placePlatformOnPath(obj) {
+        var P = obj.path, d = obj.pathDist, i = P.seg;
+        // it only moves a few pixels a frame, so search from last frame's segment
+        while (i > 0 && P.cum[i] > d) i--;
+        while (i < P.pts.length - 2 && P.cum[i + 1] < d) i++;
+        P.seg = i;
+        var len = P.cum[i + 1] - P.cum[i];
+        var t = len > 0 ? (d - P.cum[i]) / len : 0;
+        obj.x = obj.startX + P.pts[i][0] + (P.pts[i + 1][0] - P.pts[i][0]) * t;
+        obj.y = obj.startY + P.pts[i][1] + (P.pts[i + 1][1] - P.pts[i][1]) * t;
+    }
+    function advancePlatformOnPath(obj) {
+        var P = obj.path;
+        obj.pathDist += obj.direction * obj.speed;
+        if (P.loop) {
+            obj.pathDist = ((obj.pathDist % P.total) + P.total) % P.total;
+        } else if (obj.pathDist >= P.total) {
+            obj.pathDist = P.total;
+            obj.direction = -1;
+        } else if (obj.pathDist <= 0) {
+            obj.pathDist = 0;
+            obj.direction = 1;
+        }
+        placePlatformOnPath(obj);
+    }
+
     // Loops pass through the spot the platform was placed at (angle 0), so it does
     // not jump when the level starts. A circle runs up and around to the right of
     // that spot; a figure eight is centered on it, half as tall as it is wide.
@@ -8056,7 +8108,9 @@ ${includeComments ? `        // ────────────────
         obj.lastY = obj.y;
 
         // Move based on axis
-        if (obj.axis === 'circle' || obj.axis === 'figure8') {
+        if (obj.path) {
+            advancePlatformOnPath(obj);
+        } else if (obj.axis === 'circle' || obj.axis === 'figure8') {
             // speed stays pixels per frame along the path: divide by the radius
             // (a figure eight's path is roughly 1.2 times longer per turn)
             var loopR = Math.max(8, obj.distance || 100);
