@@ -117,8 +117,14 @@ function bgLayerEditorHTML(layer, i) {
     };
     return `
         <div class="bgp-preview-wrap">
-            <canvas id="bgp-preview" class="bgp-preview" width="560" height="150"></canvas>
-            <label class="bgp-inline"><input type="checkbox" id="bgp-show-joins" onchange="drawBgPanelPreview()"> Show where copies meet</label>
+            <canvas id="bgp-preview" class="bgp-preview${bgPreviewMode === 'all' ? ' draggable' : ''}" width="560" height="150"></canvas>
+            <div class="bgp-preview-bar">
+                <div class="bgp-seg">${[['layer', 'This layer'], ['all', 'All layers']].map(([m, t]) =>
+                    `<button type="button" class="${bgPreviewMode === m ? 'active' : ''}" onclick="setBgPreviewMode('${m}')">${t}</button>`).join('')}</div>
+                ${bgPreviewMode === 'all' ? `<label class="bgp-inline"><input type="checkbox" id="bgp-pan" ${bgPreviewPan ? 'checked' : ''} onchange="setBgPreviewPan(this.checked)"> Pan camera</label>` : ''}
+                <label class="bgp-inline"><input type="checkbox" id="bgp-show-joins" onchange="drawBgPanelPreview()"> Show where copies meet</label>
+            </div>
+            ${bgPreviewMode === 'all' ? '<small class="bgp-hint">Every visible layer, back to front. Drag the preview to move the camera and compare parallax.</small>' : ''}
         </div>
         <div class="bgp-group">
             <div class="bgp-group-title">Image</div>
@@ -164,6 +170,8 @@ function renderBackgroundLayers() {
             </div>
             <div class="bgp-editor">${layers.length ? bgLayerEditorHTML(layers[selectedBgLayerIndex], selectedBgLayerIndex) : '<div class="bgp-empty">Add a layer to edit it here.</div>'}</div>
         </div>`;
+    const cv = document.getElementById('bgp-preview');
+    if (cv) attachBgPreviewDrag(cv);
     startBgPanelPreview();
 }
 
@@ -419,9 +427,77 @@ function bgPanelImage(src) {
     return bgPanelImages[src];
 }
 
-// The selected layer on its own, repeated across the strip with its motion,
-// opacity and edges, over the level's background color. Motion is scaled as
-// if the strip were the game screen's height.
+// Preview state is only for looking, never saved with the level.
+let bgPreviewMode = 'layer';
+let bgPreviewPan = true;
+let bgPreviewCamX = 0;
+let bgPreviewPanStart = 0;
+
+// The camera sweeps 600 game pixels each way over 12 seconds: far enough that a
+// speed 1 layer visibly outruns a speed 0.2 one, slow enough to follow.
+function bgPreviewCamera() {
+    if (!bgPreviewPan) return bgPreviewCamX;
+    return 600 * Math.sin(2 * Math.PI * (performance.now() - bgPreviewPanStart) / 12000);
+}
+
+function setBgPreviewMode(mode) {
+    bgPreviewMode = mode === 'all' ? 'all' : 'layer';
+    renderBackgroundLayers();
+}
+
+function setBgPreviewPan(on) {
+    if (on) bgPreviewPanStart = performance.now();
+    else bgPreviewCamX = bgPreviewCamera();
+    bgPreviewPan = !!on;
+}
+
+// Dragging the strip moves the camera the way dragging a map does: pull right and
+// the world follows the pointer, so a speed 1 layer stays under it.
+function attachBgPreviewDrag(cv) {
+    let lastX = null;
+    cv.addEventListener('pointerdown', (e) => {
+        if (bgPreviewMode !== 'all') return;
+        if (bgPreviewPan) {
+            setBgPreviewPan(false);
+            const box = document.getElementById('bgp-pan');
+            if (box) box.checked = false;
+        }
+        lastX = e.clientX;
+        cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener('pointermove', (e) => {
+        if (lastX === null) return;
+        // pointer pixels to strip pixels, then strip pixels to game pixels
+        const toStrip = cv.width / (cv.clientWidth || cv.width);
+        bgPreviewCamX -= (e.clientX - lastX) * toStrip / (cv.height / 500);
+        lastX = e.clientX;
+        drawBgPanelPreview();
+    });
+    const end = () => { lastX = null; };
+    cv.addEventListener('pointerup', end);
+    cv.addEventListener('pointercancel', end);
+}
+
+// Draws one layer into the strip. k converts game pixels to strip pixels, as if
+// the strip were the 500px-tall game screen. Returns where its copies start.
+function drawBgPreviewLayer(c, layer, camX, k, w, h) {
+    const img = bgPanelImage(layer.src);
+    if (!img || img.__failed || !img.complete || !img.naturalWidth) return null;
+    const m = bgLayerMotion(layer, performance.now() / 1000);
+    const src = bgLayerSource(layer, img);
+    const dh = Math.ceil(h + m.amp * 2 * k);
+    const dw = Math.max(1, Math.ceil((src.naturalWidth || src.width) * dh / (src.naturalHeight || src.height)));
+    const speed = Math.max(0, Math.min(1, parseFloat(layer.speed) || 0));
+    const offsetX = (camX * speed + m.dx) * k;
+    c.globalAlpha = bgLayerAlpha(layer);
+    drawTiledBgLayer(c, src, layer, offsetX, -m.amp * k + m.dy * k, dw, dh, w);
+    c.globalAlpha = 1;
+    return { offsetX, dw };
+}
+
+// This layer: the selected layer alone over the level's background color, with
+// no camera. All layers: every visible layer back to front, each shifted by the
+// shared camera times its own parallax speed.
 function drawBgPanelPreview() {
     const cv = document.getElementById('bgp-preview');
     if (!cv) return;
@@ -442,21 +518,28 @@ function drawBgPanelPreview() {
         c.fillText(text, w / 2, h / 2 + 4);
     };
     if (!layer) return;
-    const img = bgPanelImage(layer.src);
-    if (!img) return note('Add an image to see this layer');
-    if (img.__failed) return note('The image did not load');
-    if (!img.complete || !img.naturalWidth) return note('Loading...');
     const k = h / 500;
-    const m = bgLayerMotion(layer, performance.now() / 1000);
-    const src = bgLayerSource(layer, img);
-    const dh = Math.ceil(h + m.amp * 2 * k);
-    const dw = Math.max(1, Math.ceil((src.naturalWidth || src.width) * dh / (src.naturalHeight || src.height)));
-    const offsetX = m.dx * k;
-    c.globalAlpha = bgLayerAlpha(layer);
-    drawTiledBgLayer(c, src, layer, offsetX, -m.amp * k + m.dy * k, dw, dh, w);
-    c.globalAlpha = 1;
-    const joins = document.getElementById('bgp-show-joins');
-    if (joins && joins.checked) {
+    let joins = null;
+    if (bgPreviewMode === 'all') {
+        const camX = bgPreviewCamera();
+        let drawn = 0;
+        layers.forEach((l, i) => {
+            if (!l || l.visible === false) return;
+            const r = drawBgPreviewLayer(c, l, camX, k, w, h);
+            if (r) drawn++;
+            if (i === selectedBgLayerIndex) joins = r;
+        });
+        if (!drawn) return note('No visible layer has an image yet');
+    } else {
+        const img = bgPanelImage(layer.src);
+        if (!img) return note('Add an image to see this layer');
+        if (img.__failed) return note('The image did not load');
+        if (!img.complete || !img.naturalWidth) return note('Loading...');
+        joins = drawBgPreviewLayer(c, Object.assign({}, layer, { speed: 0 }), 0, k, w, h);
+    }
+    const showJoins = document.getElementById('bgp-show-joins');
+    if (joins && showJoins && showJoins.checked) {
+        const { offsetX, dw } = joins;
         c.save();
         c.strokeStyle = 'rgba(79, 140, 255, 0.9)';
         c.setLineDash([4, 4]);

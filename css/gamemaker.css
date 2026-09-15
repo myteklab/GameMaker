@@ -4300,6 +4300,10 @@
 .bgp-preview-wrap { margin-top: -15px; padding: 15px 0 8px; background: var(--bg-2); }
 .bgp-list { padding-top: 0; }
 .bgp-preview { display: block; width: 100%; height: 150px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-1); }
+.bgp-preview.draggable { cursor: grab; touch-action: none; }
+.bgp-preview.draggable:active { cursor: grabbing; }
+.bgp-preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 6px; }
+.bgp-preview-bar .bgp-inline { margin-top: 0; }
 .bgp-inline { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 10px; color: var(--text-3); cursor: pointer; }
 .bgp-inline input { width: auto; margin: 0; }
 .bgp-group { padding: 10px 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.2); }
