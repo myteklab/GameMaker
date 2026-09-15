@@ -28,71 +28,143 @@ function setEditingBgLayers(newLayers) {
     }
 }
 
+// Which layer the Backgrounds panel is editing. The list on the left picks it,
+// the editor on the right changes it.
+let selectedBgLayerIndex = 0;
+
+function bgEditingCurrentLevel() {
+    return typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex;
+}
+
+function bgEscAttr(v) {
+    return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// A readable name for a layer card: the file name from the URL, without the
+// folder or extension.
+function bgLayerLabel(layer, index) {
+    const src = (layer && layer.src || '').trim();
+    if (!src) return 'Empty layer';
+    if (src.startsWith('data:')) return 'Image ' + (index + 1);
+    let name = src.split('?')[0].split('/').filter(Boolean).pop() || ('Layer ' + (index + 1));
+    try { name = decodeURIComponent(name); } catch (e) {}
+    name = name.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ');
+    return name.length > 24 ? name.slice(0, 23) + '...' : name;
+}
+
+const BG_ICON_UP = '<svg class="gm-icon" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>';
+const BG_ICON_DOWN = '<svg class="gm-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
+
+function bgLayerCardHTML(layer, i, count) {
+    const hasImage = layer.src && layer.src.trim() !== '';
+    const badges = [];
+    if (bgLayerMotionX(layer) === 'scroll') badges.push('Scrolls');
+    if (bgLayerMotionX(layer) === 'sway') badges.push('Sways');
+    if (bgLayerMotionY(layer) === 'sway') badges.push('Bobs');
+    if (bgLayerSeam(layer) !== 'repeat') badges.push(bgLayerSeam(layer) === 'blend' ? 'Blend' : 'Mirror');
+    return `
+        <div class="bgp-card${i === selectedBgLayerIndex ? ' active' : ''}${layer.visible === false ? ' hidden-layer' : ''}" onclick="selectBgLayer(${i})">
+            <div class="bgp-thumb">${hasImage ? `<img src="${bgEscAttr(layer.src)}" alt="" onerror="bgPreviewFailed(this)">` : 'No image'}</div>
+            <div style="min-width: 0;">
+                <div class="bgp-card-name" title="${bgEscAttr(layer.src || '')}">${bgEscAttr(bgLayerLabel(layer, i))}</div>
+                <div class="bgp-badges">${badges.map(b => `<span class="bgp-badge">${b}</span>`).join('')}</div>
+            </div>
+            <div class="bgp-card-actions">
+                <button type="button" class="bgp-icon-btn" title="Move back" ${i === 0 ? 'disabled' : ''} onclick="event.stopPropagation(); moveBgLayer(${i}, -1)">${BG_ICON_UP}</button>
+                <button type="button" class="bgp-icon-btn" title="Move forward" ${i === count - 1 ? 'disabled' : ''} onclick="event.stopPropagation(); moveBgLayer(${i}, 1)">${BG_ICON_DOWN}</button>
+                <button type="button" class="bgp-icon-btn" title="${layer.visible === false ? 'Show layer' : 'Hide layer'}" onclick="event.stopPropagation(); toggleBgLayerVisibility(${i})"><svg class="gm-icon"><use href="#icon-${layer.visible === false ? 'eye-off' : 'eye'}"/></svg></button>
+                <button type="button" class="bgp-icon-btn danger" title="Delete layer" onclick="event.stopPropagation(); removeBgLayer(${i})"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>
+            </div>
+        </div>`;
+}
+
+function bgSliderHTML(i, field, label, min, max, step, value, shown) {
+    return `
+        <div class="bgp-slider">
+            <label>${label}</label>
+            <input type="range" min="${min}" max="${max}" step="${step}" value="${value}" oninput="setBgLayerField(${i}, '${field}', this.value, this)">
+            <output>${shown}</output>
+        </div>`;
+}
+
+function bgSegHTML(i, field, current, options) {
+    return `<div class="bgp-seg">${options.map(([value, text]) =>
+        `<button type="button" class="${value === current ? 'active' : ''}" onclick="setBgLayerChoice(${i}, '${field}', '${value}')">${text}</button>`).join('')}</div>`;
+}
+
+function bgLayerEditorHTML(layer, i) {
+    const mx = bgLayerMotionX(layer), my = bgLayerMotionY(layer), seam = bgLayerSeam(layer);
+    const speed = Math.max(0, Math.min(1, parseFloat(layer.speed) || 0));
+    const opacity = Math.round(bgLayerAlpha(layer) * 100);
+    let motionX = '';
+    if (mx === 'scroll') {
+        motionX = bgSliderHTML(i, 'drift', 'Speed', -200, 200, 5, bgLayerDrift(layer), bgLayerDrift(layer) + ' px/s')
+            + '<small class="bgp-hint">Keeps moving the whole time. Negative moves left.</small>';
+    } else if (mx === 'sway') {
+        motionX = bgSliderHTML(i, 'swayX', 'Distance', 0, 400, 5, bgLayerSwayX(layer), bgLayerSwayX(layer) + ' px')
+            + bgSliderHTML(i, 'swayXTime', 'Round trip', 1, 60, 1, bgLayerSwayXTime(layer), bgLayerSwayXTime(layer) + ' s')
+            + '<small class="bgp-hint">Glides out and back. A slower round trip looks calmer.</small>';
+    }
+    let motionY = '';
+    if (my === 'sway') {
+        motionY = bgSliderHTML(i, 'swayY', 'Distance', 0, 200, 2, bgLayerSwayY(layer), bgLayerSwayY(layer) + ' px')
+            + bgSliderHTML(i, 'swayYTime', 'Round trip', 1, 60, 1, bgLayerSwayYTime(layer), bgLayerSwayYTime(layer) + ' s');
+    }
+    const edgeHints = {
+        repeat: 'Copies sit side by side. A texture whose sides differ shows a line.',
+        mirror: 'Every other copy is flipped, so the edges always match.',
+        blend: 'Each copy fades into the next. More blend hides a stronger line.'
+    };
+    return `
+        <div class="bgp-preview-wrap">
+            <canvas id="bgp-preview" class="bgp-preview" width="560" height="150"></canvas>
+            <label class="bgp-inline"><input type="checkbox" id="bgp-show-joins" onchange="drawBgPanelPreview()"> Show where copies meet</label>
+        </div>
+        <div class="bgp-group">
+            <div class="bgp-group-title">Image</div>
+            <div class="bgp-row">
+                <input type="text" id="bg-layer-url-${i}" value="${bgEscAttr(layer.src || '')}" placeholder="Image URL" onchange="setBgLayerImage(${i}, this.value)">
+                <button type="button" class="browse-library-btn" onclick="browseBgLayerImage(${i})">Browse</button>
+            </div>
+        </div>
+        <div class="bgp-group">
+            <div class="bgp-group-title">Depth and look</div>
+            ${bgSliderHTML(i, 'speed', 'Parallax', 0, 1, 0.05, speed, speed.toFixed(2))}
+            <small class="bgp-hint">0 stays still, 1 moves with the camera. Far layers move slowly.</small>
+            ${bgSliderHTML(i, 'opacity', 'Opacity', 0, 100, 5, opacity, opacity + '%')}
+        </div>
+        <div class="bgp-group">
+            <div class="bgp-group-title">Motion</div>
+            <div class="bgp-seg-row"><span>Sideways</span>${bgSegHTML(i, 'motionX', mx, [['none', 'None'], ['scroll', 'Scroll'], ['sway', 'Back and forth']])}</div>
+            ${motionX}
+            <div class="bgp-seg-row"><span>Up and down</span>${bgSegHTML(i, 'motionY', my, [['none', 'None'], ['sway', 'Bob']])}</div>
+            ${motionY}
+        </div>
+        <div class="bgp-group">
+            <div class="bgp-group-title">Edges</div>
+            <div class="bgp-seg-row"><span>Copies meet</span>${bgSegHTML(i, 'seam', seam, [['repeat', 'Repeat'], ['mirror', 'Mirror'], ['blend', 'Blend']])}</div>
+            ${seam === 'blend' ? bgSliderHTML(i, 'blend', 'Blend amount', 5, 50, 1, bgLayerBlend(layer), bgLayerBlend(layer) + '%') : ''}
+            <small class="bgp-hint">${edgeHints[seam]}</small>
+        </div>`;
+}
+
 function renderBackgroundLayers() {
-    const list = document.getElementById('bg-layers-list');
-    if (!list) return;
-    list.innerHTML = '';
+    const host = document.getElementById('bg-layers-list');
+    if (!host) return;
+    const layers = getEditingBgLayers() || [];
+    layers.forEach(l => { if (l.visible === undefined) l.visible = true; });
+    if (selectedBgLayerIndex >= layers.length) selectedBgLayerIndex = Math.max(0, layers.length - 1);
 
-    const layers = getEditingBgLayers();
-
-    layers.forEach((layer, index) => {
-        // Ensure visible property exists (default to true for legacy data)
-        if (layer.visible === undefined) layer.visible = true;
-
-        const div = document.createElement('div');
-        div.className = 'bg-layer-item';
-        div.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px;';
-
-        // Create preview thumbnail
-        const previewId = 'bg-preview-' + index;
-        const hasImage = layer.src && layer.src.trim() !== '';
-
-        div.innerHTML = `
-            <div class="bg-layer-preview" id="${previewId}" style="width: 50px; height: 35px; min-width: 50px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
-                ${hasImage ? `<img src="${layer.src}" style="width: 100%; height: 100%; object-fit: cover;" onerror="bgPreviewFailed(this)">` : '<span style="font-size: 10px; color: var(--text-3);">No img</span>'}
+    host.innerHTML = `
+        <div class="bgp">
+            <div class="bgp-list">
+                <div class="bgp-list-head">Layers <span>back to front</span></div>
+                <div class="bgp-cards">${layers.length ? layers.map((l, i) => bgLayerCardHTML(l, i, layers.length)).join('') : '<div class="bgp-empty">No layers yet. Add one for a sky, hills or clouds.</div>'}</div>
+                <button type="button" class="btn btn-full" onclick="addBackgroundLayer()">+ Add Layer</button>
             </div>
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                <div style="display: flex; gap: 4px;">
-                    <input type="text" id="bg-layer-url-${index}" value="${layer.src || ''}" placeholder="Image URL..."
-                        style="flex: 1; min-width: 0; font-size: 11px;"
-                        onchange="updateBgLayer(${index}, this.value); updateBgPreview(${index}, this.value);"
-                        onblur="loadBackgroundImages()"
-                        oninput="updateBgPreview(${index}, this.value);">
-                    <button type="button" class="browse-library-btn" onclick="browseBgLayerImage(${index})" style="padding: 4px 8px; font-size: 11px;">Browse</button>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <span style="font-size: 10px; color: var(--text-3);">Speed:</span>
-                    <input type="number" value="${layer.speed}" step="0.1" min="0" max="1" title="Parallax speed"
-                        style="width: 60px; font-size: 11px;"
-                        onchange="updateBgLayerSpeed(${index}, this.value)">
-                    <span style="font-size: 10px; color: var(--text-3); margin-left: 6px;">Opacity:</span>
-                    <input type="range" min="0" max="100" step="5" value="${Math.round(bgLayerAlpha(layer) * 100)}" title="Layer opacity"
-                        style="width: 70px; accent-color: var(--accent);"
-                        oninput="updateBgLayerOpacity(${index}, this.value)">
-                    <span id="bg-opacity-${index}" style="font-size: 10px; color: var(--text-2); min-width: 30px;">${Math.round(bgLayerAlpha(layer) * 100)}%</span>
-                    <button class="visibility-btn" onclick="toggleBgLayerVisibility(${index})" title="${layer.visible ? 'Hide layer' : 'Show layer'}"
-                        style="opacity:${layer.visible ? '1' : '0.4'}; background: none; border: none; cursor: pointer; font-size: 14px;"><svg class="gm-icon"><use href="#icon-${layer.visible ? 'eye' : 'eye-off'}"/></svg></button>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <span style="font-size: 10px; color: var(--text-3);">Drift:</span>
-                    <input type="number" value="${bgLayerDrift(layer)}" step="5" min="-200" max="200"
-                        title="Pixels per second the layer moves on its own, like clouds (negative moves left)"
-                        style="width: 60px; font-size: 11px;"
-                        onchange="updateBgLayerDrift(${index}, this.value)">
-                    <span style="font-size: 10px; color: var(--text-3);">px/s</span>
-                    <span style="font-size: 10px; color: var(--text-3); margin-left: 6px;">Edges:</span>
-                    <select title="How repeated copies of the image meet" style="font-size: 11px; padding: 2px 6px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: var(--text);"
-                        onchange="updateBgLayerSeam(${index}, this.value)">
-                        <option value="repeat"${bgLayerSeam(layer) === 'repeat' ? ' selected' : ''}>Repeat</option>
-                        <option value="mirror"${bgLayerSeam(layer) === 'mirror' ? ' selected' : ''}>Mirror</option>
-                        <option value="blend"${bgLayerSeam(layer) === 'blend' ? ' selected' : ''}>Blend</option>
-                    </select>
-                </div>
-            </div>
-            <button onclick="removeBgLayer(${index})" title="Remove layer" style="background: rgba(231,76,60,0.3); border: none; color: var(--danger); width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 14px;">×</button>
-        `;
-        list.appendChild(div);
-    });
+            <div class="bgp-editor">${layers.length ? bgLayerEditorHTML(layers[selectedBgLayerIndex], selectedBgLayerIndex) : '<div class="bgp-empty">Add a layer to edit it here.</div>'}</div>
+        </div>`;
+    startBgPanelPreview();
 }
 
 // The thumbnail's failure mark used to be inlined in the onerror attribute,
@@ -103,35 +175,35 @@ function bgPreviewFailed(img) {
     if (box) box.innerHTML = '<span style="font-size: 10px; color: var(--danger);"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>';
 }
 
-// Update background layer preview thumbnail
-function updateBgPreview(index, url) {
-    const preview = document.getElementById('bg-preview-' + index);
-    if (!preview) return;
+function selectBgLayer(index) {
+    selectedBgLayerIndex = index;
+    renderBackgroundLayers();
+}
 
-    url = url.trim();
-    if (!url) {
-        preview.innerHTML = '<span style="font-size: 10px; color: var(--text-3);">No img</span>';
-        return;
-    }
+function moveBgLayer(index, dir) {
+    const layers = getEditingBgLayers();
+    const to = index + dir;
+    if (!layers[index] || to < 0 || to >= layers.length) return;
+    const moved = layers.splice(index, 1)[0];
+    layers.splice(to, 0, moved);
+    if (selectedBgLayerIndex === index) selectedBgLayerIndex = to;
+    else if (selectedBgLayerIndex === to) selectedBgLayerIndex = index;
+    markDirty();
+    if (bgEditingCurrentLevel()) loadBackgroundImages();
+    renderBackgroundLayers();
+}
 
-    // Show loading state
-    preview.innerHTML = '<span style="font-size: 10px; color: var(--text-3);">...</span>';
-
-    // Create test image
-    const img = new Image();
-    img.onload = function() {
-        preview.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover;">`;
-    };
-    img.onerror = function() {
-        preview.innerHTML = '<span style="font-size: 10px; color: var(--danger);"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>';
-    };
-    img.src = url;
+function setBgLayerImage(index, url) {
+    const layers = getEditingBgLayers();
+    if (!layers[index]) return;
+    updateBgLayer(index, (url || '').trim());
+    renderBackgroundLayers();
+    if (bgEditingCurrentLevel()) loadBackgroundImages();
 }
 
 // Pick a layer image from the Asset Library or My Files. The picker hands
 // back a permanent URL (a private file is made link-viewable on the way),
-// so the layer is set, the row redrawn, and the canvas reloaded here rather
-// than waiting for the URL field's blur like typed input does.
+// so the layer is set, the panel redrawn, and the canvas reloaded here.
 function browseBgLayerImage(index) {
     if (typeof openAssetPickerWithCallback !== 'function') {
         showToast('Asset Library is not available', 'error');
@@ -140,12 +212,61 @@ function browseBgLayerImage(index) {
     openAssetPickerWithCallback(function(url) {
         const layers = getEditingBgLayers();
         if (!url || !layers[index]) return;
-        updateBgLayer(index, url);
-        renderBackgroundLayers();
-        if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
-            loadBackgroundImages();
-        }
+        setBgLayerImage(index, url);
     }, 'tiles-backgrounds');
+}
+
+// Every slider in the panel goes through here: clamp, store, update its own
+// readout, and let the canvas and preview show it. No re-render, so a slider
+// being dragged keeps its focus.
+const BG_FIELD_RULES = {
+    speed:     { lo: 0,    hi: 1,   def: 0.5, show: v => v.toFixed(2) },
+    opacity:   { lo: 0,    hi: 100, def: 100, show: v => v + '%', store: v => v / 100 },
+    drift:     { lo: -200, hi: 200, def: 0,   show: v => v + ' px/s' },
+    swayX:     { lo: 0,    hi: 400, def: 40,  show: v => v + ' px' },
+    swayXTime: { lo: 1,    hi: 60,  def: 6,   show: v => v + ' s' },
+    swayY:     { lo: 0,    hi: 200, def: 12,  show: v => v + ' px' },
+    swayYTime: { lo: 1,    hi: 60,  def: 4,   show: v => v + ' s' },
+    blend:     { lo: 5,    hi: 50,  def: 15,  show: v => v + '%' }
+};
+function setBgLayerField(index, field, value, input) {
+    const layers = getEditingBgLayers();
+    const rule = BG_FIELD_RULES[field];
+    if (!layers[index] || !rule) return;
+    const v = bgNum(value, rule.def, rule.lo, rule.hi);
+    layers[index][field] = rule.store ? rule.store(v) : v;
+    const out = input && input.parentElement && input.parentElement.querySelector('output');
+    if (out) out.textContent = rule.show(v);
+    markDirty();
+    if (bgEditingCurrentLevel()) {
+        ensureBgDriftLoop();
+        draw();
+    }
+    drawBgPanelPreview();
+}
+
+// Segmented choices change which controls exist, so they re-render the panel.
+function setBgLayerChoice(index, field, value) {
+    const layers = getEditingBgLayers();
+    const layer = layers[index];
+    if (!layer) return;
+    if (field === 'motionX') {
+        layer.motionX = value === 'scroll' || value === 'sway' ? value : 'none';
+        // a scroll with no speed would look like nothing happened
+        if (layer.motionX === 'scroll' && !bgLayerDrift(layer)) layer.drift = 20;
+    } else if (field === 'motionY') {
+        layer.motionY = value === 'sway' ? 'sway' : 'none';
+    } else if (field === 'seam') {
+        layer.seam = bgLayerSeam({ seam: value });
+    } else {
+        return;
+    }
+    markDirty();
+    renderBackgroundLayers();
+    if (bgEditingCurrentLevel()) {
+        ensureBgDriftLoop();
+        draw();
+    }
 }
 
 // 0..1. Layers saved before opacity existed have none and draw fully opaque.
@@ -154,45 +275,91 @@ function bgLayerAlpha(layer) {
     return isNaN(a) ? 1 : Math.max(0, Math.min(1, a));
 }
 
-function updateBgLayerOpacity(index, percent) {
-    const layers = getEditingBgLayers();
-    if (!layers[index]) return;
-    const a = Math.max(0, Math.min(100, parseInt(percent, 10) || 0)) / 100;
-    layers[index].opacity = a;
-    const label = document.getElementById('bg-opacity-' + index);
-    if (label) label.textContent = Math.round(a * 100) + '%';
-    markDirty();
-    if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
-        draw();
-    }
+function bgNum(v, def, lo, hi) {
+    const n = parseFloat(v);
+    return isNaN(n) ? def : Math.max(lo, Math.min(hi, n));
 }
 
-// Pixels per second the layer slides on its own, whatever the camera does:
-// a sky of clouds that keeps moving while the player stands still.
+// Scroll speed in game pixels per second, used when sideways motion is 'scroll'.
 function bgLayerDrift(layer) {
-    const d = parseFloat(layer && layer.drift);
-    return isNaN(d) ? 0 : Math.max(-200, Math.min(200, d));
+    return bgNum(layer && layer.drift, 0, -200, 200);
+}
+
+// Sideways motion: 'none', 'scroll' (keeps moving) or 'sway' (out and back).
+// A layer saved with a drift speed but no motion field was a scroll.
+function bgLayerMotionX(layer) {
+    const m = layer && layer.motionX;
+    if (m === 'scroll' || m === 'sway' || m === 'none') return m;
+    return bgLayerDrift(layer) !== 0 ? 'scroll' : 'none';
+}
+
+function bgLayerMotionY(layer) {
+    return layer && layer.motionY === 'sway' ? 'sway' : 'none';
+}
+
+function bgLayerSwayX(layer) { return bgNum(layer && layer.swayX, 40, 0, 400); }
+function bgLayerSwayXTime(layer) { return bgNum(layer && layer.swayXTime, 6, 1, 60); }
+function bgLayerSwayY(layer) { return bgNum(layer && layer.swayY, 12, 0, 200); }
+function bgLayerSwayYTime(layer) { return bgNum(layer && layer.swayYTime, 4, 1, 60); }
+
+// A scroll at speed 0 or a sway of 0 px is still, so the editor clock can stop.
+function bgLayerMoves(layer) {
+    const mx = bgLayerMotionX(layer);
+    return (mx === 'scroll' && bgLayerDrift(layer) !== 0) || (mx === 'sway' && bgLayerSwayX(layer) > 0)
+        || (bgLayerMotionY(layer) === 'sway' && bgLayerSwayY(layer) > 0);
+}
+
+// Where the layer's own motion has put it at time t (seconds), in game pixels.
+// dx follows the camera-offset convention (positive shifts the picture left);
+// dy moves it down; amp is how far it can travel vertically, which the draw
+// adds above and below so no gap opens.
+function bgLayerMotion(layer, t) {
+    let dx = 0, dy = 0, amp = 0;
+    const mx = bgLayerMotionX(layer);
+    if (mx === 'scroll') dx = -t * bgLayerDrift(layer);
+    else if (mx === 'sway') dx = -bgLayerSwayX(layer) * Math.sin(2 * Math.PI * t / bgLayerSwayXTime(layer));
+    if (bgLayerMotionY(layer) === 'sway') {
+        amp = bgLayerSwayY(layer);
+        dy = amp * Math.sin(2 * Math.PI * t / bgLayerSwayYTime(layer));
+    }
+    return { dx, dy, amp };
+}
+
+// The same motion in editor screen pixels: scaled the way the camera offset is.
+function bgMotionEditor(layer) {
+    const m = bgLayerMotion(layer, performance.now() / 1000);
+    const renderScale = (typeof gameSettings !== 'undefined' && gameSettings.tileRenderScale) || 1;
+    const k = zoom / renderScale;
+    return { dx: m.dx * k, dy: m.dy * k, amp: m.amp * k };
 }
 
 // How repeated copies of the image meet. 'mirror' flips every other copy so
 // neighbouring edges are always identical; 'blend' fades the image's right
-// edge into its left once, so a texture that differs at its sides has no line.
+// edge into its left, so a texture that differs at its sides has no line.
 function bgLayerSeam(layer) {
     const s = layer && layer.seam;
     return s === 'mirror' || s === 'blend' ? s : 'repeat';
 }
 
-function bgLayerSource(layer, img) {
-    return bgLayerSeam(layer) === 'blend' ? blendedSeamCanvas(img) : img;
+// Percent of the image width faded across the seam when blending.
+function bgLayerBlend(layer) {
+    return Math.round(bgNum(layer && layer.blend, 15, 5, 50));
 }
 
-// The last 15% of the image is faded over its first 15% and then dropped, so
+function bgLayerSource(layer, img) {
+    return bgLayerSeam(layer) === 'blend' ? blendedSeamCanvas(img, bgLayerBlend(layer)) : img;
+}
+
+// The last pct of the image is faded over its first pct and then dropped, so
 // the tile's right edge continues straight into its own left edge. Built once
-// per image. No pixel reads, so it works for images from any host.
-function blendedSeamCanvas(img) {
-    if (img.__seamBlend) return img.__seamBlend;
+// per image and blend amount. No pixel reads, so it works for images from any
+// host.
+function blendedSeamCanvas(img, pct) {
+    const p = Math.round(pct || 15);
+    img.__seamBlends = img.__seamBlends || {};
+    if (img.__seamBlends[p]) return img.__seamBlends[p];
     const w = img.naturalWidth, h = img.naturalHeight;
-    const o = Math.max(1, Math.round(w * 0.15));
+    const o = Math.max(1, Math.round(w * p / 100));
     const c = document.createElement('canvas');
     c.width = w - o;
     c.height = h;
@@ -210,7 +377,7 @@ function blendedSeamCanvas(img) {
     tq.fillStyle = fade;
     tq.fillRect(0, 0, o, h);
     q.drawImage(tail, 0, 0);
-    img.__seamBlend = c;
+    img.__seamBlends[p] = c;
     return c;
 }
 
@@ -235,46 +402,109 @@ function drawTiledBgLayer(c, src, layer, offsetX, y, w, h, viewW) {
     }
 }
 
-// Screen pixels a drifting layer has moved so far, at editor zoom. Drift is in
-// game pixels, so it is scaled the same way the camera offset is. Positive
-// drift moves the picture right.
-function bgDriftOffset(layer) {
-    const d = bgLayerDrift(layer);
-    if (!d) return 0;
-    const renderScale = (typeof gameSettings !== 'undefined' && gameSettings.tileRenderScale) || 1;
-    return -(performance.now() / 1000) * d * zoom / renderScale;
+// Images for the panel preview, loaded by URL so the preview works for any
+// level being edited, not only the one on the canvas.
+const bgPanelImages = {};
+function bgPanelImage(src) {
+    src = (src || '').trim();
+    if (!src) return null;
+    if (!bgPanelImages[src]) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => drawBgPanelPreview();
+        img.onerror = () => { img.__failed = true; drawBgPanelPreview(); };
+        img.src = src;
+        bgPanelImages[src] = img;
+    }
+    return bgPanelImages[src];
 }
 
-function updateBgLayerDrift(index, value) {
-    const layers = getEditingBgLayers();
-    if (!layers[index]) return;
-    layers[index].drift = bgLayerDrift({ drift: value });
-    markDirty();
-    ensureBgDriftLoop();
-    draw();
-}
-
-function updateBgLayerSeam(index, value) {
-    const layers = getEditingBgLayers();
-    if (!layers[index]) return;
-    layers[index].seam = bgLayerSeam({ seam: value });
-    markDirty();
-    if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
-        draw();
+// The selected layer on its own, repeated across the strip with its motion,
+// opacity and edges, over the level's background color. Motion is scaled as
+// if the strip were the game screen's height.
+function drawBgPanelPreview() {
+    const cv = document.getElementById('bgp-preview');
+    if (!cv) return;
+    const w = Math.max(200, Math.round(cv.clientWidth || cv.width));
+    if (cv.width !== w) cv.width = w;
+    const h = cv.height;
+    const c = cv.getContext('2d');
+    const layers = getEditingBgLayers() || [];
+    const layer = layers[selectedBgLayerIndex];
+    const lvl = (typeof editingLevelIndex !== 'undefined' && editingLevelIndex >= 0 && levels[editingLevelIndex]) ? levels[editingLevelIndex] : getCurrentLevel();
+    c.globalAlpha = 1;
+    c.fillStyle = (lvl && lvl.bgColor) || '#222a36';
+    c.fillRect(0, 0, w, h);
+    const note = (text) => {
+        c.fillStyle = 'rgba(230, 233, 239, 0.6)';
+        c.font = '12px sans-serif';
+        c.textAlign = 'center';
+        c.fillText(text, w / 2, h / 2 + 4);
+    };
+    if (!layer) return;
+    const img = bgPanelImage(layer.src);
+    if (!img) return note('Add an image to see this layer');
+    if (img.__failed) return note('The image did not load');
+    if (!img.complete || !img.naturalWidth) return note('Loading...');
+    const k = h / 500;
+    const m = bgLayerMotion(layer, performance.now() / 1000);
+    const src = bgLayerSource(layer, img);
+    const dh = Math.ceil(h + m.amp * 2 * k);
+    const dw = Math.max(1, Math.ceil((src.naturalWidth || src.width) * dh / (src.naturalHeight || src.height)));
+    const offsetX = m.dx * k;
+    c.globalAlpha = bgLayerAlpha(layer);
+    drawTiledBgLayer(c, src, layer, offsetX, -m.amp * k + m.dy * k, dw, dh, w);
+    c.globalAlpha = 1;
+    const joins = document.getElementById('bgp-show-joins');
+    if (joins && joins.checked) {
+        c.save();
+        c.strokeStyle = 'rgba(79, 140, 255, 0.9)';
+        c.setLineDash([4, 4]);
+        c.lineWidth = 1;
+        for (let x = -(((offsetX % dw) + dw) % dw); x <= w; x += dw) {
+            if (x <= 0) continue;
+            c.beginPath();
+            c.moveTo(Math.round(x) + 0.5, 0);
+            c.lineTo(Math.round(x) + 0.5, h);
+            c.stroke();
+        }
+        c.restore();
     }
 }
 
-// The editor only redraws on input, so a drifting layer needs its own clock.
-// It runs while the current level has a visible drifting layer, at about
+// Animates the preview while the Backgrounds section is on screen, about
+// 24fps, and stops as soon as the panel is hidden or closed.
+let bgPanelRAF = null;
+let bgPanelLastDraw = 0;
+function startBgPanelPreview() {
+    drawBgPanelPreview();
+    if (bgPanelRAF) return;
+    const tick = (now) => {
+        const cv = document.getElementById('bgp-preview');
+        const modal = document.getElementById('level-settings-modal');
+        if (!cv || !modal || modal.style.display === 'none' || !cv.offsetParent) {
+            bgPanelRAF = null;
+            return;
+        }
+        bgPanelRAF = requestAnimationFrame(tick);
+        if (now - bgPanelLastDraw < 42 || document.hidden) return;
+        bgPanelLastDraw = now;
+        drawBgPanelPreview();
+    };
+    bgPanelRAF = requestAnimationFrame(tick);
+}
+
+// The editor only redraws on input, so a moving layer needs its own clock.
+// It runs while the current level has a visible moving layer, at about
 // 24fps, skips frames while the tab is hidden or backgrounds are switched
-// off, and ends itself when nothing drifts.
+// off, and ends itself when nothing moves.
 let bgDriftRAF = null;
 let bgDriftLastDraw = 0;
 function ensureBgDriftLoop() {
     if (bgDriftRAF) return;
     const tick = (now) => {
-        const drifting = (backgroundLayers || []).some(l => l && l.visible !== false && bgLayerDrift(l) !== 0);
-        if (!drifting) {
+        const moving = (backgroundLayers || []).some(l => l && l.visible !== false && bgLayerMoves(l));
+        if (!moving) {
             bgDriftRAF = null;
             return;
         }
@@ -290,19 +520,20 @@ function ensureBgDriftLoop() {
 
 function addBackgroundLayer() {
     const layers = getEditingBgLayers();
-    layers.push({ src: '', speed: 0.5, visible: true, opacity: 1, drift: 0, seam: 'repeat' });
+    layers.push({ src: '', speed: 0.5, visible: true, opacity: 1, motionX: 'none', drift: 0, motionY: 'none', seam: 'repeat', blend: 15 });
+    selectedBgLayerIndex = layers.length - 1;
     markDirty();
     renderBackgroundLayers();
 }
 
 function toggleBgLayerVisibility(index) {
     const layers = getEditingBgLayers();
+    if (!layers[index]) return;
     layers[index].visible = !layers[index].visible;
     markDirty();
     renderBackgroundLayers();
     ensureBgDriftLoop();
-    // Only redraw if editing current level
-    if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
+    if (bgEditingCurrentLevel()) {
         draw();
     }
 }
@@ -312,26 +543,19 @@ function updateBgLayer(index, src) {
     layers[index].src = src;
     markDirty();
     // Clear cached image so it reloads (only if editing current level)
-    if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
+    if (bgEditingCurrentLevel()) {
         loadedBackgroundImages[index] = null;
-    }
-}
-
-function updateBgLayerSpeed(index, speed) {
-    const layers = getEditingBgLayers();
-    layers[index].speed = parseFloat(speed);
-    markDirty();
-    // Only redraw if editing current level
-    if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
-        draw();
     }
 }
 
 function removeBgLayer(index) {
     const layers = getEditingBgLayers();
+    if (!layers[index]) return;
     layers.splice(index, 1);
-    // Only modify cached images if editing current level
-    if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
+    if (selectedBgLayerIndex > index || selectedBgLayerIndex >= layers.length) {
+        selectedBgLayerIndex = Math.max(0, selectedBgLayerIndex - 1);
+    }
+    if (bgEditingCurrentLevel()) {
         loadedBackgroundImages.splice(index, 1);
         draw();
     }

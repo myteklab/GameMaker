@@ -2635,6 +2635,8 @@ function showPlayerSection(sectionName) {
 // ============================================
 
 function showLevelSettingsSection(sectionName) {
+    // the layer preview animates only while this section is on screen
+    if (sectionName === 'backgrounds' && typeof startBgPanelPreview === 'function') setTimeout(startBgPanelPreview, 0);
     // Update nav buttons
     document.querySelectorAll(".level-settings-nav-item").forEach(btn => {
         btn.classList.toggle("active", btn.dataset.section === sectionName);

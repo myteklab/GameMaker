@@ -3092,8 +3092,8 @@
 
         /* Level Settings Modal - Two Panel Layout */
         #level-settings-modal .modal {
-            width: 600px;
-            max-width: 95vw;
+            width: min(980px, 94vw);
+            max-width: 94vw;
         }
 
         .level-settings-container {
@@ -4270,3 +4270,50 @@
     padding: 12px 25px 25px;
     background: var(--bg-2);
 }
+
+/* Level Settings > Backgrounds: the layer list on the left, the selected
+   layer's settings on the right with a live preview on top */
+.bgp { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 16px; align-items: start; }
+.bgp-list { display: flex; flex-direction: column; gap: 8px; }
+.bgp-list-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; font-weight: 600; color: var(--text-2); }
+.bgp-list-head span { font-weight: 400; font-size: 10px; color: var(--text-3); }
+.bgp-cards { display: flex; flex-direction: column; gap: 6px; }
+.bgp-card { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px; border-radius: 8px; background: var(--bg-3); border: 1px solid transparent; cursor: pointer; }
+.bgp-card:hover { background: var(--bg-4); }
+.bgp-card.active { border-color: var(--accent); background: rgba(79, 140, 255, 0.12); }
+.bgp-card.hidden-layer .bgp-thumb, .bgp-card.hidden-layer .bgp-card-name { opacity: 0.45; }
+.bgp-thumb { width: 48px; height: 34px; border-radius: 4px; overflow: hidden; background: rgba(0, 0, 0, 0.3); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text-3); text-align: center; }
+.bgp-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.bgp-card-name { font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bgp-badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; min-height: 12px; }
+.bgp-badge { font-size: 9px; line-height: 12px; padding: 0 5px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); color: var(--text-2); }
+.bgp-card-actions { display: grid; grid-template-columns: repeat(2, 22px); gap: 2px; }
+.bgp-icon-btn { width: 22px; height: 22px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-2); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.bgp-icon-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+.bgp-icon-btn:disabled { opacity: 0.3; cursor: default; }
+.bgp-icon-btn.danger:hover { background: rgba(240, 97, 109, 0.2); color: var(--danger); }
+.bgp-empty { font-size: 11px; color: var(--text-3); padding: 14px; text-align: center; border: 1px dashed var(--line); border-radius: 8px; }
+.bgp-editor { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+/* the settings below the preview scroll, so the preview and the layer list stay
+   pinned; otherwise a student changing Edges cannot see what it did */
+.bgp-list, .bgp-preview-wrap { position: sticky; top: -15px; z-index: 2; }
+.bgp-preview-wrap { margin-top: -15px; padding: 15px 0 8px; background: var(--bg-2); }
+.bgp-list { padding-top: 0; }
+.bgp-preview { display: block; width: 100%; height: 150px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-1); }
+.bgp-inline { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 10px; color: var(--text-3); cursor: pointer; }
+.bgp-inline input { width: auto; margin: 0; }
+.bgp-group { padding: 10px 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.2); }
+.bgp-group-title { margin-bottom: 8px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.bgp-row { display: flex; gap: 6px; }
+.bgp-row input[type="text"] { flex: 1; min-width: 0; font-size: 11px; }
+.bgp-slider { display: grid; grid-template-columns: 92px minmax(0, 1fr) 64px; gap: 8px; align-items: center; margin-top: 6px; font-size: 11px; color: var(--text-2); }
+.bgp-slider input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
+.bgp-slider output { font-size: 11px; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
+.bgp-hint { display: block; margin-top: 4px; font-size: 10px; color: var(--text-3); }
+.bgp-seg-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 11px; color: var(--text-2); }
+.bgp-seg-row > span:first-child { width: 92px; flex-shrink: 0; }
+.bgp-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-1); }
+.bgp-seg button { padding: 4px 10px; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 11px; cursor: pointer; }
+.bgp-seg button:hover { color: var(--text); }
+.bgp-seg button.active { background: var(--accent); color: #fff; }
+@media (max-width: 860px) { .bgp { grid-template-columns: 1fr; } .bgp-list { position: static; } }

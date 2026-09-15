@@ -168,12 +168,14 @@ function drawMenuLevelEditor(lvl) {
                 const img = loadedBackgroundImages[i];
                 if (img && img.complete && img.naturalWidth > 0) {
                     ctx.globalAlpha = bgLayerAlpha(layer);
-                    if (bgLayerDrift(layer) !== 0) {
-                        // a drifting menu layer repeats sideways at full canvas height
+                    if (bgLayerMoves(layer)) {
+                        // a moving menu layer repeats sideways at full canvas height, drawn
+                        // taller by twice any up-and-down distance so no gap opens
+                        const motion = bgMotionEditor(layer);
                         const src = bgLayerSource(layer, img);
-                        const h = canvas.height;
+                        const h = Math.ceil(canvas.height + motion.amp * 2);
                         const w = Math.ceil((src.naturalWidth || src.width) * h / (src.naturalHeight || src.height));
-                        drawTiledBgLayer(ctx, src, layer, bgDriftOffset(layer), 0, w, h, canvas.width);
+                        drawTiledBgLayer(ctx, src, layer, motion.dx, -motion.amp + motion.dy, w, h, canvas.width);
                     } else {
                         // Scale to fit canvas, centered
                         const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
@@ -907,17 +909,19 @@ function drawBackground() {
         const img = loadedBackgroundImages[i];
 
         if (img && img.complete && img.naturalWidth > 0) {
-            // Parallax (speed 0 = static, 1 = moves with camera) plus any drift
-            const offsetX = cameraX * layer.speed * zoom + bgDriftOffset(layer);
+            // Parallax (speed 0 = static, 1 = moves with camera) plus the layer's own
+            // motion. Up-and-down motion draws the image taller by twice its distance,
+            // so the visible band stays covered wherever it has moved to.
+            const motion = bgMotionEditor(layer);
+            const offsetX = cameraX * layer.speed * zoom + motion.dx;
             const src = bgLayerSource(layer, img);
             ctx.globalAlpha = bgLayerAlpha(layer);
 
-            // Scale image to fit the visible level height
-            const scale = visibleLevelHeight / (src.naturalHeight || src.height);
+            const scaledHeight = Math.ceil(visibleLevelHeight + motion.amp * 2);
+            const scale = scaledHeight / (src.naturalHeight || src.height);
             const scaledWidth = Math.ceil((src.naturalWidth || src.width) * scale);
-            const scaledHeight = Math.ceil(visibleLevelHeight);
 
-            drawTiledBgLayer(ctx, src, layer, offsetX, visibleTop, scaledWidth, scaledHeight, canvas.width);
+            drawTiledBgLayer(ctx, src, layer, offsetX, visibleTop - motion.amp + motion.dy, scaledWidth, scaledHeight, canvas.width);
             ctx.globalAlpha = 1;
         }
     }

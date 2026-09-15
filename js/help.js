@@ -197,10 +197,10 @@ const helpContent = {
                 </div>
             </div>
 
-            <h4>Drift and Edges</h4>
+            <h4>Motion and Edges</h4>
             <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px; margin-bottom: 15px; font-size: 12px; color: var(--text-2);">
-                <p style="margin: 0 0 8px;"><strong style="color: var(--accent);">Drift</strong> moves a layer on its own, even while the player stands still. Try 10 to 30 for slow clouds. Negative numbers drift left.</p>
-                <p style="margin: 0;"><strong style="color: var(--accent);">Edges</strong> sets how copies of the image meet. <strong>Repeat</strong> puts them side by side. <strong>Mirror</strong> flips every other copy so the edges always match. <strong>Blend</strong> fades one edge into the next, which hides the line on sky, grass and cloud textures.</p>
+                <p style="margin: 0 0 8px;"><strong style="color: var(--accent);">Motion</strong> moves a layer on its own, even while the player stands still. <strong>Scroll</strong> keeps it moving sideways (try 10 to 30 for slow clouds, negative goes left). <strong>Back and forth</strong> glides it out and back, and <strong>Bob</strong> floats it up and down. Set how far it goes and how many seconds a round trip takes.</p>
+                <p style="margin: 0;"><strong style="color: var(--accent);">Edges</strong> sets how copies of the image meet. <strong>Repeat</strong> puts them side by side. <strong>Mirror</strong> flips every other copy so the edges always match. <strong>Blend</strong> fades one copy into the next; raise the blend amount if you still see a line. Tick <em>Show where copies meet</em> under the preview to check.</p>
             </div>
 
             <h4>Layer Order</h4>

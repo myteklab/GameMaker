@@ -614,9 +614,13 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
             }
             // a number, never the raw field: it is written into the game's source
             const layerOpacity = (() => { const a = parseFloat(layer.opacity); return isNaN(a) ? 1 : Math.max(0, Math.min(1, a)); })();
-            const layerDrift = (() => { const d = parseFloat(layer.drift); return isNaN(d) ? 0 : Math.max(-200, Math.min(200, d)); })();
+            const num = (v, def, lo, hi) => { const n = parseFloat(v); return isNaN(n) ? def : Math.max(lo, Math.min(hi, n)); };
+            const layerDrift = num(layer.drift, 0, -200, 200);
             const layerSeam = layer.seam === 'mirror' || layer.seam === 'blend' ? layer.seam : 'repeat';
-            bgLayersCode += `        { src: '${escapedSrc}', speed: ${layer.speed}, opacity: ${layerOpacity}, drift: ${layerDrift}, seam: '${layerSeam}' }`;
+            const layerMotionX = layer.motionX === 'scroll' || layer.motionX === 'sway' || layer.motionX === 'none'
+                ? layer.motionX : (layerDrift !== 0 ? 'scroll' : 'none');
+            const layerMotionY = layer.motionY === 'sway' ? 'sway' : 'none';
+            bgLayersCode += `        { src: '${escapedSrc}', speed: ${layer.speed}, opacity: ${layerOpacity}, seam: '${layerSeam}', blend: ${Math.round(num(layer.blend, 15, 5, 50))}, motionX: '${layerMotionX}', drift: ${layerDrift}, swayX: ${num(layer.swayX, 40, 0, 400)}, swayXTime: ${num(layer.swayXTime, 6, 1, 60)}, motionY: '${layerMotionY}', swayY: ${num(layer.swayY, 12, 0, 200)}, swayYTime: ${num(layer.swayYTime, 4, 1, 60)} }`;
             validLayerCount++;
         }
     });
@@ -3859,10 +3863,45 @@ ${includeComments ? `    // ═════════════════�
         var s = layer && layer.seam;
         return s === 'mirror' || s === 'blend' ? s : 'repeat';
     }
-    function blendedSeamCanvas(img) {
-        if (img.__seamBlend) return img.__seamBlend;
+    function bgNum(v, def, lo, hi) {
+        var n = parseFloat(v);
+        return isNaN(n) ? def : Math.max(lo, Math.min(hi, n));
+    }
+    // sideways: 'none', 'scroll' (keeps moving) or 'sway' (out and back); a
+    // layer from a level saved with only a drift speed was a scroll
+    function bgLayerMotionX(layer) {
+        var m = layer && layer.motionX;
+        if (m === 'scroll' || m === 'sway' || m === 'none') return m;
+        return bgLayerDrift(layer) !== 0 ? 'scroll' : 'none';
+    }
+    function bgLayerMotionY(layer) {
+        return layer && layer.motionY === 'sway' ? 'sway' : 'none';
+    }
+    function bgLayerMoves(layer) {
+        var mx = bgLayerMotionX(layer);
+        return (mx === 'scroll' && bgLayerDrift(layer) !== 0) || (mx === 'sway' && bgNum(layer.swayX, 40, 0, 400) > 0)
+            || (bgLayerMotionY(layer) === 'sway' && bgNum(layer.swayY, 12, 0, 200) > 0);
+    }
+    // Where the layer's own motion has put it at time t, in game pixels. dx
+    // follows the camera-offset convention, dy moves it down, amp is how far it
+    // can travel vertically so the draw can cover that much above and below.
+    function bgLayerMotion(layer, t) {
+        var dx = 0, dy = 0, amp = 0;
+        var mx = bgLayerMotionX(layer);
+        if (mx === 'scroll') dx = -t * bgLayerDrift(layer);
+        else if (mx === 'sway') dx = -bgNum(layer.swayX, 40, 0, 400) * Math.sin(2 * Math.PI * t / bgNum(layer.swayXTime, 6, 1, 60));
+        if (bgLayerMotionY(layer) === 'sway') {
+            amp = bgNum(layer.swayY, 12, 0, 200);
+            dy = amp * Math.sin(2 * Math.PI * t / bgNum(layer.swayYTime, 4, 1, 60));
+        }
+        return { dx: dx, dy: dy, amp: amp };
+    }
+    function blendedSeamCanvas(img, pct) {
+        var p = Math.round(pct || 15);
+        img.__seamBlends = img.__seamBlends || {};
+        if (img.__seamBlends[p]) return img.__seamBlends[p];
         var w = img.naturalWidth, h = img.naturalHeight;
-        var o = Math.max(1, Math.round(w * 0.15));
+        var o = Math.max(1, Math.round(w * p / 100));
         var c = document.createElement('canvas');
         c.width = w - o;
         c.height = h;
@@ -3880,11 +3919,11 @@ ${includeComments ? `    // ═════════════════�
         tq.fillStyle = fade;
         tq.fillRect(0, 0, o, h);
         q.drawImage(tail, 0, 0);
-        img.__seamBlend = c;
+        img.__seamBlends[p] = c;
         return c;
     }
     function bgLayerSource(layer, img) {
-        return bgLayerSeam(layer) === 'blend' ? blendedSeamCanvas(img) : img;
+        return bgLayerSeam(layer) === 'blend' ? blendedSeamCanvas(img, Math.round(bgNum(layer.blend, 15, 5, 50))) : img;
     }
     function drawTiledBgLayer(src, layer, offsetX, y, w, h, viewW) {
         var mirror = bgLayerSeam(layer) === 'mirror';
@@ -4827,11 +4866,14 @@ ${includeComments ? `    // ═════════════════�
             var img = loadedBgImages[i];
             if (img && img.complete && img.naturalWidth > 0) {
                 ctx.globalAlpha = bgLayerAlpha(layer);
-                if (bgLayerDrift(layer) !== 0) {
-                    // a drifting menu layer repeats sideways at full canvas height
+                if (bgLayerMoves(layer)) {
+                    // a moving menu layer repeats sideways at full canvas height, drawn
+                    // taller by twice any up-and-down distance so no gap opens
+                    var mm = bgLayerMotion(layer, performance.now() / 1000);
                     var msrc = bgLayerSource(layer, img);
-                    var mw = Math.ceil((msrc.naturalWidth || msrc.width) * CANVAS_HEIGHT / (msrc.naturalHeight || msrc.height));
-                    drawTiledBgLayer(msrc, layer, -(performance.now() / 1000) * bgLayerDrift(layer), 0, mw, CANVAS_HEIGHT, CANVAS_WIDTH);
+                    var mh = Math.ceil(CANVAS_HEIGHT + mm.amp * 2);
+                    var mw = Math.ceil((msrc.naturalWidth || msrc.width) * mh / (msrc.naturalHeight || msrc.height));
+                    drawTiledBgLayer(msrc, layer, mm.dx, -mm.amp + mm.dy, mw, mh, CANVAS_WIDTH);
                 } else {
                     // Scale to cover canvas
                     var scale = Math.max(CANVAS_WIDTH / img.naturalWidth, CANVAS_HEIGHT / img.naturalHeight);
@@ -8876,16 +8918,19 @@ ${includeComments ? `        // ────────────────
             var img = loadedBgImages[i];
             if (img && img.complete && img.naturalWidth > 0) {
                 var src = bgLayerSource(layer, img);
-                // parallax from the camera, drift from the clock in game pixels per second
-                var offsetX = camX * layer.speed - (performance.now() / 1000) * bgLayerDrift(layer);
+                // parallax from the camera, plus the layer's own motion from the clock
+                var motion = bgLayerMotion(layer, performance.now() / 1000);
+                var offsetX = camX * layer.speed + motion.dx;
                 ctx.globalAlpha = bgLayerAlpha(layer);
 
-                var visibleHeight = Math.min(levelBottomOnScreen, CANVAS_HEIGHT);
-                var scale = visibleHeight / (src.naturalHeight || src.height);
+                // up-and-down motion draws the image taller by twice its distance, so
+                // the band down to the level bottom stays covered wherever it has moved
+                var visibleHeight = Math.ceil(Math.min(levelBottomOnScreen, CANVAS_HEIGHT));
+                var scaledHeight = Math.ceil(visibleHeight + motion.amp * 2);
+                var scale = scaledHeight / (src.naturalHeight || src.height);
                 var scaledWidth = Math.ceil((src.naturalWidth || src.width) * scale);
-                var scaledHeight = Math.ceil(visibleHeight);
 
-                drawTiledBgLayer(src, layer, offsetX, levelBottomOnScreen - scaledHeight, scaledWidth, scaledHeight, CANVAS_WIDTH);
+                drawTiledBgLayer(src, layer, offsetX, levelBottomOnScreen - visibleHeight - motion.amp + motion.dy, scaledWidth, scaledHeight, CANVAS_WIDTH);
                 ctx.globalAlpha = 1;
             }
         }

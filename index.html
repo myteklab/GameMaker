@@ -4917,7 +4917,7 @@
 
 <!-- Level Settings Modal -->
 <div class="modal-overlay template-modal" id="level-settings-modal" onclick="if(event.target === this) closeLevelSettingsModal()">
-    <div class="modal template-editor-modal" style="max-width: 600px; max-height: 85vh; display: flex; flex-direction: column;">
+    <div class="modal template-editor-modal" style="max-width: 980px; width: min(980px, 94vw); max-height: 85vh; display: flex; flex-direction: column;">
         <div class="modal-header" style="flex-shrink: 0;">
             <h2><svg class="gm-icon"><use href="#icon-map"/></svg> Level Settings <span class="help-icon" onclick="showHelp('levels')">?</span></h2>
             <button class="modal-close-btn" onclick="closeLevelSettingsModal()">&times;</button>
@@ -5147,17 +5147,7 @@
                         <small style="color: var(--text-3); font-size: 9px; margin-top: 4px; display: block;">Sets a solid background color. Background layers render on top of this.</small>
                     </div>
 
-                    <h4 style="color: var(--text-2); font-size: 12px; margin: 0 0 8px 0;">Parallax Layers</h4>
-                    <p style="font-size: 11px; color: var(--text-3); margin-bottom: 5px;">Add depth with scrolling background layers</p>
-                    <p style="font-size: 10px; color: var(--text-3); margin-bottom: 12px;">Speed: 0 = static, 0.3 = slow parallax, 1 = moves with camera</p>
-                    <p style="font-size: 10px; color: var(--text-3); margin: -8px 0 12px;">Drift moves a layer on its own, like clouds. Edges: Blend or Mirror hides the line where the image repeats.</p>
-
                     <div id="bg-layers-list"></div>
-                    <button class="btn btn-full" onclick="addBackgroundLayer()" style="margin-top: 10px;">+ Add Background Layer</button>
-
-                    <div style="margin-top: 15px; padding: 10px; background: rgba(79, 140, 255, 0.15); border-radius: 6px; border-left: 3px solid var(--accent);">
-                        <p style="font-size: 10px; color: var(--text-2); margin: 0;"><strong style="color: var(--accent);">Tip:</strong> Add 2-3 layers with different speeds (0.1, 0.3, 0.6) for a professional parallax effect!</p>
-                    </div>
                 </div><!-- End Backgrounds Section -->
 
                 <!-- Particles Section -->
