@@ -4245,3 +4245,28 @@
 #pixel-editor-detail-hint {
     color: var(--text-3);
 }
+
+/* Dialog buttons stay in view. In every dialog the Save/Cancel row is the
+   last child of the dialog box, so pinning it to the bottom of the box's
+   scroll area keeps it on screen on a laptop instead of below the fold.
+   The negative margins and matching padding reach the box's own padding
+   and cancel out, so a dialog that does not scroll keeps its layout.
+   Dialogs built as flex columns (.template-editor-modal) already pin their
+   footer and are left alone. */
+.template-editor-content > .modal-buttons:last-child,
+.template-editor-content > .modal-footer-bar:last-child {
+    position: sticky;
+    bottom: -20px;
+    z-index: 5;
+    margin: 8px -20px -20px !important;
+    padding: 12px 20px 20px;
+    background: var(--bg-2);
+}
+.modal:not(.template-editor-modal) > .modal-buttons:last-child {
+    position: sticky;
+    bottom: -25px;
+    z-index: 5;
+    margin: 8px -25px -25px !important;
+    padding: 12px 25px 25px;
+    background: var(--bg-2);
+}
