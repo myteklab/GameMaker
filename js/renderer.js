@@ -2,6 +2,21 @@
 // DRAWING/RENDERING
 // ============================================
 
+// Clips to a rounded rectangle when r > 0. The radius is capped at half the short
+// side, so a large value on a thin platform gives round ends, not a broken path.
+function platformCornerPath(c, x, y, w, h, r) {
+    r = Math.min(r || 0, w / 2, h / 2);
+    if (r <= 0) return;
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+    c.clip();
+}
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -325,6 +340,10 @@ function drawGameObjects() {
             let platformDrawn = false;
             const spriteUrl = template?.sprite;
             const tileKey = template?.tileKey;
+            // Rounded corners clip only the platform's own image; the save is
+            // separate so the path arrows drawn after it are not cut off.
+            ctx.save();
+            platformCornerPath(ctx, screenX, screenY, objWidth, objHeight, (template?.cornerRadius || 0) * zoom);
 
             // Option 1: Draw sprite if available
             if (spriteUrl && !objectSpriteCache[spriteUrl]?.error) {
@@ -393,6 +412,7 @@ function drawGameObjects() {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
                 ctx.fillRect(screenX, screenY + objHeight - 2 * zoom, objWidth, 2 * zoom);
             }
+            ctx.restore();
 
             // Draw movement direction indicator
             const axis = template?.axis || 'x';

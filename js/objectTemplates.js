@@ -1748,6 +1748,7 @@ function showAddMovingPlatformTemplate() {
     document.getElementById('moving-platform-template-animspeed').value = '8';
     document.getElementById('moving-platform-template-width').value = '64';
     document.getElementById('moving-platform-template-height').value = '16';
+    document.getElementById('moving-platform-template-corner').value = '0';
     document.getElementById('moving-platform-template-axis').value = 'x';
     document.getElementById('moving-platform-template-distance').value = '100';
     document.getElementById('moving-platform-template-speed').value = '2';
@@ -1793,6 +1794,7 @@ function editMovingPlatformTemplate(id) {
     document.getElementById('moving-platform-template-animspeed').value = template.animSpeed || 8;
     document.getElementById('moving-platform-template-width').value = template.width || 64;
     document.getElementById('moving-platform-template-height').value = template.height || 16;
+    document.getElementById('moving-platform-template-corner').value = template.cornerRadius || 0;
     document.getElementById('moving-platform-template-axis').value = template.axis || 'x';
     document.getElementById('moving-platform-template-distance').value = template.distance || 100;
     document.getElementById('moving-platform-template-speed').value = template.speed || 2;
@@ -1849,6 +1851,7 @@ function saveMovingPlatformTemplate() {
         animSpeed: parseInt(document.getElementById('moving-platform-template-animspeed').value) || 8,
         width: parseInt(document.getElementById('moving-platform-template-width').value) || 64,
         height: parseInt(document.getElementById('moving-platform-template-height').value) || 16,
+        cornerRadius: Math.max(0, Math.min(64, parseInt(document.getElementById('moving-platform-template-corner').value) || 0)),
         axis: document.getElementById('moving-platform-template-axis').value || 'x',
         distance: parseInt(document.getElementById('moving-platform-template-distance').value) || 100,
         speed: parseFloat(document.getElementById('moving-platform-template-speed').value) || 2,

@@ -3958,6 +3958,23 @@ ${includeComments ? `    // ═════════════════�
     // Pulsing outline on a touch-activated platform nobody has stepped on yet.
     // Shared by the sprite draw and the drawn-platform fallback, so a platform
     // with a sprite still shows it is waiting to be triggered.
+    // Rounded outline of a platform; the radius is capped at half the short side.
+    function platformCornerShape(obj, x, y, w, h) {
+        var r = Math.min(obj.cornerRadius || 0, w / 2, h / 2);
+        if (r <= 0) return false;
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+        return true;
+    }
+    // Callers save and restore around this. Looks only: collision stays the rectangle.
+    function clipPlatformCorners(obj, x, y, w, h) {
+        if (platformCornerShape(obj, x, y, w, h)) ctx.clip();
+    }
     function drawInactivePlatformOutline(obj, x, y, w, h) {
         if (obj.activation !== 'touch' || obj.activated || !obj.showInactiveOutline) return;
         var pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
@@ -3967,7 +3984,8 @@ ${includeComments ? `    // ═════════════════�
         var b = parseInt(outlineColor.slice(5, 7), 16);
         ctx.strokeStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', ' + pulse + ')';
         ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, w, h);
+        if (platformCornerShape(obj, x, y, w, h)) ctx.stroke();
+        else ctx.strokeRect(x, y, w, h);
     }
     var npcTemplates = ${JSON.stringify(npcTemplates)};
     var doorTemplates = ${JSON.stringify(doorTemplates)};
@@ -5127,6 +5145,7 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.moveSound = template.moveSound || '';
                     gameObj.showInactiveOutline = template.showInactiveOutline !== false;
                     gameObj.inactiveOutlineColor = template.inactiveOutlineColor || '#ffff00';
+                    gameObj.cornerRadius = Math.max(0, Math.min(64, parseFloat(template.cornerRadius) || 0));
                     gameObj.startX = objX;
                     gameObj.startY = objY;
 
@@ -9530,6 +9549,7 @@ ${includeComments ? `        // ────────────────
                 }
 
                 ctx.save();
+                if (obj.type === 'movingPlatform') clipPlatformCorners(obj, screenX, screenY, objW, objH);
                 // Handle sprite rotation/flip based on object type and direction
                 if (obj.type === 'npc' && IS_TOPDOWN && obj.wanderDirection && spriteRows <= 1) {
                     // NPC in top-down mode with single-row sprite: rotate based on wander direction
@@ -9966,6 +9986,8 @@ ${includeComments ? `        // ────────────────
                     var platY = screenY;
 
                     var tileDrawn = false;
+                    ctx.save();
+                    clipPlatformCorners(obj, platX, platY, objW, objH);
 
                     // Try to draw with tile if tileKey is set
                     if (obj.tileKey) {
@@ -10044,6 +10066,7 @@ ${includeComments ? `        // ────────────────
                         ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                         ctx.fillRect(platX, platY + objH - 2, objW, 2);
                     }
+                    ctx.restore();
 
                     drawInactivePlatformOutline(obj, platX, platY, objW, objH);
                 } else if (obj.type === 'npc') {
