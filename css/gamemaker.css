@@ -2743,13 +2743,19 @@
             text-align: center;
         }
 
-        .bg-layer-item button {
+        /* The reset is for the row's icon buttons; Browse keeps the app's Browse look */
+        .bg-layer-item button:not(.browse-library-btn) {
             background: none;
             border: none;
             color: var(--danger);
             cursor: pointer;
             padding: 2px;
             flex-shrink: 0;
+        }
+
+        /* the eye toggle is not destructive; only the remove button is red */
+        .bg-layer-item button.visibility-btn {
+            color: var(--text-2);
         }
 
         .bg-layer-item .visibility-btn {

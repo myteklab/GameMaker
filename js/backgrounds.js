@@ -49,7 +49,7 @@ function renderBackgroundLayers() {
 
         div.innerHTML = `
             <div class="bg-layer-preview" id="${previewId}" style="width: 50px; height: 35px; min-width: 50px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
-                ${hasImage ? `<img src="${layer.src}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:10px;color:#666;\\'><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>'">` : '<span style="font-size: 10px; color: var(--text-3);">No img</span>'}
+                ${hasImage ? `<img src="${layer.src}" style="width: 100%; height: 100%; object-fit: cover;" onerror="bgPreviewFailed(this)">` : '<span style="font-size: 10px; color: var(--text-3);">No img</span>'}
             </div>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
                 <div style="display: flex; gap: 4px;">
@@ -73,6 +73,14 @@ function renderBackgroundLayers() {
         `;
         list.appendChild(div);
     });
+}
+
+// The thumbnail's failure mark used to be inlined in the onerror attribute,
+// and the SVG icon's double quotes closed the attribute early, leaking '">
+// as text beside every layer image. A named handler has no quoting to break.
+function bgPreviewFailed(img) {
+    const box = img && img.parentElement;
+    if (box) box.innerHTML = '<span style="font-size: 10px; color: var(--danger);"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>';
 }
 
 // Update background layer preview thumbnail
