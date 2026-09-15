@@ -3844,6 +3844,21 @@ ${includeComments ? `    // ═════════════════�
     var powerupTemplates = ${JSON.stringify(powerupTemplates)};
     var springTemplates = ${JSON.stringify(springTemplates)};
     var movingPlatformTemplates = ${JSON.stringify(movingPlatformTemplates)};
+
+    // Pulsing outline on a touch-activated platform nobody has stepped on yet.
+    // Shared by the sprite draw and the drawn-platform fallback, so a platform
+    // with a sprite still shows it is waiting to be triggered.
+    function drawInactivePlatformOutline(obj, x, y, w, h) {
+        if (obj.activation !== 'touch' || obj.activated || !obj.showInactiveOutline) return;
+        var pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+        var outlineColor = obj.inactiveOutlineColor || '#ffff00';
+        var r = parseInt(outlineColor.slice(1, 3), 16);
+        var g = parseInt(outlineColor.slice(3, 5), 16);
+        var b = parseInt(outlineColor.slice(5, 7), 16);
+        ctx.strokeStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', ' + pulse + ')';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, w, h);
+    }
     var npcTemplates = ${JSON.stringify(npcTemplates)};
     var doorTemplates = ${JSON.stringify(doorTemplates)};
     var mysteryBlockTemplates = ${JSON.stringify(mysteryBlockTemplates)};
@@ -3890,7 +3905,10 @@ ${includeComments ? `    // ═════════════════�
 
     // Pre-load sprites from all templates
     function loadTemplateSprites() {
-        var allTemplates = [].concat(enemyTemplates, collectibleTemplates, hazardTemplates, powerupTemplates, npcTemplates, doorTemplates);
+        // Every template type whose editor offers a sprite belongs here. Springs
+        // and moving platforms were missing, so their sprites never loaded and
+        // the game drew the fallback color instead.
+        var allTemplates = [].concat(enemyTemplates, collectibleTemplates, hazardTemplates, powerupTemplates, npcTemplates, doorTemplates, springTemplates, movingPlatformTemplates);
         for (var i = 0; i < allTemplates.length; i++) {
             var tmpl = allTemplates[i];
             if (tmpl.sprite && !loadedSprites[tmpl.sprite]) {
@@ -9432,6 +9450,9 @@ ${includeComments ? `        // ────────────────
                     );
                 }
                 ctx.restore();
+                if (obj.type === 'movingPlatform') {
+                    drawInactivePlatformOutline(obj, screenX, screenY, objW, objH);
+                }
             } else if (obj.tileKey && tileTypes[obj.tileKey] && obj.type !== 'movingPlatform') {
                 // Try to draw with tile if tileKey is set (no sprite available)
                 // Moving platforms are handled separately with tiling support
@@ -9908,18 +9929,7 @@ ${includeComments ? `        // ────────────────
                         ctx.fillRect(platX, platY + objH - 2, objW, 2);
                     }
 
-                    // Pulsing outline for inactive touch-activated platforms (configurable)
-                    if (obj.activation === 'touch' && !obj.activated && obj.showInactiveOutline) {
-                        var pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
-                        // Convert hex color to rgba with pulse alpha
-                        var outlineColor = obj.inactiveOutlineColor || '#ffff00';
-                        var r = parseInt(outlineColor.slice(1, 3), 16);
-                        var g = parseInt(outlineColor.slice(3, 5), 16);
-                        var b = parseInt(outlineColor.slice(5, 7), 16);
-                        ctx.strokeStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', ' + pulse + ')';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(platX, platY, objW, objH);
-                    }
+                    drawInactivePlatformOutline(obj, platX, platY, objW, objH);
                 } else if (obj.type === 'npc') {
                     // Circle background for NPCs (platformer only)
                     if (!IS_TOPDOWN) {
