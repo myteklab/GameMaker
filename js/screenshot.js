@@ -215,9 +215,11 @@ function generateScreenshotFromView() {
             var bgWidth = img.naturalWidth * bgScale;
             var parallaxX = viewLeft * (backgroundLayers[idx].speed || 0);
             var startBgX = offsetX - (parallaxX * scale) % bgWidth;
+            sctx.globalAlpha = bgLayerAlpha(backgroundLayers[idx]);
             for (var bx = startBgX; bx < offsetX + renderW; bx += bgWidth) {
                 sctx.drawImage(img, bx, offsetY, bgWidth, renderH);
             }
+            sctx.globalAlpha = 1;
         }
     }
     sctx.restore();

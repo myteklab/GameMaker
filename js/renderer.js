@@ -174,7 +174,9 @@ function drawMenuLevelEditor(lvl) {
                     const drawX = (canvas.width - drawWidth) / 2;
                     const drawY = (canvas.height - drawHeight) / 2;
 
+                    ctx.globalAlpha = bgLayerAlpha(layer);
                     ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                    ctx.globalAlpha = 1;
                 }
             }
         } else {
@@ -900,6 +902,7 @@ function drawBackground() {
         if (img && img.complete && img.naturalWidth > 0) {
             // Calculate parallax offset (speed 0 = static, 1 = moves with camera)
             const parallaxX = cameraX * layer.speed * zoom;
+            ctx.globalAlpha = bgLayerAlpha(layer);
 
             // Scale image to fit the visible level height
             const scale = visibleLevelHeight / img.naturalHeight;
@@ -921,6 +924,7 @@ function drawBackground() {
             if (startX > 0) {
                 ctx.drawImage(img, Math.round(startX - scaledWidth), bgY, scaledWidth + 1, scaledHeight);
             }
+            ctx.globalAlpha = 1;
         }
     }
 }

@@ -65,6 +65,11 @@ function renderBackgroundLayers() {
                     <input type="number" value="${layer.speed}" step="0.1" min="0" max="1" title="Parallax speed"
                         style="width: 60px; font-size: 11px;"
                         onchange="updateBgLayerSpeed(${index}, this.value)">
+                    <span style="font-size: 10px; color: var(--text-3); margin-left: 6px;">Opacity:</span>
+                    <input type="range" min="0" max="100" step="5" value="${Math.round(bgLayerAlpha(layer) * 100)}" title="Layer opacity"
+                        style="width: 70px; accent-color: var(--accent);"
+                        oninput="updateBgLayerOpacity(${index}, this.value)">
+                    <span id="bg-opacity-${index}" style="font-size: 10px; color: var(--text-2); min-width: 30px;">${Math.round(bgLayerAlpha(layer) * 100)}%</span>
                     <button class="visibility-btn" onclick="toggleBgLayerVisibility(${index})" title="${layer.visible ? 'Hide layer' : 'Show layer'}"
                         style="opacity:${layer.visible ? '1' : '0.4'}; background: none; border: none; cursor: pointer; font-size: 14px;"><svg class="gm-icon"><use href="#icon-${layer.visible ? 'eye' : 'eye-off'}"/></svg></button>
                 </div>
@@ -128,9 +133,28 @@ function browseBgLayerImage(index) {
     }, 'tiles-backgrounds');
 }
 
+// 0..1. Layers saved before opacity existed have none and draw fully opaque.
+function bgLayerAlpha(layer) {
+    const a = parseFloat(layer && layer.opacity);
+    return isNaN(a) ? 1 : Math.max(0, Math.min(1, a));
+}
+
+function updateBgLayerOpacity(index, percent) {
+    const layers = getEditingBgLayers();
+    if (!layers[index]) return;
+    const a = Math.max(0, Math.min(100, parseInt(percent, 10) || 0)) / 100;
+    layers[index].opacity = a;
+    const label = document.getElementById('bg-opacity-' + index);
+    if (label) label.textContent = Math.round(a * 100) + '%';
+    markDirty();
+    if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
+        draw();
+    }
+}
+
 function addBackgroundLayer() {
     const layers = getEditingBgLayers();
-    layers.push({ src: '', speed: 0.5, visible: true });
+    layers.push({ src: '', speed: 0.5, visible: true, opacity: 1 });
     markDirty();
     renderBackgroundLayers();
 }

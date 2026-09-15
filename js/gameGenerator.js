@@ -612,7 +612,9 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
             if (validLayerCount > 0) {
                 bgLayersCode += ',\n';
             }
-            bgLayersCode += `        { src: '${escapedSrc}', speed: ${layer.speed} }`;
+            // a number, never the raw field: it is written into the game's source
+            const layerOpacity = (() => { const a = parseFloat(layer.opacity); return isNaN(a) ? 1 : Math.max(0, Math.min(1, a)); })();
+            bgLayersCode += `        { src: '${escapedSrc}', speed: ${layer.speed}, opacity: ${layerOpacity} }`;
             validLayerCount++;
         }
     });
@@ -621,6 +623,7 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
     }
     bgLayersCode += '    ];\n';
     bgLayersCode += '    var loadedBgImages = [];\n';
+    bgLayersCode += '    function bgLayerAlpha(layer) { var a = parseFloat(layer && layer.opacity); return isNaN(a) ? 1 : Math.max(0, Math.min(1, a)); }\n';
     // Set initial bg color from first level
     const firstLevelBgColor = levels[0] && levels[0].bgColor ? levels[0].bgColor.replace(/'/g, "\\'") : '';
     bgLayersCode += `    var currentBgColor = '${firstLevelBgColor}';\n`;
@@ -4741,7 +4744,9 @@ ${includeComments ? `    // ═════════════════�
                 var drawX = (CANVAS_WIDTH - drawWidth) / 2;
                 var drawY = (CANVAS_HEIGHT - drawHeight) / 2;
 
+                ctx.globalAlpha = bgLayerAlpha(layer);
                 ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                ctx.globalAlpha = 1;
             }
         }
 
@@ -8776,6 +8781,7 @@ ${includeComments ? `        // ────────────────
             var img = loadedBgImages[i];
             if (img && img.complete && img.naturalWidth > 0) {
                 var parallaxX = camX * layer.speed;
+                ctx.globalAlpha = bgLayerAlpha(layer);
 
                 var visibleHeight = Math.min(levelBottomOnScreen, CANVAS_HEIGHT);
                 var scale = visibleHeight / img.naturalHeight;
@@ -8791,6 +8797,7 @@ ${includeComments ? `        // ────────────────
                 if (startX > 0) {
                     ctx.drawImage(img, Math.round(startX - scaledWidth), bgY, scaledWidth + 1, scaledHeight);
                 }
+                ctx.globalAlpha = 1;
             }
         }
 

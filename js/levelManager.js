@@ -602,7 +602,9 @@ function renderLevelPreview(lvl, canvasId) {
                         // Align background to bottom of level (like in-game)
                         const drawY = offsetY + levelPixelHeight - drawHeight;
 
+                        ctx.globalAlpha = bgLayerAlpha(bgLayer);
                         ctx.drawImage(bgImg, drawX, drawY, drawWidth, drawHeight);
+                        ctx.globalAlpha = 1;
                     });
 
                     ctx.restore();
@@ -632,7 +634,9 @@ function renderLevelPreview(lvl, canvasId) {
                         const drawX = offsetX;
                         const drawY = offsetY + levelPixelHeight - drawHeight;
 
+                        ctx.globalAlpha = bgLayerAlpha(bgLayer);
                         ctx.drawImage(bgImg, drawX, drawY, drawWidth, drawHeight);
+                        ctx.globalAlpha = 1;
                     });
 
                     ctx.restore();
@@ -729,7 +733,9 @@ function renderMenuLevelPreview(ctx, lvl, width, height) {
             const drawX = (width - drawWidth) / 2;
             const drawY = (height - drawHeight) / 2;
 
+            ctx.globalAlpha = bgLayerAlpha(validBgLayers[0]);
             ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+            ctx.globalAlpha = 1;
             drawMenuButtonsPreview(ctx, lvl, width, height);
         };
         img.onerror = function() {
