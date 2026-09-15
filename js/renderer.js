@@ -421,7 +421,17 @@ function drawGameObjects() {
             ctx.lineWidth = 2;
             ctx.setLineDash([4, 4]);
             ctx.beginPath();
-            if (axis === 'x') {
+            if (axis === 'circle') {
+                // the whole loop, matching placePlatformOnLoop in the game
+                ctx.arc(centerX + distance, centerY, distance, 0, Math.PI * 2);
+            } else if (axis === 'figure8') {
+                for (let k = 0; k <= 64; k++) {
+                    const a = k / 64 * Math.PI * 2;
+                    const px = centerX + distance * Math.sin(a);
+                    const py = centerY + (distance / 2) * Math.sin(2 * a);
+                    if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                }
+            } else if (axis === 'x') {
                 // Horizontal movement - draw arrow line to the right
                 ctx.moveTo(screenX + objWidth, centerY);
                 ctx.lineTo(screenX + objWidth + Math.min(distance, 50 * zoom), centerY);

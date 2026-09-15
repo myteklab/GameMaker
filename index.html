@@ -845,7 +845,7 @@
             </div>
             <div class="url-input-row" style="margin-top: 6px;">
                 <button onclick="loadTilesetFromURLInput()" style="flex: 1;">Load URL</button>
-                <button type="button" class="browse-library-btn" onclick="openAssetPicker('tileset-url-input', 'tilesets')" title="Browse Tilesets" style="flex: 1;">Browse Library</button>
+                <button type="button" class="browse-library-btn" onclick="openAssetPicker('tileset-url-input', 'tiles-backgrounds')" title="Browse Tilesets" style="flex: 1;">Browse Library</button>
             </div>
         </div>
 
@@ -2481,7 +2481,7 @@
             <label>Image URL (optional - will tile across zone)</label>
             <div class="input-with-browse">
                 <input type="text" id="terrain-zone-template-image" placeholder="https://... (leave empty for solid color)">
-                <button type="button" class="browse-library-btn" onclick="openAssetPicker('terrain-zone-template-image', 'tilesets')">Browse</button>
+                <button type="button" class="browse-library-btn" onclick="openAssetPicker('terrain-zone-template-image', 'tiles-backgrounds')">Browse</button>
             </div>
         </div>
         <div class="form-row">
@@ -2677,16 +2677,18 @@
                 <div class="editor-section-header">Movement</div>
 
                 <div class="form-group">
-                    <label>Axis</label>
-                    <select id="moving-platform-template-axis">
+                    <label>Path</label>
+                    <select id="moving-platform-template-axis" onchange="updatePlatformPathLabels()">
                         <option value="x">Horizontal (left-right)</option>
                         <option value="y">Vertical (up-down)</option>
+                        <option value="circle">Circle</option>
+                        <option value="figure8">Figure eight</option>
                     </select>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Distance (px)</label>
+                        <label id="moving-platform-template-distance-label">Distance (px)</label>
                         <input type="number" id="moving-platform-template-distance" value="100" min="16" max="500">
                     </div>
                     <div class="form-group">

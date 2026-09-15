@@ -822,6 +822,39 @@ function closeLevelManagerModal() {
 
 let editingLevelIndex = -1;
 
+// Level Settings applies some changes as they are made (background layers and
+// color, particles, level type, menu buttons) so the canvas can show them. Cancel
+// has to put those back, or it quietly keeps whatever was tried.
+const LEVEL_SETTINGS_LIVE_FIELDS = ['backgroundLayers', 'bgColor', 'backgroundParticleEffect', 'backgroundParticleSpawnMode', 'levelType', 'menuButtons', 'pressAnyKey', 'pressAnyKeyText'];
+let levelSettingsSnapshot = null;
+
+function snapshotLevelSettings(index) {
+    const lvl = levels[index];
+    const fields = {};
+    LEVEL_SETTINGS_LIVE_FIELDS.forEach(f => { if (f in lvl) fields[f] = JSON.stringify(lvl[f]); });
+    levelSettingsSnapshot = { index, id: lvl.id, fields };
+}
+
+// Returns true when something had changed and was put back.
+function restoreLevelSettingsSnapshot() {
+    const snap = levelSettingsSnapshot;
+    levelSettingsSnapshot = null;
+    if (!snap) return false;
+    const lvl = levels[snap.index];
+    // a collaborator deleting or reordering levels meanwhile must not revert the wrong one
+    if (!lvl || lvl.id !== snap.id) return false;
+    let changed = false;
+    LEVEL_SETTINGS_LIVE_FIELDS.forEach(f => {
+        const before = snap.fields[f];
+        const now = f in lvl ? JSON.stringify(lvl[f]) : undefined;
+        if (before === now) return;
+        changed = true;
+        if (before === undefined) delete lvl[f];
+        else lvl[f] = JSON.parse(before);
+    });
+    return changed;
+}
+
 function showLevelSettingsModal(index) {
     editingLevelIndex = index;
     const lvl = levels[index];
@@ -835,6 +868,7 @@ function showLevelSettingsModal(index) {
     if (!lvl.backgroundLayers) {
         lvl.backgroundLayers = [];
     }
+    snapshotLevelSettings(index);
 
     document.getElementById('level-settings-name').value = lvl.name;
     document.getElementById('level-settings-width').value = lvl.width;
@@ -915,9 +949,12 @@ function showLevelSettingsModal(index) {
     document.getElementById('level-settings-modal').style.display = 'flex';
 }
 
+// Save clears the snapshot first, so reaching here with one means Cancel, the X,
+// or a click outside the dialog.
 function closeLevelSettingsModal() {
     // Stop BGM preview if playing
     stopBgmPreview();
+    const reverted = restoreLevelSettingsSnapshot();
 
     // If we were editing the current level, sync backgrounds to global
     if (editingLevelIndex === currentLevelIndex && editingLevelIndex >= 0) {
@@ -927,6 +964,13 @@ function closeLevelSettingsModal() {
 
     document.getElementById('level-settings-modal').style.display = 'none';
     editingLevelIndex = -1;
+
+    if (reverted) {
+        if (typeof updateLevelsList === 'function') updateLevelsList();
+        if (typeof updateLevelIndicator === 'function') updateLevelIndicator();
+        markDirty();
+        draw();
+    }
 }
 
 function updateLevelSettingsFields() {
@@ -1123,6 +1167,7 @@ function saveLevelSettings() {
 
     updateLevelsList();
     updateLevelIndicator();
+    levelSettingsSnapshot = null; // keep the live changes
     closeLevelSettingsModal();
     markDirty();
     draw();

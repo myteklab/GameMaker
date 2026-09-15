@@ -22,7 +22,8 @@
 
         assetPicker = new AssetLibraryPicker({
             // Allow all asset categories GameMaker can use
-            categories: ['sprites', 'tilesets', 'backgrounds', 'sounds', 'music'],
+            // slugs must match library_categories; an unknown slug filters that category out
+            categories: ['sprites', 'tiles-backgrounds', 'sounds', 'music'],
             onSelect: function(asset) {
                 if (currentTargetInput) {
                     const inputId = currentTargetInput.id;

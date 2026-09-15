@@ -5152,7 +5152,9 @@ ${includeComments ? `    // ═════════════════�
                     // Randomize start position if enabled and always-moving
                     if (template.randomizeStart && template.activation === 'always') {
                         var randomOffset = Math.random() * gameObj.distance;
-                        if (gameObj.axis === 'y') {
+                        if (gameObj.axis === 'circle' || gameObj.axis === 'figure8') {
+                            gameObj.angle = Math.random() * Math.PI * 2;
+                        } else if (gameObj.axis === 'y') {
                             gameObj.y = objY + randomOffset;
                             gameObj.startY = objY; // Keep original start for boundary calc
                         } else {
@@ -5165,6 +5167,10 @@ ${includeComments ? `    // ═════════════════�
                         gameObj.direction = 1; // 1 = forward, -1 = backward
                     }
 
+                    if (gameObj.axis === 'circle' || gameObj.axis === 'figure8') {
+                        gameObj.angle = gameObj.angle || 0;
+                        placePlatformOnLoop(gameObj);
+                    }
                     gameObj.lastX = gameObj.x;
                     gameObj.lastY = gameObj.y;
                     gameObj.deltaX = 0;
@@ -8022,6 +8028,20 @@ ${includeComments ? `        // ────────────────
         }
     }
 
+    // Loops pass through the spot the platform was placed at (angle 0), so it does
+    // not jump when the level starts. A circle runs up and around to the right of
+    // that spot; a figure eight is centered on it, half as tall as it is wide.
+    function placePlatformOnLoop(obj) {
+        var r = Math.max(8, obj.distance || 100);
+        if (obj.axis === 'figure8') {
+            obj.x = obj.startX + r * Math.sin(obj.angle);
+            obj.y = obj.startY + (r / 2) * Math.sin(2 * obj.angle);
+        } else {
+            obj.x = obj.startX + r - r * Math.cos(obj.angle);
+            obj.y = obj.startY - r * Math.sin(obj.angle);
+        }
+    }
+
     // Update moving platform position
     function updateMovingPlatform(obj) {
         // Skip if touch-activated and not yet activated
@@ -8036,7 +8056,13 @@ ${includeComments ? `        // ────────────────
         obj.lastY = obj.y;
 
         // Move based on axis
-        if (obj.axis === 'y') {
+        if (obj.axis === 'circle' || obj.axis === 'figure8') {
+            // speed stays pixels per frame along the path: divide by the radius
+            // (a figure eight's path is roughly 1.2 times longer per turn)
+            var loopR = Math.max(8, obj.distance || 100);
+            obj.angle += obj.direction * obj.speed / (obj.axis === 'figure8' ? loopR * 1.2 : loopR);
+            placePlatformOnLoop(obj);
+        } else if (obj.axis === 'y') {
             // Vertical movement
             obj.y += obj.direction * obj.speed;
 

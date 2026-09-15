@@ -288,31 +288,85 @@ function generateScreenshotFromView() {
         }
     }
 
-    // Draw game objects in view
+    // Draw game objects in view the way the editor does: the sprite's first frame,
+    // else the template's tile, else a colored block with its symbol. This path only
+    // runs because some image tainted the editor canvas, so each image gets the same
+    // test as the tileset; an unsafe one would make toDataURL throw here as well.
+    var cleanImages = new Map();
+    function imageIsClean(img) {
+        if (!img || !img.complete || !img.naturalWidth) return false;
+        if (cleanImages.has(img)) return cleanImages.get(img);
+        var ok = false;
+        try {
+            var t = document.createElement('canvas');
+            t.width = 1;
+            t.height = 1;
+            var tctx = t.getContext('2d');
+            tctx.drawImage(img, 0, 0, 1, 1);
+            tctx.getImageData(0, 0, 1, 1);
+            ok = true;
+        } catch (e) {}
+        cleanImages.set(img, ok);
+        return ok;
+    }
     if (typeof gameObjects !== 'undefined') {
         for (var i = 0; i < gameObjects.length; i++) {
             var obj = gameObjects[i];
-            var objX = obj.x * tileSize;
-            var objY = obj.y * tileSize;
+            var template = typeof getTemplate === 'function' ? getTemplate(obj.type, obj.templateId) : null;
+            // platforms keep their real size; everything else fits its cell, as in the editor
+            var isPlatform = obj.type === 'movingPlatform';
+            var ow = isPlatform ? ((template && template.width) || tileSize) : tileSize;
+            var oh = isPlatform ? ((template && template.height) || tileSize) : tileSize;
+            var objX = obj.x * tileSize + (tileSize - ow) / 2;
+            var objY = obj.y * tileSize + (tileSize - oh) / 2;
 
             // Skip objects outside view
-            if (objX + tileSize < viewLeft || objX > viewLeft + viewWidth ||
-                objY + tileSize < viewTop || objY > viewTop + viewHeight) continue;
+            if (objX + ow < viewLeft || objX > viewLeft + viewWidth ||
+                objY + oh < viewTop || objY > viewTop + viewHeight) continue;
 
             var sx = offsetX + (objX - viewLeft) * scale;
             var sy = offsetY + (objY - viewTop) * scale;
-            var objSize = tileSize * scale;
+            var sw = ow * scale;
+            var sh = oh * scale;
 
-            var colors = {
-                enemy: '#e74c3c', collectible: '#f1c40f', hazard: '#7f8c8d',
-                powerup: '#e91e63', goal: '#2ecc71', spring: '#9b59b6',
-                checkpoint: '#3498db', npc: '#3498db', door: '#8b4513',
-                movingPlatform: '#8B4513', mysteryBlock: '#f1c40f'
-            };
-            sctx.fillStyle = colors[obj.type] || '#888';
-            sctx.globalAlpha = 0.8;
-            sctx.fillRect(sx, sy, objSize, objSize);
-            sctx.globalAlpha = 1;
+            sctx.save();
+            if (isPlatform && template && template.cornerRadius && typeof platformCornerPath === 'function') {
+                platformCornerPath(sctx, sx, sy, sw, sh, template.cornerRadius * scale);
+            }
+            sctx.imageSmoothingEnabled = false;
+            var drawn = false;
+            var sprite = template && template.sprite ? objectSpriteCache[template.sprite] : null;
+            if (sprite && sprite.loaded && imageIsClean(sprite.img)) {
+                var cols = template.spritesheetCols || template.frameCount || 1;
+                var rows = template.spritesheetRows || 1;
+                sctx.drawImage(sprite.img, 0, 0, sprite.img.naturalWidth / cols, sprite.img.naturalHeight / rows, sx, sy, sw, sh);
+                drawn = true;
+            } else if (template && template.tileKey) {
+                var customTile = objectSpriteCache['custom_' + template.tileKey] || null;
+                if (customTile && customTile.loaded && imageIsClean(customTile.img)) {
+                    sctx.drawImage(customTile.img, sx, sy, sw, sh);
+                    drawn = true;
+                } else if (canUseTileset && tiles[template.tileKey]) {
+                    var tt = tiles[template.tileKey];
+                    sctx.drawImage(tilesetImage, tt.x, tt.y, tileSize, tileSize, sx, sy, sw, sh);
+                    drawn = true;
+                }
+            }
+            if (!drawn) {
+                sctx.fillStyle = typeof getObjectColor === 'function' ? getObjectColor(obj.type, obj.templateId) : '#888';
+                sctx.globalAlpha = 0.9;
+                sctx.fillRect(sx, sy, sw, sh);
+                sctx.globalAlpha = 1;
+                var symbol = typeof getObjectSymbol === 'function' ? getObjectSymbol(obj.type, obj.templateId) : '';
+                if (symbol) {
+                    sctx.fillStyle = '#ffffff';
+                    sctx.font = Math.max(8, Math.min(sw, sh) * 0.6) + "px 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif";
+                    sctx.textAlign = 'center';
+                    sctx.textBaseline = 'middle';
+                    sctx.fillText(symbol, sx + sw / 2, sy + sh / 2);
+                }
+            }
+            sctx.restore();
         }
     }
 

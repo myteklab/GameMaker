@@ -1708,13 +1708,21 @@ function closeMovingPlatformTemplatesModal() {
     document.getElementById('moving-platform-templates-modal').classList.remove('visible');
 }
 
+// On a loop the number is how far the path reaches from the platform's start,
+// not how far it slides, so the label says so.
+function updatePlatformPathLabels() {
+    const axis = document.getElementById('moving-platform-template-axis').value;
+    const label = document.getElementById('moving-platform-template-distance-label');
+    if (label) label.textContent = (axis === 'circle' || axis === 'figure8') ? 'Loop size (px)' : 'Distance (px)';
+}
+
 function renderMovingPlatformTemplatesList() {
     const container = document.getElementById('moving-platform-templates-list');
     if (!container) return;
 
     let html = '';
     movingPlatformTemplates.forEach((template, index) => {
-        const axisLabel = template.axis === 'y' ? 'Vertical' : 'Horizontal';
+        const axisLabel = { y: 'Vertical', circle: 'Circle', figure8: 'Figure eight' }[template.axis] || 'Horizontal';
         const modeLabel = template.collisionMode === 'oneway' ? 'One-way' : 'Solid';
         const activationLabel = template.activation === 'touch' ? 'Touch-activated' : 'Always moving';
 
@@ -1750,6 +1758,7 @@ function showAddMovingPlatformTemplate() {
     document.getElementById('moving-platform-template-height').value = '16';
     document.getElementById('moving-platform-template-corner').value = '0';
     document.getElementById('moving-platform-template-axis').value = 'x';
+    updatePlatformPathLabels();
     document.getElementById('moving-platform-template-distance').value = '100';
     document.getElementById('moving-platform-template-speed').value = '2';
     document.getElementById('moving-platform-template-collision').value = 'solid';
@@ -1796,6 +1805,7 @@ function editMovingPlatformTemplate(id) {
     document.getElementById('moving-platform-template-height').value = template.height || 16;
     document.getElementById('moving-platform-template-corner').value = template.cornerRadius || 0;
     document.getElementById('moving-platform-template-axis').value = template.axis || 'x';
+    updatePlatformPathLabels();
     document.getElementById('moving-platform-template-distance').value = template.distance || 100;
     document.getElementById('moving-platform-template-speed').value = template.speed || 2;
     document.getElementById('moving-platform-template-collision').value = template.collisionMode || 'solid';
