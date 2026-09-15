@@ -3680,12 +3680,16 @@
 .custom-tile-item:hover .custom-tile-actions {
     display: flex;
 }
+/* The icons stroke in currentColor. Without a color here the browser's black
+   button text applied, so the icons were black on a black chip and only
+   showed once hover turned the chip blue. */
 .custom-tile-actions button {
     width: 18px;
     height: 18px;
     padding: 0;
     border: none;
     background: rgba(0,0,0,0.7);
+    color: var(--text);
     border-radius: 3px;
     cursor: pointer;
     font-size: 10px;
@@ -3695,6 +3699,10 @@
 }
 .custom-tile-actions button:hover {
     background: rgba(79, 140, 255, 0.8);
+    color: #fff;
+}
+.custom-tile-actions button[title="Delete"]:hover {
+    background: rgba(240, 97, 109, 0.85);
 }
 
 /* Tile Actions (delete button on hover for tileset tiles) */
