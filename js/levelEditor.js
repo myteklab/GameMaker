@@ -300,8 +300,8 @@ function addGameObject(tileX, tileY, type, templateId = null) {
 
     // For movingPlatform, check if placing here would overlap with existing platforms
     if (type === 'movingPlatform' && template) {
-        const newWidth = template.width || 64;
-        const newHeight = template.height || 16;
+        const newWidth = gameToEditorPx(template.width || 64);
+        const newHeight = gameToEditorPx(template.height || 16);
         const newTilesX = Math.ceil(newWidth / tileSize);
         const newTilesY = Math.ceil(newHeight / tileSize);
 
@@ -310,8 +310,8 @@ function addGameObject(tileX, tileY, type, templateId = null) {
             const obj = gameObjects[i];
             if (obj.type === 'movingPlatform') {
                 const existingTemplate = getTemplate('movingPlatform', obj.templateId);
-                const existingWidth = existingTemplate?.width || 64;
-                const existingHeight = existingTemplate?.height || 16;
+                const existingWidth = gameToEditorPx(existingTemplate?.width || 64);
+                const existingHeight = gameToEditorPx(existingTemplate?.height || 16);
                 const existingTilesX = Math.ceil(existingWidth / tileSize);
                 const existingTilesY = Math.ceil(existingHeight / tileSize);
 
@@ -362,8 +362,9 @@ function removeGameObjectAt(tileX, tileY) {
     // Find object at this tile - check bounding boxes for multi-tile objects
     const index = gameObjects.findIndex(obj => {
         const template = getTemplate ? getTemplate(obj.type, obj.templateId) : null;
-        const objWidth = template?.width || tileSize;
-        const objHeight = template?.height || tileSize;
+        const isPlatform = obj.type === 'movingPlatform';
+        const objWidth = isPlatform && template?.width ? gameToEditorPx(template.width) : (template?.width || tileSize);
+        const objHeight = isPlatform && template?.height ? gameToEditorPx(template.height) : (template?.height || tileSize);
         const tilesX = Math.ceil(objWidth / tileSize);
         const tilesY = Math.ceil(objHeight / tileSize);
 

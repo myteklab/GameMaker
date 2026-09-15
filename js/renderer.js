@@ -2,6 +2,15 @@
 // DRAWING/RENDERING
 // ============================================
 
+// Platform sizes, loop sizes and corners are stored in game pixels, and the game
+// draws a tile tileSize * tileRenderScale pixels wide. The editor works in
+// tileSize pixels per tile, so without this a platform and its path looked twice
+// their in-game size.
+function gameToEditorPx(v) {
+    const renderScale = (typeof gameSettings !== 'undefined' && gameSettings.tileRenderScale) || 2;
+    return v / renderScale;
+}
+
 // Clips to a rounded rectangle when r > 0. The radius is capped at half the short
 // side, so a large value on a thin platform gives round ends, not a broken path.
 function platformCornerPath(c, x, y, w, h, r) {
@@ -299,12 +308,12 @@ function drawGameObjects() {
         // In the editor, cap object display to tile size so they fit in grid cells
         // Moving platforms keep their actual size since they span multiple tiles
         const isMultiTile = (obj.type === 'movingPlatform');
-        const objWidth = isMultiTile ? (template?.width || tileSize) * zoom : scaledTileSize;
-        const objHeight = isMultiTile ? (template?.height || tileSize) * zoom : scaledTileSize;
+        const objWidth = isMultiTile ? (template?.width ? gameToEditorPx(template.width) : tileSize) * zoom : scaledTileSize;
+        const objHeight = isMultiTile ? (template?.height ? gameToEditorPx(template.height) : tileSize) * zoom : scaledTileSize;
 
-        // Position: centered in the tile cell
+        // Centered in the tile cell; a platform sits on the cell's bottom like in the game
         const screenX = (obj.x * tileSize - cameraX) * zoom + (scaledTileSize - objWidth) / 2;
-        const screenY = (obj.y * tileSize - cameraY) * zoom + (scaledTileSize - objHeight) / 2;
+        const screenY = (obj.y * tileSize - cameraY) * zoom + (isMultiTile ? scaledTileSize - objHeight : (scaledTileSize - objHeight) / 2);
 
         // Skip if off-screen
         if (screenX + objWidth < 0 || screenX > canvas.width ||
@@ -343,7 +352,7 @@ function drawGameObjects() {
             // Rounded corners clip only the platform's own image; the save is
             // separate so the path arrows drawn after it are not cut off.
             ctx.save();
-            platformCornerPath(ctx, screenX, screenY, objWidth, objHeight, (template?.cornerRadius || 0) * zoom);
+            platformCornerPath(ctx, screenX, screenY, objWidth, objHeight, gameToEditorPx(template?.cornerRadius || 0) * zoom);
 
             // Option 1: Draw sprite if available
             if (spriteUrl && !objectSpriteCache[spriteUrl]?.error) {
@@ -416,7 +425,7 @@ function drawGameObjects() {
 
             // Draw movement direction indicator
             const axis = template?.axis || 'x';
-            const distance = (template?.distance || 100) * zoom;
+            const distance = gameToEditorPx(template?.distance || 100) * zoom;
             ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
             ctx.lineWidth = 2;
             ctx.setLineDash([4, 4]);

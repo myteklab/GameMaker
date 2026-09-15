@@ -315,10 +315,10 @@ function generateScreenshotFromView() {
             var template = typeof getTemplate === 'function' ? getTemplate(obj.type, obj.templateId) : null;
             // platforms keep their real size; everything else fits its cell, as in the editor
             var isPlatform = obj.type === 'movingPlatform';
-            var ow = isPlatform ? ((template && template.width) || tileSize) : tileSize;
-            var oh = isPlatform ? ((template && template.height) || tileSize) : tileSize;
+            var ow = isPlatform && template && template.width ? gameToEditorPx(template.width) : tileSize;
+            var oh = isPlatform && template && template.height ? gameToEditorPx(template.height) : tileSize;
             var objX = obj.x * tileSize + (tileSize - ow) / 2;
-            var objY = obj.y * tileSize + (tileSize - oh) / 2;
+            var objY = obj.y * tileSize + (isPlatform ? tileSize - oh : (tileSize - oh) / 2);
 
             // Skip objects outside view
             if (objX + ow < viewLeft || objX > viewLeft + viewWidth ||
@@ -331,7 +331,7 @@ function generateScreenshotFromView() {
 
             sctx.save();
             if (isPlatform && template && template.cornerRadius && typeof platformCornerPath === 'function') {
-                platformCornerPath(sctx, sx, sy, sw, sh, template.cornerRadius * scale);
+                platformCornerPath(sctx, sx, sy, sw, sh, gameToEditorPx(template.cornerRadius) * scale);
             }
             sctx.imageSmoothingEnabled = false;
             var drawn = false;

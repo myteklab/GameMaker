@@ -633,8 +633,9 @@ function findObjectAtPixel(screenX, screenY) {
     for (let i = gameObjects.length - 1; i >= 0; i--) {
         const obj = gameObjects[i];
         const template = getTemplate(obj.type, obj.templateId);
-        const objWidth = (template?.width || tileSize) * zoom;
-        const objHeight = (template?.height || tileSize) * zoom;
+        const isPlatform = obj.type === 'movingPlatform';
+        const objWidth = (isPlatform && template?.width ? gameToEditorPx(template.width) : (template?.width || tileSize)) * zoom;
+        const objHeight = (isPlatform && template?.height ? gameToEditorPx(template.height) : (template?.height || tileSize)) * zoom;
 
         // Object position: centered X, bottom-aligned in tile
         const objTileScreenX = (obj.x * tileSize - cameraX) * zoom;
