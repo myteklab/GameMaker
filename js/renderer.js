@@ -305,15 +305,16 @@ function drawGameObjects() {
         // Get template for this object to get custom size
         const template = getTemplate(obj.type, obj.templateId);
 
-        // In the editor, cap object display to tile size so they fit in grid cells
-        // Moving platforms keep their actual size since they span multiple tiles
-        const isMultiTile = (obj.type === 'movingPlatform');
-        const objWidth = isMultiTile ? (template?.width ? gameToEditorPx(template.width) : tileSize) * zoom : scaledTileSize;
-        const objHeight = isMultiTile ? (template?.height ? gameToEditorPx(template.height) : tileSize) * zoom : scaledTileSize;
+        // Objects are drawn at their in-game size and spot: centered on the cell
+        // sideways and standing on its bottom, as initGameObjects places them. They
+        // used to be squeezed into one cell, so a 64px enemy looked like a 32px one.
+        // Terrain zones have their own draw and keep the cell.
+        const trueSize = obj.type !== 'terrainZone';
+        const objWidth = trueSize && template?.width ? gameToEditorPx(template.width) * zoom : scaledTileSize;
+        const objHeight = trueSize && template?.height ? gameToEditorPx(template.height) * zoom : scaledTileSize;
 
-        // Centered in the tile cell; a platform sits on the cell's bottom like in the game
         const screenX = (obj.x * tileSize - cameraX) * zoom + (scaledTileSize - objWidth) / 2;
-        const screenY = (obj.y * tileSize - cameraY) * zoom + (isMultiTile ? scaledTileSize - objHeight : (scaledTileSize - objHeight) / 2);
+        const screenY = (obj.y * tileSize - cameraY) * zoom + scaledTileSize - objHeight;
 
         // Skip if off-screen
         if (screenX + objWidth < 0 || screenX > canvas.width ||

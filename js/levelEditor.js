@@ -362,15 +362,21 @@ function removeGameObjectAt(tileX, tileY) {
     // Find object at this tile - check bounding boxes for multi-tile objects
     const index = gameObjects.findIndex(obj => {
         const template = getTemplate ? getTemplate(obj.type, obj.templateId) : null;
-        const isPlatform = obj.type === 'movingPlatform';
-        const objWidth = isPlatform && template?.width ? gameToEditorPx(template.width) : (template?.width || tileSize);
-        const objHeight = isPlatform && template?.height ? gameToEditorPx(template.height) : (template?.height || tileSize);
-        const tilesX = Math.ceil(objWidth / tileSize);
-        const tilesY = Math.ceil(objHeight / tileSize);
-
-        // Check if clicked tile is within this object's bounding box
-        return tileX >= obj.x && tileX < obj.x + tilesX &&
-               tileY >= obj.y && tileY < obj.y + tilesY;
+        if (obj.type === 'terrainZone') {
+            const tilesX = Math.ceil((template?.width || tileSize) / tileSize);
+            const tilesY = Math.ceil((template?.height || tileSize) / tileSize);
+            return tileX >= obj.x && tileX < obj.x + tilesX &&
+                   tileY >= obj.y && tileY < obj.y + tilesY;
+        }
+        // the same box the editor draws: centered on its cell, standing on the bottom
+        const objWidth = template?.width ? gameToEditorPx(template.width) : tileSize;
+        const objHeight = template?.height ? gameToEditorPx(template.height) : tileSize;
+        const left = obj.x * tileSize + (tileSize - objWidth) / 2;
+        const top = obj.y * tileSize + tileSize - objHeight;
+        const cellLeft = tileX * tileSize;
+        const cellTop = tileY * tileSize;
+        return cellLeft < left + objWidth && cellLeft + tileSize > left &&
+               cellTop < top + objHeight && cellTop + tileSize > top;
     });
 
     if (index >= 0) {

@@ -313,12 +313,13 @@ function generateScreenshotFromView() {
         for (var i = 0; i < gameObjects.length; i++) {
             var obj = gameObjects[i];
             var template = typeof getTemplate === 'function' ? getTemplate(obj.type, obj.templateId) : null;
-            // platforms keep their real size; everything else fits its cell, as in the editor
+            // in-game size and spot, the same box the editor draws
             var isPlatform = obj.type === 'movingPlatform';
-            var ow = isPlatform && template && template.width ? gameToEditorPx(template.width) : tileSize;
-            var oh = isPlatform && template && template.height ? gameToEditorPx(template.height) : tileSize;
+            var trueSize = obj.type !== 'terrainZone';
+            var ow = trueSize && template && template.width ? gameToEditorPx(template.width) : tileSize;
+            var oh = trueSize && template && template.height ? gameToEditorPx(template.height) : tileSize;
             var objX = obj.x * tileSize + (tileSize - ow) / 2;
-            var objY = obj.y * tileSize + (isPlatform ? tileSize - oh : (tileSize - oh) / 2);
+            var objY = obj.y * tileSize + tileSize - oh;
 
             // Skip objects outside view
             if (objX + ow < viewLeft || objX > viewLeft + viewWidth ||
