@@ -167,15 +167,22 @@ function drawMenuLevelEditor(lvl) {
 
                 const img = loadedBackgroundImages[i];
                 if (img && img.complete && img.naturalWidth > 0) {
-                    // Scale to fit canvas, centered
-                    const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
-                    const drawWidth = img.naturalWidth * scale;
-                    const drawHeight = img.naturalHeight * scale;
-                    const drawX = (canvas.width - drawWidth) / 2;
-                    const drawY = (canvas.height - drawHeight) / 2;
-
                     ctx.globalAlpha = bgLayerAlpha(layer);
-                    ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                    if (bgLayerDrift(layer) !== 0) {
+                        // a drifting menu layer repeats sideways at full canvas height
+                        const src = bgLayerSource(layer, img);
+                        const h = canvas.height;
+                        const w = Math.ceil((src.naturalWidth || src.width) * h / (src.naturalHeight || src.height));
+                        drawTiledBgLayer(ctx, src, layer, bgDriftOffset(layer), 0, w, h, canvas.width);
+                    } else {
+                        // Scale to fit canvas, centered
+                        const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+                        const drawWidth = img.naturalWidth * scale;
+                        const drawHeight = img.naturalHeight * scale;
+                        const drawX = (canvas.width - drawWidth) / 2;
+                        const drawY = (canvas.height - drawHeight) / 2;
+                        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                    }
                     ctx.globalAlpha = 1;
                 }
             }
@@ -900,30 +907,17 @@ function drawBackground() {
         const img = loadedBackgroundImages[i];
 
         if (img && img.complete && img.naturalWidth > 0) {
-            // Calculate parallax offset (speed 0 = static, 1 = moves with camera)
-            const parallaxX = cameraX * layer.speed * zoom;
+            // Parallax (speed 0 = static, 1 = moves with camera) plus any drift
+            const offsetX = cameraX * layer.speed * zoom + bgDriftOffset(layer);
+            const src = bgLayerSource(layer, img);
             ctx.globalAlpha = bgLayerAlpha(layer);
 
             // Scale image to fit the visible level height
-            const scale = visibleLevelHeight / img.naturalHeight;
-            const scaledWidth = Math.ceil(img.naturalWidth * scale);
+            const scale = visibleLevelHeight / (src.naturalHeight || src.height);
+            const scaledWidth = Math.ceil((src.naturalWidth || src.width) * scale);
             const scaledHeight = Math.ceil(visibleLevelHeight);
 
-            // Position background to fill visible level area
-            const bgY = visibleTop;
-
-            // Calculate starting position (tile horizontally)
-            const startX = Math.round(-(parallaxX % scaledWidth));
-
-            // Draw tiled background
-            for (let x = startX; x < canvas.width; x += scaledWidth) {
-                ctx.drawImage(img, Math.round(x), bgY, scaledWidth + 1, scaledHeight);
-            }
-
-            // Also draw one more tile to the left if needed
-            if (startX > 0) {
-                ctx.drawImage(img, Math.round(startX - scaledWidth), bgY, scaledWidth + 1, scaledHeight);
-            }
+            drawTiledBgLayer(ctx, src, layer, offsetX, visibleTop, scaledWidth, scaledHeight, canvas.width);
             ctx.globalAlpha = 1;
         }
     }

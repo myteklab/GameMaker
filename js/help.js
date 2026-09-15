@@ -197,6 +197,12 @@ const helpContent = {
                 </div>
             </div>
 
+            <h4>Drift and Edges</h4>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px; margin-bottom: 15px; font-size: 12px; color: var(--text-2);">
+                <p style="margin: 0 0 8px;"><strong style="color: var(--accent);">Drift</strong> moves a layer on its own, even while the player stands still. Try 10 to 30 for slow clouds. Negative numbers drift left.</p>
+                <p style="margin: 0;"><strong style="color: var(--accent);">Edges</strong> sets how copies of the image meet. <strong>Repeat</strong> puts them side by side. <strong>Mirror</strong> flips every other copy so the edges always match. <strong>Blend</strong> fades one edge into the next, which hides the line on sky, grass and cloud textures.</p>
+            </div>
+
             <h4>Layer Order</h4>
             <div style="background: linear-gradient(180deg, #1a1a3e 0%, #2a1a3e 50%, #3a2a3e 100%); border-radius: 6px; padding: 12px; margin-bottom: 15px; text-align: center;">
                 <div style="color: #88f; font-size: 11px; margin-bottom: 4px;">━━━ Layer 1: Sky (speed 0.1) ━━━</div>
@@ -207,7 +213,7 @@ const helpContent = {
             <p style="font-size: 11px; color: #999; text-align: center; margin-bottom: 15px;">First layer = furthest back. Add layers front to back!</p>
 
             <div class="help-tip">
-                <p><strong>Pro tip:</strong> Use seamlessly-tiling images! The background repeats horizontally.</p>
+                <p><strong>Pro tip:</strong> The background repeats sideways. If you see a line where it repeats, set Edges to Blend or Mirror.</p>
             </div>
         `
     },

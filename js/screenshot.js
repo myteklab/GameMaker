@@ -211,14 +211,17 @@ function generateScreenshotFromView() {
         var idx = safeBackgroundIndices[i];
         var img = loadedBackgroundImages[idx];
         if (img) {
-            var bgScale = renderH / img.naturalHeight;
-            var bgWidth = img.naturalWidth * bgScale;
-            var parallaxX = viewLeft * (backgroundLayers[idx].speed || 0);
-            var startBgX = offsetX - (parallaxX * scale) % bgWidth;
-            sctx.globalAlpha = bgLayerAlpha(backgroundLayers[idx]);
-            for (var bx = startBgX; bx < offsetX + renderW; bx += bgWidth) {
-                sctx.drawImage(img, bx, offsetY, bgWidth, renderH);
-            }
+            var bgLayer = backgroundLayers[idx];
+            var src = bgLayerSource(bgLayer, img);
+            var bgScale = renderH / (src.naturalHeight || src.height);
+            var bgWidth = Math.ceil((src.naturalWidth || src.width) * bgScale);
+            var parallaxX = viewLeft * (bgLayer.speed || 0);
+            // a preview card is a still frame, so drift is left out
+            sctx.globalAlpha = bgLayerAlpha(bgLayer);
+            sctx.save();
+            sctx.translate(offsetX, offsetY);
+            drawTiledBgLayer(sctx, src, bgLayer, parallaxX * scale, 0, bgWidth, renderH, renderW);
+            sctx.restore();
             sctx.globalAlpha = 1;
         }
     }

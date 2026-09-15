@@ -614,7 +614,9 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
             }
             // a number, never the raw field: it is written into the game's source
             const layerOpacity = (() => { const a = parseFloat(layer.opacity); return isNaN(a) ? 1 : Math.max(0, Math.min(1, a)); })();
-            bgLayersCode += `        { src: '${escapedSrc}', speed: ${layer.speed}, opacity: ${layerOpacity} }`;
+            const layerDrift = (() => { const d = parseFloat(layer.drift); return isNaN(d) ? 0 : Math.max(-200, Math.min(200, d)); })();
+            const layerSeam = layer.seam === 'mirror' || layer.seam === 'blend' ? layer.seam : 'repeat';
+            bgLayersCode += `        { src: '${escapedSrc}', speed: ${layer.speed}, opacity: ${layerOpacity}, drift: ${layerDrift}, seam: '${layerSeam}' }`;
             validLayerCount++;
         }
     });
@@ -3845,6 +3847,63 @@ ${includeComments ? `    // ═════════════════�
     var springTemplates = ${JSON.stringify(springTemplates)};
     var movingPlatformTemplates = ${JSON.stringify(movingPlatformTemplates)};
 
+    // Background layers can drift on their own (pixels per second, clouds that
+    // keep moving while the player stands still) and choose how repeated copies
+    // meet: 'mirror' flips every other copy, 'blend' fades the image's right edge
+    // into its left once so a texture with different sides shows no line.
+    function bgLayerDrift(layer) {
+        var d = parseFloat(layer && layer.drift);
+        return isNaN(d) ? 0 : Math.max(-200, Math.min(200, d));
+    }
+    function bgLayerSeam(layer) {
+        var s = layer && layer.seam;
+        return s === 'mirror' || s === 'blend' ? s : 'repeat';
+    }
+    function blendedSeamCanvas(img) {
+        if (img.__seamBlend) return img.__seamBlend;
+        var w = img.naturalWidth, h = img.naturalHeight;
+        var o = Math.max(1, Math.round(w * 0.15));
+        var c = document.createElement('canvas');
+        c.width = w - o;
+        c.height = h;
+        var q = c.getContext('2d');
+        q.drawImage(img, 0, 0, w - o, h, 0, 0, w - o, h);
+        var tail = document.createElement('canvas');
+        tail.width = o;
+        tail.height = h;
+        var tq = tail.getContext('2d');
+        tq.drawImage(img, w - o, 0, o, h, 0, 0, o, h);
+        tq.globalCompositeOperation = 'destination-in';
+        var fade = tq.createLinearGradient(0, 0, o, 0);
+        fade.addColorStop(0, 'rgba(0,0,0,1)');
+        fade.addColorStop(1, 'rgba(0,0,0,0)');
+        tq.fillStyle = fade;
+        tq.fillRect(0, 0, o, h);
+        q.drawImage(tail, 0, 0);
+        img.__seamBlend = c;
+        return c;
+    }
+    function bgLayerSource(layer, img) {
+        return bgLayerSeam(layer) === 'blend' ? blendedSeamCanvas(img) : img;
+    }
+    function drawTiledBgLayer(src, layer, offsetX, y, w, h, viewW) {
+        var mirror = bgLayerSeam(layer) === 'mirror';
+        var x = -(((offsetX % w) + w) % w);
+        var copy = Math.floor(offsetX / w);
+        for (; x < viewW; x += w, copy++) {
+            var dx = Math.round(x);
+            if (mirror && (copy & 1)) {
+                ctx.save();
+                ctx.translate(dx + w, y);
+                ctx.scale(-1, 1);
+                ctx.drawImage(src, 0, 0, w + 1, h);
+                ctx.restore();
+            } else {
+                ctx.drawImage(src, dx, y, w + 1, h);
+            }
+        }
+    }
+
     // A custom tile saved with "Keep original detail" is a larger image than the
     // tile grid. Source rectangles are given in grid pixels and scaled to the
     // image here, so the whole picture (or the matching part of it) lands on the
@@ -4767,15 +4826,21 @@ ${includeComments ? `    // ═════════════════�
             var layer = backgroundLayers[i];
             var img = loadedBgImages[i];
             if (img && img.complete && img.naturalWidth > 0) {
-                // Scale to cover canvas
-                var scale = Math.max(CANVAS_WIDTH / img.naturalWidth, CANVAS_HEIGHT / img.naturalHeight);
-                var drawWidth = img.naturalWidth * scale;
-                var drawHeight = img.naturalHeight * scale;
-                var drawX = (CANVAS_WIDTH - drawWidth) / 2;
-                var drawY = (CANVAS_HEIGHT - drawHeight) / 2;
-
                 ctx.globalAlpha = bgLayerAlpha(layer);
-                ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                if (bgLayerDrift(layer) !== 0) {
+                    // a drifting menu layer repeats sideways at full canvas height
+                    var msrc = bgLayerSource(layer, img);
+                    var mw = Math.ceil((msrc.naturalWidth || msrc.width) * CANVAS_HEIGHT / (msrc.naturalHeight || msrc.height));
+                    drawTiledBgLayer(msrc, layer, -(performance.now() / 1000) * bgLayerDrift(layer), 0, mw, CANVAS_HEIGHT, CANVAS_WIDTH);
+                } else {
+                    // Scale to cover canvas
+                    var scale = Math.max(CANVAS_WIDTH / img.naturalWidth, CANVAS_HEIGHT / img.naturalHeight);
+                    var drawWidth = img.naturalWidth * scale;
+                    var drawHeight = img.naturalHeight * scale;
+                    var drawX = (CANVAS_WIDTH - drawWidth) / 2;
+                    var drawY = (CANVAS_HEIGHT - drawHeight) / 2;
+                    ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+                }
                 ctx.globalAlpha = 1;
             }
         }
@@ -8810,23 +8875,17 @@ ${includeComments ? `        // ────────────────
             var layer = backgroundLayers[i];
             var img = loadedBgImages[i];
             if (img && img.complete && img.naturalWidth > 0) {
-                var parallaxX = camX * layer.speed;
+                var src = bgLayerSource(layer, img);
+                // parallax from the camera, drift from the clock in game pixels per second
+                var offsetX = camX * layer.speed - (performance.now() / 1000) * bgLayerDrift(layer);
                 ctx.globalAlpha = bgLayerAlpha(layer);
 
                 var visibleHeight = Math.min(levelBottomOnScreen, CANVAS_HEIGHT);
-                var scale = visibleHeight / img.naturalHeight;
-                var scaledWidth = Math.ceil(img.naturalWidth * scale);
+                var scale = visibleHeight / (src.naturalHeight || src.height);
+                var scaledWidth = Math.ceil((src.naturalWidth || src.width) * scale);
                 var scaledHeight = Math.ceil(visibleHeight);
 
-                var bgY = levelBottomOnScreen - scaledHeight;
-
-                var startX = Math.round(-(parallaxX % scaledWidth));
-                for (var x = startX; x < CANVAS_WIDTH; x += scaledWidth) {
-                    ctx.drawImage(img, Math.round(x), bgY, scaledWidth + 1, scaledHeight);
-                }
-                if (startX > 0) {
-                    ctx.drawImage(img, Math.round(startX - scaledWidth), bgY, scaledWidth + 1, scaledHeight);
-                }
+                drawTiledBgLayer(src, layer, offsetX, levelBottomOnScreen - scaledHeight, scaledWidth, scaledHeight, CANVAS_WIDTH);
                 ctx.globalAlpha = 1;
             }
         }

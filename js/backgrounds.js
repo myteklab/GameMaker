@@ -73,6 +73,21 @@ function renderBackgroundLayers() {
                     <button class="visibility-btn" onclick="toggleBgLayerVisibility(${index})" title="${layer.visible ? 'Hide layer' : 'Show layer'}"
                         style="opacity:${layer.visible ? '1' : '0.4'}; background: none; border: none; cursor: pointer; font-size: 14px;"><svg class="gm-icon"><use href="#icon-${layer.visible ? 'eye' : 'eye-off'}"/></svg></button>
                 </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 10px; color: var(--text-3);">Drift:</span>
+                    <input type="number" value="${bgLayerDrift(layer)}" step="5" min="-200" max="200"
+                        title="Pixels per second the layer moves on its own, like clouds (negative moves left)"
+                        style="width: 60px; font-size: 11px;"
+                        onchange="updateBgLayerDrift(${index}, this.value)">
+                    <span style="font-size: 10px; color: var(--text-3);">px/s</span>
+                    <span style="font-size: 10px; color: var(--text-3); margin-left: 6px;">Edges:</span>
+                    <select title="How repeated copies of the image meet" style="font-size: 11px; padding: 2px 6px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: var(--text);"
+                        onchange="updateBgLayerSeam(${index}, this.value)">
+                        <option value="repeat"${bgLayerSeam(layer) === 'repeat' ? ' selected' : ''}>Repeat</option>
+                        <option value="mirror"${bgLayerSeam(layer) === 'mirror' ? ' selected' : ''}>Mirror</option>
+                        <option value="blend"${bgLayerSeam(layer) === 'blend' ? ' selected' : ''}>Blend</option>
+                    </select>
+                </div>
             </div>
             <button onclick="removeBgLayer(${index})" title="Remove layer" style="background: rgba(231,76,60,0.3); border: none; color: var(--danger); width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 14px;">×</button>
         `;
@@ -152,9 +167,130 @@ function updateBgLayerOpacity(index, percent) {
     }
 }
 
+// Pixels per second the layer slides on its own, whatever the camera does:
+// a sky of clouds that keeps moving while the player stands still.
+function bgLayerDrift(layer) {
+    const d = parseFloat(layer && layer.drift);
+    return isNaN(d) ? 0 : Math.max(-200, Math.min(200, d));
+}
+
+// How repeated copies of the image meet. 'mirror' flips every other copy so
+// neighbouring edges are always identical; 'blend' fades the image's right
+// edge into its left once, so a texture that differs at its sides has no line.
+function bgLayerSeam(layer) {
+    const s = layer && layer.seam;
+    return s === 'mirror' || s === 'blend' ? s : 'repeat';
+}
+
+function bgLayerSource(layer, img) {
+    return bgLayerSeam(layer) === 'blend' ? blendedSeamCanvas(img) : img;
+}
+
+// The last 15% of the image is faded over its first 15% and then dropped, so
+// the tile's right edge continues straight into its own left edge. Built once
+// per image. No pixel reads, so it works for images from any host.
+function blendedSeamCanvas(img) {
+    if (img.__seamBlend) return img.__seamBlend;
+    const w = img.naturalWidth, h = img.naturalHeight;
+    const o = Math.max(1, Math.round(w * 0.15));
+    const c = document.createElement('canvas');
+    c.width = w - o;
+    c.height = h;
+    const q = c.getContext('2d');
+    q.drawImage(img, 0, 0, w - o, h, 0, 0, w - o, h);
+    const tail = document.createElement('canvas');
+    tail.width = o;
+    tail.height = h;
+    const tq = tail.getContext('2d');
+    tq.drawImage(img, w - o, 0, o, h, 0, 0, o, h);
+    tq.globalCompositeOperation = 'destination-in';
+    const fade = tq.createLinearGradient(0, 0, o, 0);
+    fade.addColorStop(0, 'rgba(0,0,0,1)');
+    fade.addColorStop(1, 'rgba(0,0,0,0)');
+    tq.fillStyle = fade;
+    tq.fillRect(0, 0, o, h);
+    q.drawImage(tail, 0, 0);
+    img.__seamBlend = c;
+    return c;
+}
+
+// Repeats src across [0, viewW) with offsetX screen pixels already scrolled.
+// Copy numbers stay attached to the world as it scrolls, so a mirrored copy
+// never flips back and forth.
+function drawTiledBgLayer(c, src, layer, offsetX, y, w, h, viewW) {
+    const mirror = bgLayerSeam(layer) === 'mirror';
+    let x = -(((offsetX % w) + w) % w);
+    let copy = Math.floor(offsetX / w);
+    for (; x < viewW; x += w, copy++) {
+        const dx = Math.round(x);
+        if (mirror && (copy & 1)) {
+            c.save();
+            c.translate(dx + w, y);
+            c.scale(-1, 1);
+            c.drawImage(src, 0, 0, w + 1, h);
+            c.restore();
+        } else {
+            c.drawImage(src, dx, y, w + 1, h);
+        }
+    }
+}
+
+// Screen pixels a drifting layer has moved so far, at editor zoom. Drift is in
+// game pixels, so it is scaled the same way the camera offset is. Positive
+// drift moves the picture right.
+function bgDriftOffset(layer) {
+    const d = bgLayerDrift(layer);
+    if (!d) return 0;
+    const renderScale = (typeof gameSettings !== 'undefined' && gameSettings.tileRenderScale) || 1;
+    return -(performance.now() / 1000) * d * zoom / renderScale;
+}
+
+function updateBgLayerDrift(index, value) {
+    const layers = getEditingBgLayers();
+    if (!layers[index]) return;
+    layers[index].drift = bgLayerDrift({ drift: value });
+    markDirty();
+    ensureBgDriftLoop();
+    draw();
+}
+
+function updateBgLayerSeam(index, value) {
+    const layers = getEditingBgLayers();
+    if (!layers[index]) return;
+    layers[index].seam = bgLayerSeam({ seam: value });
+    markDirty();
+    if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
+        draw();
+    }
+}
+
+// The editor only redraws on input, so a drifting layer needs its own clock.
+// It runs while the current level has a visible drifting layer, at about
+// 24fps, skips frames while the tab is hidden or backgrounds are switched
+// off, and ends itself when nothing drifts.
+let bgDriftRAF = null;
+let bgDriftLastDraw = 0;
+function ensureBgDriftLoop() {
+    if (bgDriftRAF) return;
+    const tick = (now) => {
+        const drifting = (backgroundLayers || []).some(l => l && l.visible !== false && bgLayerDrift(l) !== 0);
+        if (!drifting) {
+            bgDriftRAF = null;
+            return;
+        }
+        bgDriftRAF = requestAnimationFrame(tick);
+        if (now - bgDriftLastDraw < 42) return;
+        const showBg = document.getElementById('show-bg');
+        if (document.hidden || (showBg && !showBg.checked)) return;
+        bgDriftLastDraw = now;
+        draw();
+    };
+    bgDriftRAF = requestAnimationFrame(tick);
+}
+
 function addBackgroundLayer() {
     const layers = getEditingBgLayers();
-    layers.push({ src: '', speed: 0.5, visible: true, opacity: 1 });
+    layers.push({ src: '', speed: 0.5, visible: true, opacity: 1, drift: 0, seam: 'repeat' });
     markDirty();
     renderBackgroundLayers();
 }
@@ -164,6 +300,7 @@ function toggleBgLayerVisibility(index) {
     layers[index].visible = !layers[index].visible;
     markDirty();
     renderBackgroundLayers();
+    ensureBgDriftLoop();
     // Only redraw if editing current level
     if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
         draw();
@@ -203,7 +340,12 @@ function removeBgLayer(index) {
 }
 
 // Load all background images from URLs
+// Each call starts a new generation. Without it a slow image from an earlier
+// call (the project's old layer, or the URL before a Browse pick) could finish
+// last and replace the layer the student just set.
+let bgImageLoadSeq = 0;
 function loadBackgroundImages() {
+    const seq = ++bgImageLoadSeq;
     loadedBackgroundImages = [];
 
     backgroundLayers.forEach((layer, index) => {
@@ -211,10 +353,12 @@ function loadBackgroundImages() {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = function() {
+                if (seq !== bgImageLoadSeq) return;
                 loadedBackgroundImages[index] = img;
                 draw();
             };
             img.onerror = function() {
+                if (seq !== bgImageLoadSeq) return;
                 console.warn(`Failed to load background layer ${index}: ${layer.src}`);
                 loadedBackgroundImages[index] = null;
             };
@@ -223,4 +367,5 @@ function loadBackgroundImages() {
             loadedBackgroundImages[index] = null;
         }
     });
+    ensureBgDriftLoop();
 }
