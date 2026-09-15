@@ -52,11 +52,14 @@ function renderBackgroundLayers() {
                 ${hasImage ? `<img src="${layer.src}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:10px;color:#666;\\'><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>'">` : '<span style="font-size: 10px; color: var(--text-3);">No img</span>'}
             </div>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                <input type="text" value="${layer.src || ''}" placeholder="Image URL..."
-                    style="width: 100%; font-size: 11px;"
-                    onchange="updateBgLayer(${index}, this.value); updateBgPreview(${index}, this.value);"
-                    onblur="loadBackgroundImages()"
-                    oninput="updateBgPreview(${index}, this.value);">
+                <div style="display: flex; gap: 4px;">
+                    <input type="text" id="bg-layer-url-${index}" value="${layer.src || ''}" placeholder="Image URL..."
+                        style="flex: 1; min-width: 0; font-size: 11px;"
+                        onchange="updateBgLayer(${index}, this.value); updateBgPreview(${index}, this.value);"
+                        onblur="loadBackgroundImages()"
+                        oninput="updateBgPreview(${index}, this.value);">
+                    <button type="button" class="browse-library-btn" onclick="browseBgLayerImage(${index})" style="padding: 4px 8px; font-size: 11px;">Browse</button>
+                </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <span style="font-size: 10px; color: var(--text-3);">Speed:</span>
                     <input type="number" value="${layer.speed}" step="0.1" min="0" max="1" title="Parallax speed"
@@ -95,6 +98,26 @@ function updateBgPreview(index, url) {
         preview.innerHTML = '<span style="font-size: 10px; color: var(--danger);"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></span>';
     };
     img.src = url;
+}
+
+// Pick a layer image from the Asset Library or My Files. The picker hands
+// back a permanent URL (a private file is made link-viewable on the way),
+// so the layer is set, the row redrawn, and the canvas reloaded here rather
+// than waiting for the URL field's blur like typed input does.
+function browseBgLayerImage(index) {
+    if (typeof openAssetPickerWithCallback !== 'function') {
+        showToast('Asset Library is not available', 'error');
+        return;
+    }
+    openAssetPickerWithCallback(function(url) {
+        const layers = getEditingBgLayers();
+        if (!url || !layers[index]) return;
+        updateBgLayer(index, url);
+        renderBackgroundLayers();
+        if (typeof editingLevelIndex === 'undefined' || editingLevelIndex < 0 || editingLevelIndex === currentLevelIndex) {
+            loadBackgroundImages();
+        }
+    }, 'tiles-backgrounds');
 }
 
 function addBackgroundLayer() {
