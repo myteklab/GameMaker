@@ -10810,6 +10810,12 @@ ${includeComments ? `    // ═════════════════�
     var targetFPS = 60;
     var frameInterval = 1000 / targetFPS;
     var lastFrameTime = 0;
+    // The game moves a fixed amount per update, so a device that cannot draw 60
+    // times a second used to play the whole game in slow motion (a Chromebook at
+    // 27fps ran at 45% speed). Run the updates the frame owes instead, and draw
+    // once. Capped, or a tab that sat in the background would run hundreds at
+    // once on return and teleport everything.
+    var MAX_CATCH_UP_UPDATES = 5;
 
     function gameLoop(currentTime) {
         requestAnimationFrame(gameLoop);
@@ -10823,7 +10829,10 @@ ${includeComments ? `    // ═════════════════�
             // This prevents drift and keeps timing accurate
             lastFrameTime = currentTime - (deltaTime % frameInterval);
 
-            update();
+            var owed = Math.min(Math.floor(deltaTime / frameInterval), MAX_CATCH_UP_UPDATES);
+            for (var step = 0; step < owed; step++) {
+                update();
+            }
             draw();
         }
     }
