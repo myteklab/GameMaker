@@ -142,16 +142,21 @@
                 return true;
             }, false);
         },
-        // path is only present on ops from objectChanged: a platform's sketched
-        // path, or null when it was cleared. Placing replaces the object, so the
-        // path is put back after.
-        applyObject: function (levelId, x, y, type, templateId, path) {
+        // path and size are only present on ops from objectChanged: a sketched
+        // path and a size set on the placed object, or null when cleared. Placing
+        // replaces the object, so they are put back after.
+        applyObject: function (levelId, x, y, type, templateId, path, size) {
             return safe(function () {
                 var withPath = function (list) {
-                    if (path === undefined || !Array.isArray(list)) return;
-                    for (var k = 0; k < list.length; k++) { var o = list[k]; if (o && o.x === x && o.y === y) { if (path) o.path = path; else delete o.path; } }
+                    if (!Array.isArray(list)) return;
+                    for (var k = 0; k < list.length; k++) {
+                        var o = list[k];
+                        if (!o || o.x !== x || o.y !== y) continue;
+                        if (path !== undefined) { if (path) o.path = path; else delete o.path; }
+                        if (size !== undefined) { if (size) o.size = size; else delete o.size; }
+                    }
                 };
-                if (API.isCurrentLevel(levelId)) { addGameObject(x, y, type, templateId); withPath(gameObjects); if (path !== undefined && typeof draw === 'function') draw(); return true; }
+                if (API.isCurrentLevel(levelId)) { addGameObject(x, y, type, templateId); withPath(gameObjects); if ((path !== undefined || size !== undefined) && typeof draw === 'function') draw(); return true; }
                 var lv = null; for (var i = 0; i < levels.length; i++) { if (levels[i] && levels[i].id === levelId) { lv = levels[i]; break; } }
                 if (!lv) return false; if (!Array.isArray(lv.gameObjects)) lv.gameObjects = [];
                 for (var j = lv.gameObjects.length - 1; j >= 0; j--) { if (lv.gameObjects[j].x === x && lv.gameObjects[j].y === y) lv.gameObjects.splice(j, 1); }
@@ -160,12 +165,12 @@
                 return true;
             }, false);
         },
-        // A placed object changed where it stands (a platform's sketched path).
-        // Goes out as a place op that carries the path.
+        // A placed object changed where it stands (its sketched path or its own
+        // size). Goes out as a place op that carries both.
         objectChanged: function (obj) {
             return safe(function () {
                 if (!API._cellCb || !obj) return false;
-                API._cellCb({ obj: true, x: obj.x, y: obj.y, type: obj.type, templateId: (obj.templateId !== undefined ? obj.templateId : null), path: obj.path || null });
+                API._cellCb({ obj: true, x: obj.x, y: obj.y, type: obj.type, templateId: (obj.templateId !== undefined ? obj.templateId : null), path: obj.path || null, size: obj.size || null });
                 return true;
             }, false);
         },

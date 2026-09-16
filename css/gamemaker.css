@@ -3620,18 +3620,19 @@
         }
         .browse-library-btn {
             padding: 6px 10px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-            border: none;
-            border-radius: 4px;
-            color: white;
+            background: var(--bg-3);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            color: var(--text);
             cursor: pointer;
             font-size: 12px;
             white-space: nowrap;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
         }
         .browse-library-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
         }
         .browse-library-btn i {
             margin-right: 2px;
@@ -4322,15 +4323,18 @@
 .bgp-seg button.active { background: var(--accent); color: #fff; }
 @media (max-width: 860px) { .bgp { grid-template-columns: 1fr; } .bgp-list { position: static; } }
 
-/* Path tools for a placed moving platform, floating over the level canvas */
-.platform-path-bar { position: absolute; z-index: 20; display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); font-size: 11px; white-space: nowrap; }
+/* Tools for a placed object (size, and a path for platforms and enemies),
+   floating over the level canvas */
 /* the bar's display: flex would otherwise beat the hidden attribute */
-.platform-path-bar[hidden] { display: none; }
-.platform-path-bar .ppb-btn { padding: 4px 10px; border-radius: 5px; border: 1px solid var(--line); background: var(--bg-3); color: var(--text); font-size: 11px; cursor: pointer; }
-.platform-path-bar .ppb-btn:hover { background: var(--bg-4); }
-.platform-path-bar .ppb-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-.platform-path-bar .ppb-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-1); }
-.platform-path-bar .ppb-seg button { padding: 3px 8px; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 11px; cursor: pointer; }
-.platform-path-bar .ppb-seg button.active { background: var(--accent); color: #fff; }
-.platform-path-bar .ppb-close { width: 22px; height: 22px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 15px; line-height: 1; cursor: pointer; }
-.platform-path-bar .ppb-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+.object-tools-bar[hidden] { display: none; }
+.object-tools-bar { position: absolute; z-index: 20; display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); font-size: 11px; white-space: nowrap; }
+.object-tools-bar .otb-btn { padding: 4px 10px; border-radius: 5px; border: 1px solid var(--line); background: var(--bg-3); color: var(--text); font-size: 11px; cursor: pointer; }
+.object-tools-bar .otb-btn:hover { background: var(--bg-4); }
+.object-tools-bar .otb-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.object-tools-bar .otb-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-1); }
+.object-tools-bar .otb-seg button { padding: 3px 8px; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 11px; cursor: pointer; }
+.object-tools-bar .otb-seg button.active { background: var(--accent); color: #fff; }
+.object-tools-bar .otb-divider { width: 1px; align-self: stretch; background: var(--line); }
+.object-tools-bar .otb-size { padding: 0 4px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.object-tools-bar .otb-close { width: 22px; height: 22px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 15px; line-height: 1; cursor: pointer; }
+.object-tools-bar .otb-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }

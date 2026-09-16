@@ -58,7 +58,7 @@ document.addEventListener('keydown', function(e) {
     }
     // Same for the platform path bar. This listener and events.js can run in
     // either order, so check both the path state and whether Esc was already used.
-    if (e.defaultPrevented || (typeof platformPathUsesEscape === 'function' && platformPathUsesEscape())) {
+    if (e.defaultPrevented || (typeof objectToolsUseEscape === 'function' && objectToolsUseEscape())) {
         return;
     }
 
@@ -148,7 +148,8 @@ async function loadGamePreview() {
 
     const pixelScaleRadio = document.querySelector('input[name="pixel-scale"]:checked');
     const pixelScale = pixelScaleRadio ? parseInt(pixelScaleRadio.value) : 1;
-    let gameHTML = await generateGameHTMLAsync(false, pixelScale);
+    // Play Test opens on the level being edited; exports start at the first level
+    let gameHTML = await generateGameHTMLAsync(false, pixelScale, { startLevel: currentLevelIndex });
 
     // Inject the platform user's name so multiplayer play-test prefills it,
     // matching the /p/ preview behavior. Skipped for downloaded exports.

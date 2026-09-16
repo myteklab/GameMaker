@@ -41,7 +41,7 @@ function onCanvasMouseMove(e) {
 
     document.getElementById('coordinates').textContent = `X: ${tile.x}, Y: ${tile.y}`;
 
-    if (typeof platformPathMouse === 'function' && platformPathMouse('move', e, x, y)) return;
+    if (typeof objectToolsMouse === 'function' && objectToolsMouse('move', e, x, y)) return;
 
     // Update rectangle selection drag
     if (selectionDragging) {
@@ -255,7 +255,7 @@ function onCanvasMouseDown(e) {
     const y = e.clientY - rect.top;
     const tile = screenToTile(x, y);
 
-    if (typeof platformPathMouse === 'function' && platformPathMouse('down', e, x, y)) return;
+    if (typeof objectToolsMouse === 'function' && objectToolsMouse('down', e, x, y)) return;
 
     // Shift+left-click: start rectangle selection
     if (e.button === 0 && e.shiftKey && !isDraggingObject) {
@@ -637,15 +637,19 @@ function findObjectAtPixel(screenX, screenY) {
     for (let i = gameObjects.length - 1; i >= 0; i--) {
         const obj = gameObjects[i];
         const template = getTemplate(obj.type, obj.templateId);
-        const trueSize = obj.type !== 'terrainZone';
-        const objWidth = (trueSize && template?.width ? gameToEditorPx(template.width) : (template?.width || tileSize)) * zoom;
-        const objHeight = (trueSize && template?.height ? gameToEditorPx(template.height) : (template?.height || tileSize)) * zoom;
-
-        // Object position: centered X, bottom-aligned in tile
-        const objTileScreenX = (obj.x * tileSize - cameraX) * zoom;
-        const objTileScreenY = (obj.y * tileSize - cameraY) * zoom;
-        const objScreenX = objTileScreenX + (scaledTileSize - objWidth) / 2;
-        const objScreenY = objTileScreenY + scaledTileSize - objHeight;
+        let objWidth, objHeight, objScreenX, objScreenY;
+        if (obj.type === 'terrainZone') {
+            objWidth = (template?.width || tileSize) * zoom;
+            objHeight = (template?.height || tileSize) * zoom;
+            objScreenX = (obj.x * tileSize - cameraX) * zoom + (scaledTileSize - objWidth) / 2;
+            objScreenY = (obj.y * tileSize - cameraY) * zoom + scaledTileSize - objHeight;
+        } else {
+            const box = objectEditorBox(obj, template);
+            objWidth = box.w * zoom;
+            objHeight = box.h * zoom;
+            objScreenX = (box.x - cameraX) * zoom;
+            objScreenY = (box.y - cameraY) * zoom;
+        }
 
         if (screenX >= objScreenX && screenX <= objScreenX + objWidth &&
             screenY >= objScreenY && screenY <= objScreenY + objHeight) {
@@ -783,7 +787,7 @@ function updateLevelSpawnUI() {
 }
 
 function onCanvasMouseUp(e) {
-    if (typeof platformPathMouse === 'function' && platformPathMouse('up', e)) return;
+    if (typeof objectToolsMouse === 'function' && objectToolsMouse('up', e)) return;
     // Finish selection move - place tiles at new position
     if (selectionMoving && selectionTileData && selectionMoveOffset) {
         var dx = selectionMoveOffset.dx;
@@ -846,7 +850,8 @@ function onCanvasMouseUp(e) {
         };
 
         gameObjects.push(newZone);
-        selectedTerrainZone = gameObjects.length - 1; // Select the new zone
+        const joined = mergeTouchingZones(newZone);
+        selectedTerrainZone = gameObjects.indexOf(joined.zone);
         updateObjectCount();
         markDirty();
 
@@ -854,7 +859,16 @@ function onCanvasMouseUp(e) {
         terrainZonePreview = null;
 
         const template = getTemplate('terrainZone', selectedTemplateId);
-        showToast(`Created ${template?.name || 'Zone'} (${newZone.width}x${newZone.height} tiles)`);
+        if (joined.merged > 0) {
+            showToast(`${template?.name || 'Zone'} joined the zone beside it (${joined.zone.width}x${joined.zone.height} tiles)`);
+        } else {
+            showToast(`Created ${template?.name || 'Zone'} (${newZone.width}x${newZone.height} tiles)`);
+        }
+        // Students were placing zones one tile at a time; say once that a drag does it in one go
+        if (newZone.width === 1 && newZone.height === 1 && typeof zoneDragTipShown !== 'undefined' && !zoneDragTipShown) {
+            zoneDragTipShown = true;
+            setTimeout(() => showToast('Tip: drag across tiles to draw a bigger zone at once', 'info'), 1600);
+        }
         draw();
         return;
     }
@@ -862,6 +876,9 @@ function onCanvasMouseUp(e) {
     // Finish terrain zone resizing
     if (e.button === 0 && resizingHandle !== null) {
         resizingHandle = null;
+        if (selectedTerrainZone !== null && gameObjects[selectedTerrainZone]) {
+            selectedTerrainZone = gameObjects.indexOf(mergeTouchingZones(gameObjects[selectedTerrainZone]).zone);
+        }
         markDirty();
         showToast('Zone resized');
         draw();
@@ -873,6 +890,9 @@ function onCanvasMouseUp(e) {
         window.isDraggingTerrainZone = false;
         window.terrainZoneDragOffset = null;
         canvas.style.cursor = 'grab';
+        if (selectedTerrainZone !== null && gameObjects[selectedTerrainZone]) {
+            selectedTerrainZone = gameObjects.indexOf(mergeTouchingZones(gameObjects[selectedTerrainZone]).zone);
+        }
         markDirty();
         showToast('Zone moved');
         draw();
@@ -907,14 +927,14 @@ function onCanvasMouseUp(e) {
             draggedTileOrigin = null;
         }
 
-        // Clear object selection; a moving platform offers its path tools
+        // Clear object selection; the object offers its tools (size, and a path for platforms and enemies)
         const droppedObject = selectedMoveObject !== null ? gameObjects[selectedMoveObject] : null;
         selectedMoveObject = null;
         stopPulseAnimation();
         markDirty();
         draw();
-        if (droppedObject && droppedObject.type === 'movingPlatform' && typeof showPlatformPathBar === 'function') {
-            showPlatformPathBar(droppedObject);
+        if (droppedObject && typeof showObjectTools === 'function') {
+            showObjectTools(droppedObject);
         }
         return;
     }
@@ -930,7 +950,7 @@ function onCanvasMouseUp(e) {
 }
 
 function onCanvasMouseLeave() {
-    if (typeof platformPathMouse === 'function') platformPathMouse('leave', null);
+    if (typeof objectToolsMouse === 'function') objectToolsMouse('leave', null);
     hoverX = -1;
     hoverY = -1;
     isDragging = false;
@@ -1089,7 +1109,7 @@ function onKeyDown(e) {
 
     // Escape key - deselect object placement, brush, selection, etc.
     if (!isTyping && e.key === 'Escape') {
-        if (typeof cancelPlatformPath === 'function' && cancelPlatformPath()) {
+        if (typeof cancelObjectTools === 'function' && cancelObjectTools()) {
             e.preventDefault();
             return;
         }

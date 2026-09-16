@@ -1500,27 +1500,3 @@ function renderMenuButtonsList() {
     });
 }
 
-// Show a specific level settings section
-function showLevelSettingsSection(sectionName) {
-    // Hide all sections
-    document.querySelectorAll('.level-settings-section').forEach(section => {
-        section.classList.remove('active');
-    });
-
-    // Deactivate all nav items
-    document.querySelectorAll('.level-settings-nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-
-    // Show the selected section
-    const targetSection = document.getElementById(`level-settings-section-${sectionName}`);
-    if (targetSection) {
-        targetSection.classList.add('active');
-    }
-
-    // Activate the nav item
-    const targetNav = document.querySelector(`.level-settings-nav-item[data-section="${sectionName}"]`);
-    if (targetNav) {
-        targetNav.classList.add('active');
-    }
-}

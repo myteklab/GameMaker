@@ -143,7 +143,23 @@ function getAllPfxData(pfxIds) {
 }
 
 // Async wrapper to generate game with bundled SFX and PFX data
-async function generateGameHTMLAsync(includeComments = false, pixelScale = 1) {
+// The level a generated game opens on. Exports, publishing and share previews
+// start at the first level; they used to start wherever the student happened to
+// have the editor open, so a finished game could open on its last level. Play
+// Test passes the level being edited.
+let generatorStartLevel = 0;
+
+async function generateGameHTMLAsync(includeComments = false, pixelScale = 1, options = {}) {
+    const wanted = parseInt(options.startLevel, 10);
+    generatorStartLevel = (wanted >= 0 && wanted < levels.length) ? wanted : 0;
+    try {
+        return await generateGameHTMLBundled(includeComments, pixelScale);
+    } finally {
+        generatorStartLevel = 0;
+    }
+}
+
+async function generateGameHTMLBundled(includeComments, pixelScale) {
     // Collect and bundle SFX data (synchronous from inline storage)
     const sfxIds = collectSfxIds();
     const bundledSfxData = getAllSfxData(sfxIds);
@@ -533,7 +549,7 @@ function generateGameHTML(includeComments = false, pixelScale = 1, bundledSfxDat
 `;
     }
     levelsCode += '    var allLevels = ' + JSON.stringify(levels, null, 8) + ';\n';
-    levelsCode += '    var startingLevelIndex = ' + currentLevelIndex + ';\n';
+    levelsCode += '    var startingLevelIndex = ' + generatorStartLevel + ';\n';
     levelsCode += '    var currentLevelIndex = startingLevelIndex;\n';
     levelsCode += '    var level = [];\n';
     levelsCode += '    var decorLevel = [];\n';  // Decoration overlay (no collision)
@@ -5043,6 +5059,18 @@ ${includeComments ? `    // ═════════════════�
             // Template dimensions match RENDER_SIZE at default (32px = 1 tile at 2x)
             var objWidth = (template && template.width) ? template.width : RENDER_SIZE;
             var objHeight = (template && template.height) ? template.height : RENDER_SIZE;
+            // A placed object can be resized on its own (obj.size, game pixels).
+            // Its hit box scales by the same amount, or it would look bigger
+            // than it collides.
+            var sizeScaleX = 1, sizeScaleY = 1;
+            if (obj.size && obj.type !== 'terrainZone') {
+                var sizedW = Math.max(8, Math.min(1024, parseFloat(obj.size.w) || objWidth));
+                var sizedH = Math.max(8, Math.min(1024, parseFloat(obj.size.h) || objHeight));
+                sizeScaleX = sizedW / objWidth;
+                sizeScaleY = sizedH / objHeight;
+                objWidth = sizedW;
+                objHeight = sizedH;
+            }
 
             // Position: center X in tile, but align bottom with tile bottom (so objects stand ON tiles)
             var objX = obj.x * RENDER_SIZE + RENDER_SIZE / 2;
@@ -5078,9 +5106,9 @@ ${includeComments ? `    // ═════════════════�
 
                 // Universal collision properties (all object types)
                 gameObj.spriteOffsetY = (template.spriteOffsetY || 0);
-                gameObj.collisionWidth = template.collisionWidth || 0;
-                gameObj.collisionHeight = template.collisionHeight || 0;
-                gameObj.collisionOffsetY = (template.collisionOffsetY || 0);
+                gameObj.collisionWidth = (template.collisionWidth || 0) * sizeScaleX;
+                gameObj.collisionHeight = (template.collisionHeight || 0) * sizeScaleY;
+                gameObj.collisionOffsetY = (template.collisionOffsetY || 0) * sizeScaleY;
 
                 // Enemy-specific properties
                 if (obj.type === 'enemy') {
@@ -5098,6 +5126,13 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.deathTime = 0; // Timestamp when enemy was killed (for respawn)
                     gameObj.velocityY = 0;
                     gameObj.onGround = false;
+                    // a path sketched on this placed enemy replaces its usual movement
+                    gameObj.path = prepareObjectPath(obj.path);
+                    if (gameObj.path) {
+                        gameObj.pathDist = 0;
+                        gameObj.pathDir = 1;
+                        placeObjectOnPath(gameObj);
+                    }
                 }
 
                 // Collectible-specific
@@ -5168,10 +5203,10 @@ ${includeComments ? `    // ═════════════════�
                     }
 
                     // a path sketched on this placed platform replaces its type's movement
-                    gameObj.path = preparePlatformPath(obj.path);
+                    gameObj.path = prepareObjectPath(obj.path);
                     if (gameObj.path) {
                         gameObj.pathDist = (template.randomizeStart && template.activation === 'always') ? Math.random() * gameObj.path.total : 0;
-                        placePlatformOnPath(gameObj);
+                        placeObjectOnPath(gameObj);
                     } else if (gameObj.axis === 'circle' || gameObj.axis === 'figure8') {
                         gameObj.angle = gameObj.angle || 0;
                         placePlatformOnLoop(gameObj);
@@ -7802,6 +7837,11 @@ ${includeComments ? `        // ────────────────
         }
         var speed = baseSpeed * speedMult;
 
+        if (obj.path) {
+            advanceEnemyOnPath(obj, speed);
+            return;
+        }
+
         switch (behavior) {
             case 'stationary':
                 // Don't move
@@ -8036,7 +8076,7 @@ ${includeComments ? `        // ────────────────
     // A path sketched on a placed platform: points in game pixels from its start,
     // the first one [0, 0]. Distances along it are worked out once so the platform
     // keeps one speed on long and short segments alike.
-    function preparePlatformPath(p) {
+    function prepareObjectPath(p) {
         if (!p || !Array.isArray(p.points)) return null;
         var pts = [];
         for (var i = 0; i < p.points.length && pts.length < 400; i++) {
@@ -8054,7 +8094,7 @@ ${includeComments ? `        // ────────────────
         if (!(total > 1)) return null;
         return { pts: pts, cum: cum, total: total, loop: loop, seg: 0 };
     }
-    function placePlatformOnPath(obj) {
+    function placeObjectOnPath(obj) {
         var P = obj.path, d = obj.pathDist, i = P.seg;
         // it only moves a few pixels a frame, so search from last frame's segment
         while (i > 0 && P.cum[i] > d) i--;
@@ -8077,7 +8117,26 @@ ${includeComments ? `        // ────────────────
             obj.pathDist = 0;
             obj.direction = 1;
         }
-        placePlatformOnPath(obj);
+        placeObjectOnPath(obj);
+    }
+
+    // Enemies follow a sketched path the same way platforms do, but their
+    // direction field is which way the sprite faces, so the way along the path
+    // lives in pathDir and direction follows the actual sideways movement.
+    function advanceEnemyOnPath(obj, speed) {
+        var P = obj.path, lastX = obj.x;
+        obj.pathDist += obj.pathDir * speed;
+        if (P.loop) {
+            obj.pathDist = ((obj.pathDist % P.total) + P.total) % P.total;
+        } else if (obj.pathDist >= P.total) {
+            obj.pathDist = P.total;
+            obj.pathDir = -1;
+        } else if (obj.pathDist <= 0) {
+            obj.pathDist = 0;
+            obj.pathDir = 1;
+        }
+        placeObjectOnPath(obj);
+        if (Math.abs(obj.x - lastX) > 0.01) obj.direction = obj.x > lastX ? 1 : -1;
     }
 
     // Loops pass through the spot the platform was placed at (angle 0), so it does

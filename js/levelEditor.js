@@ -310,8 +310,9 @@ function addGameObject(tileX, tileY, type, templateId = null) {
             const obj = gameObjects[i];
             if (obj.type === 'movingPlatform') {
                 const existingTemplate = getTemplate('movingPlatform', obj.templateId);
-                const existingWidth = gameToEditorPx(existingTemplate?.width || 64);
-                const existingHeight = gameToEditorPx(existingTemplate?.height || 16);
+                const existingSize = objectGameSize(obj, existingTemplate);
+                const existingWidth = gameToEditorPx(existingSize.w);
+                const existingHeight = gameToEditorPx(existingSize.h);
                 const existingTilesX = Math.ceil(existingWidth / tileSize);
                 const existingTilesY = Math.ceil(existingHeight / tileSize);
 
@@ -350,6 +351,41 @@ function addGameObject(tileX, tileY, type, templateId = null) {
     draw();
 }
 
+// Touching zones of the same kind become one rectangle. Students were placing
+// water one tile at a time (18 and 20 single-tile zones in two games); one zone
+// per strip plays the same, and is far easier to move, resize and check. Only
+// joins that make an exact rectangle, and the whole level is tidied, so rows a
+// student already placed join as soon as they touch one of them. Undo was saved
+// by whatever edit called this. Returns the zone the focus ended up in.
+function mergeTouchingZones(focus) {
+    let keep = focus;
+    let merged = 0;
+    let changed = true;
+    while (changed) {
+        changed = false;
+        const zones = gameObjects.filter(o => o.type === 'terrainZone');
+        for (let i = 0; i < zones.length && !changed; i++) {
+            for (let j = 0; j < zones.length && !changed; j++) {
+                const a = zones[i], b = zones[j];
+                if (a === b || a.templateId !== b.templateId) continue;
+                const aw = a.width || 1, ah = a.height || 1, bw = b.width || 1, bh = b.height || 1;
+                if (a.y === b.y && ah === bh && a.x + aw === b.x) {
+                    a.width = aw + bw;
+                } else if (a.x === b.x && aw === bw && a.y + ah === b.y) {
+                    a.height = ah + bh;
+                } else {
+                    continue;
+                }
+                gameObjects.splice(gameObjects.indexOf(b), 1);
+                if (keep === b) keep = a;
+                merged++;
+                changed = true;
+            }
+        }
+    }
+    return { zone: keep, merged };
+}
+
 // Add object using current selection
 function addSelectedObject(tileX, tileY) {
     if (!selectedObjectType) return false;
@@ -368,15 +404,12 @@ function removeGameObjectAt(tileX, tileY) {
             return tileX >= obj.x && tileX < obj.x + tilesX &&
                    tileY >= obj.y && tileY < obj.y + tilesY;
         }
-        // the same box the editor draws: centered on its cell, standing on the bottom
-        const objWidth = template?.width ? gameToEditorPx(template.width) : tileSize;
-        const objHeight = template?.height ? gameToEditorPx(template.height) : tileSize;
-        const left = obj.x * tileSize + (tileSize - objWidth) / 2;
-        const top = obj.y * tileSize + tileSize - objHeight;
+        // the same box the editor draws
+        const box = objectEditorBox(obj, template);
         const cellLeft = tileX * tileSize;
         const cellTop = tileY * tileSize;
-        return cellLeft < left + objWidth && cellLeft + tileSize > left &&
-               cellTop < top + objHeight && cellTop + tileSize > top;
+        return cellLeft < box.x + box.w && cellLeft + tileSize > box.x &&
+               cellTop < box.y + box.h && cellTop + tileSize > box.y;
     });
 
     if (index >= 0) {

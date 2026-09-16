@@ -315,11 +315,8 @@ function generateScreenshotFromView() {
             var template = typeof getTemplate === 'function' ? getTemplate(obj.type, obj.templateId) : null;
             // in-game size and spot, the same box the editor draws
             var isPlatform = obj.type === 'movingPlatform';
-            var trueSize = obj.type !== 'terrainZone';
-            var ow = trueSize && template && template.width ? gameToEditorPx(template.width) : tileSize;
-            var oh = trueSize && template && template.height ? gameToEditorPx(template.height) : tileSize;
-            var objX = obj.x * tileSize + (tileSize - ow) / 2;
-            var objY = obj.y * tileSize + tileSize - oh;
+            var box = objectEditorBox(obj, template);
+            var ow = box.w, oh = box.h, objX = box.x, objY = box.y;
 
             // Skip objects outside view
             if (objX + ow < viewLeft || objX > viewLeft + viewWidth ||

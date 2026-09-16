@@ -11,6 +11,31 @@ function gameToEditorPx(v) {
     return v / renderScale;
 }
 
+// The size the game gives a placed object, in game pixels: its own size when it
+// was resized in the level, otherwise its type's.
+function objectGameSize(obj, template) {
+    if (template === undefined) template = getTemplate(obj.type, obj.templateId);
+    const fallback = tileSize * ((typeof gameSettings !== 'undefined' && gameSettings.tileRenderScale) || 2);
+    const typeW = (template && template.width) || fallback;
+    const typeH = (template && template.height) || fallback;
+    if (!obj.size || obj.type === 'terrainZone') return { w: typeW, h: typeH };
+    const clamp = (v, def) => { const n = parseFloat(v); return isNaN(n) ? def : Math.max(8, Math.min(1024, n)); };
+    return { w: clamp(obj.size.w, typeW), h: clamp(obj.size.h, typeH) };
+}
+
+// The box a placed object fills, in editor world pixels: centered on its cell and
+// standing on the cell's bottom, as initGameObjects places it. Drawing, clicking,
+// removing and screenshots all use this one box so they cannot disagree.
+function objectEditorBox(obj, template) {
+    let w = tileSize, h = tileSize;
+    if (obj.type !== 'terrainZone') {
+        const size = objectGameSize(obj, template);
+        w = gameToEditorPx(size.w);
+        h = gameToEditorPx(size.h);
+    }
+    return { x: obj.x * tileSize + (tileSize - w) / 2, y: obj.y * tileSize + tileSize - h, w, h };
+}
+
 // Clips to a rounded rectangle when r > 0. The radius is capped at half the short
 // side, so a large value on a thin platform gives round ends, not a broken path.
 function platformCornerPath(c, x, y, w, h, r) {
@@ -87,7 +112,7 @@ function draw() {
     // play-testing.
     drawDoorSpawnMarkers();
 
-    if (typeof drawPlatformPathOverlay === 'function') drawPlatformPathOverlay();
+    if (typeof drawObjectToolsOverlay === 'function') drawObjectToolsOverlay();
 
     // Update scrollbars to reflect current camera position
     if (typeof updateScrollbars === 'function') {
@@ -311,12 +336,11 @@ function drawGameObjects() {
         // sideways and standing on its bottom, as initGameObjects places them. They
         // used to be squeezed into one cell, so a 64px enemy looked like a 32px one.
         // Terrain zones have their own draw and keep the cell.
-        const trueSize = obj.type !== 'terrainZone';
-        const objWidth = trueSize && template?.width ? gameToEditorPx(template.width) * zoom : scaledTileSize;
-        const objHeight = trueSize && template?.height ? gameToEditorPx(template.height) * zoom : scaledTileSize;
-
-        const screenX = (obj.x * tileSize - cameraX) * zoom + (scaledTileSize - objWidth) / 2;
-        const screenY = (obj.y * tileSize - cameraY) * zoom + scaledTileSize - objHeight;
+        const box = objectEditorBox(obj, template);
+        const objWidth = box.w * zoom;
+        const objHeight = box.h * zoom;
+        const screenX = (box.x - cameraX) * zoom;
+        const screenY = (box.y - cameraY) * zoom;
 
         // Skip if off-screen
         if (screenX + objWidth < 0 || screenX > canvas.width ||
@@ -427,7 +451,7 @@ function drawGameObjects() {
             ctx.restore();
 
             // Draw movement direction indicator: the platform's own sketched path when it has one
-            const ownPath = typeof validPlatformPath === 'function' ? validPlatformPath(obj.path) : null;
+            const ownPath = typeof validObjectPath === 'function' ? validObjectPath(obj.path) : null;
             const axis = ownPath ? 'own' : (template?.axis || 'x');
             const distance = gameToEditorPx(template?.distance || 100) * zoom;
             ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
@@ -435,7 +459,7 @@ function drawGameObjects() {
             ctx.setLineDash([4, 4]);
             ctx.beginPath();
             if (axis === 'own') {
-                tracePlatformOwnPath(ctx, ownPath, centerX, centerY);
+                traceObjectPath(ctx, ownPath, centerX, centerY);
             } else if (axis === 'circle') {
                 // the whole loop, matching placePlatformOnLoop in the game
                 ctx.arc(centerX + distance, centerY, distance, 0, Math.PI * 2);
