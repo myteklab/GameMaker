@@ -5180,6 +5180,16 @@ ${includeComments ? `    // ═════════════════�
                 if (obj.type === 'hazard') {
                     gameObj.damage = template.damage || 1;
                     gameObj.continuous = template.continuous || false;
+                    // A sketched path turns a spike into a saw on a track.
+                    gameObj.speed = Math.max(0.25, parseFloat(template.speed) || 2);
+                    gameObj.startX = objX;
+                    gameObj.startY = objY;
+                    gameObj.path = prepareObjectPath(obj.path);
+                    if (gameObj.path) {
+                        gameObj.pathDist = 0;
+                        gameObj.direction = 1;
+                        placeObjectOnPath(gameObj);
+                    }
                 }
 
                 // Powerup-specific
@@ -6866,6 +6876,12 @@ ${includeComments ? `        // ────────────────
                 updateNPC(obj);
             }
 
+            // A hazard only moves if the student drew it a path. It travels the
+            // same way a platform does, since neither has a facing to worry about.
+            if (obj.type === 'hazard' && obj.path) {
+                advancePlatformOnPath(obj);
+            }
+
             // Update moving platform position and handle collision. A conveyor
             // runs the same collision, it just never moves itself: the belt
             // speed goes straight into deltaX and the riding code carries the
@@ -8114,6 +8130,55 @@ ${includeComments ? `        // ────────────────
         }
     }
 
+    // Which placed objects an enemy should treat as a wall or a floor. Everything
+    // else (ladders, pickups, hazards, one-way platforms) it walks through, the
+    // same way the player does.
+    function blocksEnemy(o) {
+        if (o.type === 'crate') return true;
+        if (o.type === 'mysteryBlock') return !IS_TOPDOWN;
+        if (o.type === 'movingPlatform' || o.type === 'conveyor') {
+            if (o.collapseState === 'collapsed') return false;
+            return o.collisionMode !== 'oneway';
+        }
+        return false;
+    }
+
+    function pointInObject(px, py, o) {
+        var w = o.width || RENDER_SIZE, h = o.height || RENDER_SIZE;
+        return px >= o.x - w / 2 && px < o.x + w / 2 && py >= o.y - h / 2 && py < o.y + h / 2;
+    }
+
+    // Enemies used to test terrain tiles only, so they strolled straight through
+    // crates, blocks and platforms. An enemy already standing inside one (a crate
+    // shoved on top of it) is not trapped by it, or it would jitter in place
+    // forever flipping direction.
+    function enemySolidAt(px, py, self) {
+        if (isSolidAt(px, py)) return true;
+        for (var i = 0; i < activeObjects.length; i++) {
+            var o = activeObjects[i];
+            if (o === self || o.active === false || !blocksEnemy(o)) continue;
+            if (!pointInObject(px, py, o)) continue;
+            if (self && pointInObject(self.x, self.y, o)) continue;
+            return true;
+        }
+        return false;
+    }
+
+    // The top of whatever is solid at this spot, so a jumping enemy lands on a
+    // crate's surface rather than snapping to the tile grid under it.
+    function enemySurfaceTop(px, py, self) {
+        var top = null;
+        if (isSolidAt(px, py)) top = Math.floor(py / RENDER_SIZE) * RENDER_SIZE;
+        for (var i = 0; i < activeObjects.length; i++) {
+            var o = activeObjects[i];
+            if (o === self || o.active === false || !blocksEnemy(o)) continue;
+            if (!pointInObject(px, py, o)) continue;
+            var objTop = o.y - (o.height || RENDER_SIZE) / 2;
+            if (top === null || objTop < top) top = objTop;
+        }
+        return top;
+    }
+
     function updateEnemy(obj) {
         var behavior = obj.behavior || 'pace';
         var baseSpeed = obj.speed || 2;
@@ -8156,7 +8221,7 @@ ${includeComments ? `        // ────────────────
 
                     // Check wall collision (vertical)
                     var checkY = obj.y + (obj.direction > 0 ? RENDER_SIZE/2 : -RENDER_SIZE/2);
-                    if (isSolidAt(obj.x, checkY)) {
+                    if (enemySolidAt(obj.x, checkY, obj)) {
                         obj.direction *= -1;
                     }
                 } else {
@@ -8174,7 +8239,7 @@ ${includeComments ? `        // ────────────────
 
                     // Check wall collision (horizontal)
                     var checkX = obj.x + (obj.direction > 0 ? RENDER_SIZE/2 : -RENDER_SIZE/2);
-                    if (isSolidAt(checkX, obj.y)) {
+                    if (enemySolidAt(checkX, obj.y, obj)) {
                         obj.direction *= -1;
                     }
                 }
@@ -8204,13 +8269,13 @@ ${includeComments ? `        // ────────────────
 
                         // Wall collision for X movement
                         var wallCheckX = nextX + (normX > 0 ? RENDER_SIZE/2 : -RENDER_SIZE/2);
-                        if (!isSolidAt(wallCheckX, obj.y)) {
+                        if (!enemySolidAt(wallCheckX, obj.y, obj)) {
                             obj.x = nextX;
                         }
 
                         // Wall collision for Y movement
                         var wallCheckY = nextY + (normY > 0 ? RENDER_SIZE/2 : -RENDER_SIZE/2);
-                        if (!isSolidAt(obj.x, wallCheckY)) {
+                        if (!enemySolidAt(obj.x, wallCheckY, obj)) {
                             obj.y = nextY;
                         }
 
@@ -8235,8 +8300,8 @@ ${includeComments ? `        // ────────────────
                             Math.pow(nextWanderY - obj.startY, 2)
                         );
                         if (distFromStart < obj.paceDistance) {
-                            if (!isSolidAt(nextWanderX, obj.y)) obj.x = nextWanderX;
-                            if (!isSolidAt(obj.x, nextWanderY)) obj.y = nextWanderY;
+                            if (!enemySolidAt(nextWanderX, obj.y, obj)) obj.x = nextWanderX;
+                            if (!enemySolidAt(obj.x, nextWanderY, obj)) obj.y = nextWanderY;
                         } else {
                             // Return toward start position
                             obj.wanderAngle = Math.atan2(obj.startY - obj.y, obj.startX - obj.x);
@@ -8263,13 +8328,13 @@ ${includeComments ? `        // ────────────────
                     // Check for walls BEFORE moving
                     var nextX = obj.x + obj.direction * moveSpeed;
                     var wallCheckX = nextX + (obj.direction > 0 ? RENDER_SIZE/2 : -RENDER_SIZE/2);
-                    var hitWall = isSolidAt(wallCheckX, obj.y);
+                    var hitWall = enemySolidAt(wallCheckX, obj.y, obj);
 
                     // Check for edge (no ground ahead) - only when on solid ground
                     var groundCheckX = nextX + (obj.direction > 0 ? RENDER_SIZE/2 : -RENDER_SIZE/2);
                     var groundCheckY = obj.y + (obj.height || RENDER_SIZE)/2 + 4;
-                    var hasGroundAhead = isSolidAt(groundCheckX, groundCheckY);
-                    var hasGroundBelow = isSolidAt(obj.x, groundCheckY);
+                    var hasGroundAhead = enemySolidAt(groundCheckX, groundCheckY, obj);
+                    var hasGroundBelow = enemySolidAt(obj.x, groundCheckY, obj);
 
                     if (hitWall) {
                         // Stop at wall - don't move through it
@@ -8296,7 +8361,7 @@ ${includeComments ? `        // ────────────────
                     obj.x += obj.direction * speed * 0.7;
                     // Wall check
                     var wallCheckJumpX = obj.x + (obj.direction > 0 ? RENDER_SIZE/2 : -RENDER_SIZE/2);
-                    if (isSolidAt(wallCheckJumpX, obj.y)) {
+                    if (enemySolidAt(wallCheckJumpX, obj.y, obj)) {
                         obj.direction *= -1;
                         obj.x -= obj.direction * speed; // Back off from wall
                     }
@@ -8317,10 +8382,11 @@ ${includeComments ? `        // ────────────────
                     // Check ground (using enemy's bottom edge)
                     var enemyHalfHeight = (obj.height || RENDER_SIZE) / 2;
                     var enemyBottom = obj.y + enemyHalfHeight;
-                    if (obj.velocityY > 0 && isSolidAt(obj.x, enemyBottom)) {
-                        // Snap to stand on top of the tile
-                        var tileY = Math.floor(enemyBottom / RENDER_SIZE) * RENDER_SIZE;
-                        obj.y = tileY - enemyHalfHeight;
+                    var landingTop = obj.velocityY > 0 ? enemySurfaceTop(obj.x, enemyBottom, obj) : null;
+                    if (landingTop !== null) {
+                        // Stand on whatever the surface actually is: a tile's grid
+                        // line, or the top of a crate that is not on the grid.
+                        obj.y = landingTop - enemyHalfHeight;
                         obj.velocityY = 0;
                         obj.onGround = true;
 
@@ -8440,6 +8506,48 @@ ${includeComments ? `        // ────────────────
             obj.x = obj.startX + r - r * Math.cos(obj.angle);
             obj.y = obj.startY - r * Math.sin(obj.angle);
         }
+    }
+
+    // Library art often ships with transparent padding baked in. A ladder drawn
+    // with 7 empty rows under it ends up floating half a tile above the ground,
+    // because the padding scales with the sprite. For the structural objects, the
+    // ones whose box is meant to meet the world, measure the opaque area once and
+    // draw that instead. Cross-origin art cannot be measured, so it draws as-is.
+    var spriteTrimCache = {};
+    function spriteTrim(img, url) {
+        if (spriteTrimCache[url] !== undefined) return spriteTrimCache[url];
+        var result = null;
+        try {
+            var cv = document.createElement('canvas');
+            cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+            var g = cv.getContext('2d');
+            g.drawImage(img, 0, 0);
+            var d = g.getImageData(0, 0, cv.width, cv.height).data;
+            var top = -1, bottom = -1, left = cv.width, right = -1;
+            for (var y = 0; y < cv.height; y++) {
+                var rowHas = false;
+                for (var x = 0; x < cv.width; x++) {
+                    if (d[(y * cv.width + x) * 4 + 3] > 16) {
+                        rowHas = true;
+                        if (x < left) left = x;
+                        if (x > right) right = x;
+                    }
+                }
+                if (rowHas) { if (top < 0) top = y; bottom = y; }
+            }
+            if (top >= 0 && right >= left) {
+                result = { x: left, y: top, w: right - left + 1, h: bottom - top + 1 };
+                if (result.x === 0 && result.y === 0 && result.w === cv.width && result.h === cv.height) result = null;
+            }
+        } catch (e) {
+            result = null;
+        }
+        spriteTrimCache[url] = result;
+        return result;
+    }
+
+    function trimsPadding(type) {
+        return type === 'ladder' || type === 'conveyor' || type === 'crate';
     }
 
     // Repeat one source frame across a destination box, a tile at a time, with the
@@ -10361,6 +10469,16 @@ ${includeComments ? `        // ────────────────
                         case 'right': srcY = frameHeight * 2; break;
                         case 'up':    srcY = frameHeight * 3; break;
                         default: srcY = 0; break;
+                    }
+                }
+
+                // Single-frame structural art: drop the transparent border so the
+                // picture fills the object instead of hovering inside it.
+                if (trimsPadding(obj.type) && spriteCols === 1 && spriteRows === 1) {
+                    var trim = spriteTrim(sprite, spriteUrl);
+                    if (trim) {
+                        srcX = trim.x; srcY = trim.y;
+                        frameWidth = trim.w; frameHeight = trim.h;
                     }
                 }
 

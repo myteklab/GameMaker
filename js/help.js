@@ -494,7 +494,7 @@ const helpContent = {
             <p><strong>Level Objects</strong></p>
             <ul>
                 <li><strong>Goal</strong> - Level completion point</li>
-                <li><strong>Hazard</strong> - Instant damage zone</li>
+                <li><strong>Hazard</strong> - Damage on contact, and it can follow a path you draw</li>
                 <li><strong>Spring</strong> - Bounces player upward</li>
                 <li><strong>Crate</strong> - A block you can shove around and stand on</li>
                 <li><strong>Ladder</strong> - Climb up and down instead of jumping</li>
@@ -734,6 +734,9 @@ const helpContent = {
             <p><strong>Move Speed</strong> sets how fast it travels in any of these.</p>
 
             <h4>Drawing A Patrol Route</h4>
+            <h4>What Stops an Enemy</h4>
+            <p>Enemies are blocked by solid tiles, by crates, by mystery blocks and by solid moving platforms and conveyors. They walk through ladders, pickups, hazards and one-way platforms, the same as you would expect. A pacing enemy that meets something solid turns around; a chasing one stops against it. That means you can shove a crate into a corridor to shut an enemy out of it.</p>
+
             <p>One enemy can follow a route you draw instead of its pattern. Click the enemy where it stands in the level, choose <strong>Draw path</strong>, and drag the route you want. End near where you started to make a loop, or leave it open and the enemy walks there and back. The route belongs to that one enemy, so two enemies of the same type can patrol different routes.</p>
 
             <h4>Touching The Player</h4>
@@ -779,6 +782,25 @@ const helpContent = {
             <p>Introduce each kind somewhere safe before using it over a pit.</p>
 
             <div class="help-tip"><p>Start a shooting enemy slow: one projectile every 2 seconds, speed 3 or 4. Fast projectiles are hard to read, and a player who cannot see what hit them just feels cheated.</p></div>
+        `
+    },
+    movingHazards: {
+        title: 'Moving Hazards',
+        content: `
+            <h4>A Hazard on a Track</h4>
+            <p>Any hazard can be given a route to travel. Click a placed hazard in the level, choose <strong>Draw path</strong>, and drag the shape you want. End near where you started for a loop, or leave it open and the hazard slides there and back forever. That is how you build a saw on a rail, a swinging blade, or a fireball that crosses a corridor on a timer.</p>
+
+            <h4>Settings</h4>
+            <ul>
+                <li><strong>Path Speed</strong> - Pixels per frame along the route. The player walks at about 4, so 2 is something you can time and 6 is something you have to respect</li>
+                <li><strong>Damage</strong> and <strong>Continuous Damage</strong> work exactly as they do for a hazard that stays put</li>
+                <li>The route belongs to that one hazard, so two spikes of the same type can travel different paths</li>
+            </ul>
+
+            <h4>Level Design</h4>
+            <p>A hazard that stays still is a place you avoid. A hazard that moves is a rhythm you have to read, and it turns a wide safe floor into a section that asks for timing without you having to build anything else.</p>
+
+            <div class="help-tip"><p>A moving hazard does not push the player or anything else. It passes through crates and enemies and only hurts the player.</p></div>
         `
     },
     crates: {

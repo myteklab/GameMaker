@@ -323,9 +323,48 @@ function drawMenuButton(button, index) {
 
 // Cache for loaded object sprites
 const objectSpriteCache = {};
+const spriteTrimCache = {};
 
 function drawGameObjects() {
     const scaledTileSize = tileSize * zoom;
+
+    // Library art often ships with transparent padding, which scales with the
+    // sprite and leaves a ladder hovering above the ground. Measure the opaque
+    // area once per image and draw that instead, for the objects whose box is
+    // meant to meet the world. Mirrors the engine's spriteTrim.
+    const spriteTrim = (img, url) => {
+        if (spriteTrimCache[url] !== undefined) return spriteTrimCache[url];
+        let result = null;
+        try {
+            const cv = document.createElement('canvas');
+            cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+            const g = cv.getContext('2d');
+            g.drawImage(img, 0, 0);
+            const d = g.getImageData(0, 0, cv.width, cv.height).data;
+            let top = -1, bottom = -1, left = cv.width, right = -1;
+            for (let y = 0; y < cv.height; y++) {
+                let rowHas = false;
+                for (let x = 0; x < cv.width; x++) {
+                    if (d[(y * cv.width + x) * 4 + 3] > 16) {
+                        rowHas = true;
+                        if (x < left) left = x;
+                        if (x > right) right = x;
+                    }
+                }
+                if (rowHas) { if (top < 0) top = y; bottom = y; }
+            }
+            if (top >= 0 && right >= left) {
+                result = { x: left, y: top, w: right - left + 1, h: bottom - top + 1 };
+                if (result.x === 0 && result.y === 0 && result.w === cv.width && result.h === cv.height) result = null;
+            }
+        } catch (e) {
+            result = null;
+        }
+        spriteTrimCache[url] = result;
+        return result;
+    };
+
+    const trimsPadding = (type) => type === 'ladder' || type === 'conveyor' || type === 'crate';
 
     // Repeat one source frame across a destination box, a tile at a time, cropping
     // the last row and column instead of squashing them. Mirrors the game's
@@ -602,16 +641,21 @@ function drawGameObjects() {
                 // Draw only the first frame of the sprite - supports grid-based spritesheets
                 const spriteCols = template?.spritesheetCols || template?.frameCount || 1;
                 const spriteRows = template?.spritesheetRows || 1;
-                const frameWidth = cached.img.naturalWidth / spriteCols;
-                const frameHeight = cached.img.naturalHeight / spriteRows;
+                let frameWidth = cached.img.naturalWidth / spriteCols;
+                let frameHeight = cached.img.naturalHeight / spriteRows;
+                let srcX = 0, srcY = 0;
+                if (trimsPadding(obj.type) && spriteCols === 1 && spriteRows === 1) {
+                    const trim = spriteTrim(cached.img, spriteUrl);
+                    if (trim) { srcX = trim.x; srcY = trim.y; frameWidth = trim.w; frameHeight = trim.h; }
+                }
                 ctx.imageSmoothingEnabled = false;
                 const cell = tileSize * zoom;
                 if (obj.type === 'crate' && (objWidth > cell || objHeight > cell)) {
-                    tileImageAcross(cached.img, 0, 0, frameWidth, frameHeight, screenX, screenY, objWidth, objHeight, cell);
+                    tileImageAcross(cached.img, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objWidth, objHeight, cell);
                 } else {
                     ctx.drawImage(
                         cached.img,
-                        0, 0, frameWidth, frameHeight,  // Source: first frame only
+                        srcX, srcY, frameWidth, frameHeight,  // Source: first frame, padding removed
                         screenX, screenY, objWidth, objHeight  // Destination
                     );
                 }

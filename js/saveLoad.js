@@ -232,6 +232,7 @@ function loadProjectData(data) {
         hazardTemplates = data.hazardTemplates.map(t => ({
             ...t,
             damageSound: t.damageSound || '', // Ensure sound property exists
+            speed: t.speed || 2,              // path speed, added with moving hazards
             // Migrate spritesheet properties for older projects
             spritesheetCols: t.spritesheetCols || t.frameCount || 1,
             spritesheetRows: t.spritesheetRows || 1,

@@ -16,7 +16,7 @@ let objectResizing = false;     // the size handle is being dragged
 let objectToolsSavedHint = null;
 let zoneDragTipShown = false;
 
-const OBJECT_PATH_NOUN = { movingPlatform: 'platform', enemy: 'enemy' };
+const OBJECT_PATH_NOUN = { movingPlatform: 'platform', enemy: 'enemy', hazard: 'hazard' };
 
 function canUseObjectTools(obj) {
     return !!obj && obj.type !== 'terrainZone';

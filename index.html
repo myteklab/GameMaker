@@ -2234,7 +2234,7 @@
 <!-- Hazard Template Editor -->
 <div class="template-editor" id="hazard-template-editor">
     <div class="template-editor-content">
-        <h3 id="hazard-template-title">Add Hazard Type <span class="help-icon" onclick="showHelp('objectTemplates')">?</span></h3>
+        <h3 id="hazard-template-title">Add Hazard Type <span class="help-icon" onclick="showHelp('movingHazards')">?</span></h3>
         <div class="form-group">
             <label>Name</label>
             <input type="text" id="hazard-template-name" placeholder="e.g., Lava">
@@ -2286,6 +2286,11 @@
                     <input type="checkbox" id="hazard-template-continuous" style="width: auto;">
                     Continuous Damage
                 </label>
+            </div>
+            <div class="form-group">
+                <label>Path Speed</label>
+                <input type="number" id="hazard-template-speed" value="2" min="0.25" max="12" step="0.25" title="How fast it travels along a drawn path">
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Click a placed hazard and choose Draw path to make it move.</span>
             </div>
         </div>
         <div class="form-row">

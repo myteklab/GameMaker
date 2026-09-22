@@ -959,6 +959,7 @@ function showAddHazardTemplate() {
     document.getElementById('hazard-template-damage').value = '1';
     document.getElementById('hazard-template-instant-kill').checked = false;
     document.getElementById('hazard-template-continuous').checked = false;
+    document.getElementById('hazard-template-speed').value = '2';
     document.getElementById('hazard-template-symbol').value = '▲';
     document.getElementById('hazard-template-color').value = '#888888';
     document.getElementById('hazard-template-damage-sound').value = '';
@@ -987,6 +988,7 @@ function editHazardTemplate(id) {
     document.getElementById('hazard-template-damage').value = template.damage >= 999 ? 1 : template.damage;
     document.getElementById('hazard-template-instant-kill').checked = template.damage >= 999;
     document.getElementById('hazard-template-continuous').checked = template.continuous || false;
+    document.getElementById('hazard-template-speed').value = template.speed !== undefined ? template.speed : 2;
     document.getElementById('hazard-template-symbol').value = template.symbol || '▲';
     document.getElementById('hazard-template-color').value = template.color || '#888888';
     document.getElementById('hazard-template-damage-sound').value = template.damageSound || '';
@@ -1026,6 +1028,7 @@ function saveHazardTemplate() {
         animSpeed: parseInt(document.getElementById('hazard-template-animspeed').value) || 8,
         damage: instantKill ? 999 : (parseInt(document.getElementById('hazard-template-damage').value) || 1),
         continuous: document.getElementById('hazard-template-continuous').checked,
+        speed: Math.max(0.25, parseFloat(document.getElementById('hazard-template-speed').value) || 2),
         symbol: document.getElementById('hazard-template-symbol').value || '▲',
         color: document.getElementById('hazard-template-color').value || '#888888',
         damageSound: document.getElementById('hazard-template-damage-sound').value.trim(),

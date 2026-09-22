@@ -387,6 +387,7 @@ let hazardTemplates = [
         height: 32,
         damage: 1,             // damage dealt (use 999 for instant kill)
         continuous: false,     // if true, damages every frame while touching
+        speed: 2,              // pixels per frame along a sketched path
         color: '#888888',      // fallback color
         symbol: '▲',
         damageSound: '',       // sound when player hits this hazard
