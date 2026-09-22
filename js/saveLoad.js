@@ -291,7 +291,7 @@ function loadProjectData(data) {
         ladderTemplates = data.ladderTemplates.map(t => ({
             ...t,
             textureFit: t.textureFit || 'stretch',
-            repeatTiles: Math.max(1, parseInt(t.repeatTiles) || 1),
+            repeatTiles: Math.max(0, parseInt(t.repeatTiles) || 0),
             climbSpeed: t.climbSpeed || 2,
             jumpOff: t.jumpOff !== false,
             climbSound: t.climbSound || '',
@@ -304,7 +304,7 @@ function loadProjectData(data) {
         conveyorTemplates = data.conveyorTemplates.map(t => ({
             ...t,
             textureFit: t.textureFit || 'stretch',
-            repeatTiles: Math.max(1, parseInt(t.repeatTiles) || 1),
+            repeatTiles: Math.max(0, parseInt(t.repeatTiles) || 0),
             beltSpeed: t.beltSpeed || 2,
             direction: t.direction || 'right',
             collisionMode: t.collisionMode || 'solid',

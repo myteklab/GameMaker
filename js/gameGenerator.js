@@ -5230,7 +5230,7 @@ ${includeComments ? `    // ═════════════════�
                 if (obj.type === 'ladder') {
                     gameObj.climbSpeed = Math.max(0.5, parseFloat(template.climbSpeed) || 2);
                     gameObj.textureFit = template.textureFit || 'stretch';
-                    gameObj.repeatTiles = Math.max(1, parseInt(template.repeatTiles) || 1);
+                    gameObj.repeatTiles = Math.max(0, parseInt(template.repeatTiles) || 0);
                     gameObj.jumpOff = template.jumpOff !== false;
                     gameObj.tileKey = template.tileKey || '';
                     gameObj.grabSound = template.grabSound || '';
@@ -5241,7 +5241,7 @@ ${includeComments ? `    // ═════════════════�
                 if (obj.type === 'conveyor') {
                     gameObj.beltSpeed = Math.max(0, parseFloat(template.beltSpeed) || 2);
                     gameObj.textureFit = template.textureFit || 'stretch';
-                    gameObj.repeatTiles = Math.max(1, parseInt(template.repeatTiles) || 1);
+                    gameObj.repeatTiles = Math.max(0, parseInt(template.repeatTiles) || 0);
                     gameObj.direction = template.direction || 'right';
                     gameObj.collisionMode = template.collisionMode || 'solid';
                     gameObj.affectsEnemies = !!template.affectsEnemies;
@@ -8558,6 +8558,80 @@ ${includeComments ? `        // ────────────────
         return type === 'ladder' || type === 'conveyor' || type === 'crate';
     }
 
+    // Most art meant to stretch a ladder or a belt is a repeating pattern, not one
+    // rung and not a capped picture: ladder1 is four rungs on a strict 8 pixel
+    // beat. Repeating the WHOLE picture stacks its short end against its long end
+    // and leaves a visible seam, so find the beat and repeat one beat of it.
+    // Returns the period in source pixels along the axis, or null if the picture
+    // is not periodic enough to be sure.
+    var spritePeriodCache = {};
+    function spritePeriod(img, url, vertical, trim) {
+        var key = url + (vertical ? '|v' : '|h');
+        if (spritePeriodCache[key] !== undefined) return spritePeriodCache[key];
+        var result = null;
+        try {
+            var box = trim || { x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
+            var cv = document.createElement('canvas');
+            cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+            var g = cv.getContext('2d');
+            g.drawImage(img, 0, 0);
+            var d = g.getImageData(0, 0, cv.width, cv.height).data;
+            var along = vertical ? box.h : box.w;
+            var across = vertical ? box.w : box.h;
+
+            // Difference between two lines of the picture, across the whole width
+            // (or height, for a belt).
+            var lineDiff = function (i1, i2) {
+                var total = 0;
+                for (var j = 0; j < across; j++) {
+                    var x1 = vertical ? box.x + j : box.x + i1;
+                    var y1 = vertical ? box.y + i1 : box.y + j;
+                    var x2 = vertical ? box.x + j : box.x + i2;
+                    var y2 = vertical ? box.y + i2 : box.y + j;
+                    var a = (y1 * cv.width + x1) * 4, b = (y2 * cv.width + x2) * 4;
+                    total += Math.abs(d[a] - d[b]) + Math.abs(d[a+1] - d[b+1]) +
+                             Math.abs(d[a+2] - d[b+2]) + Math.abs(d[a+3] - d[b+3]);
+                }
+                return total / (across * 4);
+            };
+
+            // Score every candidate beat cheaply first. A real beat scores low, but
+            // so do its multiples, so the winner alone proves nothing.
+            var scored = [];
+            for (var period = 2; period <= Math.floor(along / 2); period++) {
+                var total = 0, n = 0;
+                for (var i = 0; i + period < along; i++) { total += lineDiff(i, i + period); n++; }
+                if (n) scored.push({ period: period, avg: total / n });
+            }
+            scored.sort(function (a, b) { return a.avg - b.avg; });
+
+            // Then prove it. The ends of a picture are where a pattern usually
+            // breaks (ladder1 has four rail rows at the top where the beat wants
+            // three), so slide a window along and look for a slice that repeats
+            // EXACTLY. The smallest beat that does is the one to tile.
+            var TOLERANCE = 4;
+            var candidates = scored.slice(0, 6).filter(function (c) { return c.avg < 40; });
+            candidates.sort(function (a, b) { return a.period - b.period; });
+            for (var ci = 0; ci < candidates.length && !result; ci++) {
+                var p = candidates[ci].period;
+                var bestStart = -1, bestScore = Infinity;
+                for (var start = 0; start + 2 * p <= along; start++) {
+                    var worst = 0;
+                    for (var k = 0; k < p && worst <= TOLERANCE; k++) {
+                        worst = Math.max(worst, lineDiff(start + k, start + k + p));
+                    }
+                    if (worst < bestScore) { bestScore = worst; bestStart = start; }
+                    if (bestScore === 0) break;
+                }
+                if (bestStart >= 0 && bestScore <= TOLERANCE) result = { period: p, start: bestStart };
+            }
+        } catch (e) {
+            result = null;
+        }
+        spritePeriodCache[key] = result;
+        return result;
+    }
+
     // Repeat one source frame across a destination box, a tile at a time, with the
     // last row and column cropped rather than squashed.
     // How far one copy of the texture reaches. A ladder repeats down its length
@@ -8575,19 +8649,25 @@ ${includeComments ? `        // ────────────────
         return trimsPadding(obj.type) && obj.textureFit === 'repeat';
     }
 
-    function tileImageAcross(img, srcX, srcY, srcW, srcH, dx, dy, dw, dh, step) {
+    // Every copy is drawn whole and the object's box does the cropping, so a part
+    // copy at the edge is cut off rather than squashed. alignEnd starts the run at
+    // the bottom, which is what a ladder wants: the ground end keeps a clean beat
+    // and any leftover is trimmed off the top where nobody reads it.
+    function tileImageAcross(img, srcX, srcY, srcW, srcH, dx, dy, dw, dh, step, alignEnd) {
         var stepX = step ? step.x : Math.min(RENDER_SIZE, dw);
         var stepY = step ? step.y : Math.min(RENDER_SIZE, dh);
-        if (stepX <= 0 || stepY <= 0) return;
-        for (var y = 0; y < dh; y += stepY) {
-            for (var x = 0; x < dw; x += stepX) {
-                var cellW = Math.min(stepX, dw - x);
-                var cellH = Math.min(stepY, dh - y);
-                ctx.drawImage(img,
-                    srcX, srcY, srcW * (cellW / stepX), srcH * (cellH / stepY),
-                    dx + x, dy + y, cellW, cellH);
+        if (stepX <= 0 || stepY <= 0 || dw <= 0 || dh <= 0) return;
+        var startY = alignEnd ? dy + dh - Math.ceil(dh / stepY) * stepY : dy;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(dx, dy, dw, dh);
+        ctx.clip();
+        for (var y = startY; y < dy + dh - 0.01; y += stepY) {
+            for (var x = dx; x < dx + dw - 0.01; x += stepX) {
+                ctx.drawImage(img, srcX, srcY, srcW, srcH, x, y, stepX, stepY);
             }
         }
+        ctx.restore();
     }
 
     // A crate reads as something you can shove: a lid, a base, and braces. A
@@ -10547,7 +10627,28 @@ ${includeComments ? `        // ────────────────
                     );
                 } else if (repeatsTexture(obj)) {
                     // Repeat instead of smearing one copy over the whole object.
-                    tileImageAcross(sprite, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objW, objH, textureStep(obj, objW, objH));
+                    var vertical = (obj.type === 'ladder');
+                    var step = textureStep(obj, objW, objH);
+                    var tiles = parseInt(obj.repeatTiles) || 0;
+                    if (tiles <= 0 && obj.type !== 'crate') {
+                        // Auto: one beat of the picture, drawn at the scale that
+                        // makes it fill the object's width (or height, for a belt).
+                        var beat = spritePeriod(sprite, spriteUrl, vertical, { x: srcX, y: srcY, w: frameWidth, h: frameHeight });
+                        if (beat) {
+                            if (vertical) {
+                                var scaleV = objW / frameWidth;
+                                srcY += beat.start;
+                                frameHeight = beat.period;
+                                step = { x: objW, y: beat.period * scaleV };
+                            } else {
+                                var scaleH = objH / frameHeight;
+                                srcX += beat.start;
+                                frameWidth = beat.period;
+                                step = { x: beat.period * scaleH, y: objH };
+                            }
+                        }
+                    }
+                    tileImageAcross(sprite, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objW, objH, step, vertical);
                 } else {
                     // Default draw (includes multi-row sprites where direction is handled via srcY)
                     ctx.drawImage(

@@ -3366,7 +3366,7 @@ function fillLadderForm(t) {
     document.getElementById('ladder-template-climbspeed').value = t.climbSpeed || 2;
     document.getElementById('ladder-template-jumpoff').checked = t.jumpOff !== false;
     document.getElementById('ladder-template-texturefit').value = t.textureFit || 'stretch';
-    document.getElementById('ladder-template-repeattiles').value = Math.max(1, parseInt(t.repeatTiles) || 1);
+    document.getElementById('ladder-template-repeattiles').value = Math.max(0, parseInt(t.repeatTiles) || 0);
     toggleRepeatTiles('ladder');
     document.getElementById('ladder-template-color').value = t.color || '#c8913c';
     document.getElementById('ladder-template-sound').value = t.grabSound || '';
@@ -3415,7 +3415,7 @@ function saveLadderTemplate() {
         jumpOff: document.getElementById('ladder-template-jumpoff').checked,
         tileKey: document.getElementById('ladder-template-tile').value || '',
         textureFit: document.getElementById('ladder-template-texturefit').value || 'stretch',
-        repeatTiles: Math.max(1, parseInt(document.getElementById('ladder-template-repeattiles').value) || 1),
+        repeatTiles: Math.max(0, parseInt(document.getElementById('ladder-template-repeattiles').value) || 0),
         color: document.getElementById('ladder-template-color').value || '#c8913c',
         grabSound: document.getElementById('ladder-template-sound').value.trim(),
         climbSound: document.getElementById('ladder-template-climb-sound').value.trim()
@@ -3523,7 +3523,7 @@ function fillConveyorForm(t) {
     document.getElementById('conveyor-template-collision').value = t.collisionMode || 'solid';
     document.getElementById('conveyor-template-affects-enemies').checked = !!t.affectsEnemies;
     document.getElementById('conveyor-template-texturefit').value = t.textureFit || 'stretch';
-    document.getElementById('conveyor-template-repeattiles').value = Math.max(1, parseInt(t.repeatTiles) || 1);
+    document.getElementById('conveyor-template-repeattiles').value = Math.max(0, parseInt(t.repeatTiles) || 0);
     toggleRepeatTiles('conveyor');
     document.getElementById('conveyor-template-color').value = t.color || '#5a6672';
     document.getElementById('conveyor-template-sound').value = t.moveSound || '';
@@ -3582,7 +3582,7 @@ function saveConveyorTemplate() {
         affectsEnemies: document.getElementById('conveyor-template-affects-enemies').checked,
         tileKey: document.getElementById('conveyor-template-tile').value || '',
         textureFit: document.getElementById('conveyor-template-texturefit').value || 'stretch',
-        repeatTiles: Math.max(1, parseInt(document.getElementById('conveyor-template-repeattiles').value) || 1),
+        repeatTiles: Math.max(0, parseInt(document.getElementById('conveyor-template-repeattiles').value) || 0),
         color: document.getElementById('conveyor-template-color').value || '#5a6672',
         moveSound: document.getElementById('conveyor-template-sound').value.trim()
     };

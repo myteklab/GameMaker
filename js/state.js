@@ -568,7 +568,7 @@ let ladderTemplates = [
         climbSpeed: 2,         // pixels per frame up or down
         jumpOff: true,         // jump detaches from the ladder
         textureFit: 'stretch', // 'stretch' or 'repeat' down the ladder
-        repeatTiles: 1,        // tiles per copy when repeating
+        repeatTiles: 0,        // tiles per copy when repeating, 0 = match the art's own pattern
         tileKey: '',
         color: '#c8913c',
         grabSound: '',
@@ -592,7 +592,7 @@ let conveyorTemplates = [
         collisionMode: 'solid', // 'solid' or 'oneway', platformer only
         affectsEnemies: false,
         textureFit: 'stretch',  // 'stretch' or 'repeat' along the belt
-        repeatTiles: 1,
+        repeatTiles: 0,         // 0 = match the art's own pattern
         tileKey: '',
         color: '#5a6672',
         moveSound: ''

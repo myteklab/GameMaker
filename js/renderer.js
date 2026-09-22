@@ -324,6 +324,7 @@ function drawMenuButton(button, index) {
 // Cache for loaded object sprites
 const objectSpriteCache = {};
 const spriteTrimCache = {};
+const spritePeriodCache = {};
 
 function drawGameObjects() {
     const scaledTileSize = tileSize * zoom;
@@ -366,6 +367,62 @@ function drawGameObjects() {
 
     const trimsPadding = (type) => type === 'ladder' || type === 'conveyor' || type === 'crate';
 
+    // Mirrors the engine's spritePeriod: find the beat a repeating picture is
+    // drawn on, so a ladder tiles one beat rather than the whole picture.
+    const spritePeriod = (img, url, vertical, box) => {
+        const key = url + (vertical ? '|v' : '|h');
+        if (spritePeriodCache[key] !== undefined) return spritePeriodCache[key];
+        let result = null;
+        try {
+            const cv = document.createElement('canvas');
+            cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+            const g = cv.getContext('2d');
+            g.drawImage(img, 0, 0);
+            const d = g.getImageData(0, 0, cv.width, cv.height).data;
+            const along = vertical ? box.h : box.w;
+            const across = vertical ? box.w : box.h;
+            const lineDiff = (i1, i2) => {
+                let total = 0;
+                for (let j2 = 0; j2 < across; j2++) {
+                    const x1 = vertical ? box.x + j2 : box.x + i1;
+                    const y1 = vertical ? box.y + i1 : box.y + j2;
+                    const x2 = vertical ? box.x + j2 : box.x + i2;
+                    const y2 = vertical ? box.y + i2 : box.y + j2;
+                    const a = (y1 * cv.width + x1) * 4, b = (y2 * cv.width + x2) * 4;
+                    total += Math.abs(d[a]-d[b]) + Math.abs(d[a+1]-d[b+1]) + Math.abs(d[a+2]-d[b+2]) + Math.abs(d[a+3]-d[b+3]);
+                }
+                return total / (across * 4);
+            };
+            const scored = [];
+            for (let period = 2; period <= Math.floor(along / 2); period++) {
+                let total = 0, n = 0;
+                for (let i = 0; i + period < along; i++) { total += lineDiff(i, i + period); n++; }
+                if (n) scored.push({ period, avg: total / n });
+            }
+            scored.sort((a, b) => a.avg - b.avg);
+            const TOLERANCE = 4;
+            const candidates = scored.slice(0, 6).filter(c => c.avg < 40).sort((a, b) => a.period - b.period);
+            for (let ci = 0; ci < candidates.length && !result; ci++) {
+                const p = candidates[ci].period;
+                let bestStart = -1, bestScore = Infinity;
+                for (let start = 0; start + 2 * p <= along; start++) {
+                    let worst = 0;
+                    for (let k = 0; k < p && worst <= TOLERANCE; k++) worst = Math.max(worst, lineDiff(start + k, start + k + p));
+                    if (worst < bestScore) { bestScore = worst; bestStart = start; }
+                    if (bestScore === 0) break;
+                }
+                if (bestStart >= 0 && bestScore <= TOLERANCE) result = { period: p, start: bestStart };
+            }
+        } catch (e) {
+            result = null;
+        }
+        spritePeriodCache[key] = result;
+        return result;
+    };
+
+    // Repeat one source frame across a destination box, a tile at a time, cropping
+    // the last row and column instead of squashing them. Mirrors the game's
+    // tileImageAcross so a crate looks the same in both.
     // Mirrors the engine's textureStep: a ladder repeats down its length, a belt
     // along its length, a crate both ways, measured in tiles.
     const textureStep = (obj, template, dw, dh, cell) => {
@@ -377,22 +434,20 @@ function drawGameObjects() {
 
     const repeatsTexture = (obj, template) => trimsPadding(obj.type) && template?.textureFit === 'repeat';
 
-    // Repeat one source frame across a destination box, a tile at a time, cropping
-    // the last row and column instead of squashing them. Mirrors the game's
-    // tileImageAcross so a crate looks the same in both.
-    const tileImageAcross = (img, srcX, srcY, srcW, srcH, dx, dy, dw, dh, step) => {
-        const stepX = step.x;
-        const stepY = step.y;
-        if (stepX <= 0 || stepY <= 0) return;
-        for (let y = 0; y < dh; y += stepY) {
-            for (let x = 0; x < dw; x += stepX) {
-                const cellW = Math.min(stepX, dw - x);
-                const cellH = Math.min(stepY, dh - y);
-                ctx.drawImage(img,
-                    srcX, srcY, srcW * (cellW / stepX), srcH * (cellH / stepY),
-                    dx + x, dy + y, cellW, cellH);
+    const tileImageAcross = (img, srcX, srcY, srcW, srcH, dx, dy, dw, dh, step, alignEnd) => {
+        const stepX = step.x, stepY = step.y;
+        if (stepX <= 0 || stepY <= 0 || dw <= 0 || dh <= 0) return;
+        const startY = alignEnd ? dy + dh - Math.ceil(dh / stepY) * stepY : dy;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(dx, dy, dw, dh);
+        ctx.clip();
+        for (let y = startY; y < dy + dh - 0.01; y += stepY) {
+            for (let x = dx; x < dx + dw - 0.01; x += stepX) {
+                ctx.drawImage(img, srcX, srcY, srcW, srcH, x, y, stepX, stepY);
             }
         }
+        ctx.restore();
     };
 
     for (let i = 0; i < gameObjects.length; i++) {
@@ -663,7 +718,26 @@ function drawGameObjects() {
                 ctx.imageSmoothingEnabled = false;
                 const cell = tileSize * zoom;
                 if (repeatsTexture(obj, template)) {
-                    tileImageAcross(cached.img, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objWidth, objHeight, textureStep(obj, template, objWidth, objHeight, cell));
+                    const vertical = (obj.type === 'ladder');
+                    let step = textureStep(obj, template, objWidth, objHeight, cell);
+                    const tiles = parseInt(template?.repeatTiles) || 0;
+                    if (tiles <= 0 && obj.type !== 'crate') {
+                        const beat = spritePeriod(cached.img, spriteUrl, vertical, { x: srcX, y: srcY, w: frameWidth, h: frameHeight });
+                        if (beat) {
+                            if (vertical) {
+                                const scaleV = objWidth / frameWidth;
+                                srcY += beat.start;
+                                frameHeight = beat.period;
+                                step = { x: objWidth, y: beat.period * scaleV };
+                            } else {
+                                const scaleH = objHeight / frameHeight;
+                                srcX += beat.start;
+                                frameWidth = beat.period;
+                                step = { x: beat.period * scaleH, y: objHeight };
+                            }
+                        }
+                    }
+                    tileImageAcross(cached.img, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objWidth, objHeight, step, vertical);
                 } else {
                     ctx.drawImage(
                         cached.img,
