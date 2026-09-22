@@ -682,6 +682,8 @@ function drawLevelContent(ctx, lvl, width, height, scale, offsetX, offsetY) {
         if (obj.type === 'enemy') color = '#ff4444';
         else if (obj.type === 'goal') color = '#00ff88';
         else if (obj.type === 'spring') color = '#ff88ff';
+        else if (obj.type === 'ladder') color = '#c8913c';
+        else if (obj.type === 'conveyor') color = '#8fa0b0';
         else if (obj.type === 'checkpoint') color = '#4488ff';
         else if (obj.type === 'hazard') color = '#ff8800';
 

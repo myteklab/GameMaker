@@ -496,6 +496,8 @@ const helpContent = {
                 <li><strong>Goal</strong> - Level completion point</li>
                 <li><strong>Hazard</strong> - Instant damage zone</li>
                 <li><strong>Spring</strong> - Bounces player upward</li>
+                <li><strong>Ladder</strong> - Climb up and down instead of jumping</li>
+                <li><strong>Conveyor</strong> - A belt that carries whatever stands on it</li>
                 <li><strong>Checkpoint</strong> - Respawn point when player dies</li>
             </ul>
 
@@ -776,6 +778,59 @@ const helpContent = {
             <p>Introduce each kind somewhere safe before using it over a pit.</p>
 
             <div class="help-tip"><p>Start a shooting enemy slow: one projectile every 2 seconds, speed 3 or 4. Fast projectiles are hard to read, and a player who cannot see what hit them just feels cheated.</p></div>
+        `
+    },
+    ladders: {
+        title: 'Ladders',
+        content: `
+            <h4>Climbing</h4>
+            <p>A ladder is the way up that is not a jump. Walk into one and hold <strong>Up</strong> or <strong>Down</strong> to climb. Gravity stops while you are holding on, so letting go of the keys leaves you hanging there.</p>
+
+            <h4>Getting On and Off</h4>
+            <ul>
+                <li>You have to be lined up with the ladder, not just brushing the edge of it</li>
+                <li>The grab reaches a few pixels past each end, so you can catch a ladder from the floor at its foot or from the ledge at its head</li>
+                <li>Walk sideways off the ladder and you let go</li>
+                <li>Climbing up stops with your feet level with the top rung, so the top acts like a floor instead of firing you past it</li>
+                <li>Hold Down at the bottom end and you drop off</li>
+            </ul>
+
+            <h4>Settings</h4>
+            <ul>
+                <li><strong>Climb Speed</strong> - Pixels per frame. Walking is about 4, so 2 feels like a careful climb</li>
+                <li><strong>Jump lets go of the ladder</strong> - On by default. Turn it off and the only way off is to climb or step away, which makes a long ladder feel like a commitment</li>
+                <li><strong>Height</strong> - The type's height. Drag the corner handle on a placed ladder to resize that one on its own, which is usually what you want</li>
+                <li><strong>Tile</strong> - A tileset tile repeats down the ladder rather than stretching</li>
+            </ul>
+
+            <h4>Level Design</h4>
+            <p>A ladder changes the shape of a level: it lets you build upward without needing a jump the player might not make. Put one as a shortcut back up after a fall and a hard section stops being a punishment.</p>
+
+            <div class="help-tip"><p>Ladders are platformer-only. In Top-Down RPG mode there is no gravity to climb against, so they do nothing.</p></div>
+        `
+    },
+    conveyors: {
+        title: 'Conveyors',
+        content: `
+            <h4>Belts</h4>
+            <p>A conveyor is a surface that moves you while you stand on it. Stand still and it carries you. Walk against it and you crawl. Walk with it and you fly.</p>
+
+            <h4>Settings</h4>
+            <ul>
+                <li><strong>Direction</strong> - Left or Right in a platformer. Up and Down work in Top-Down RPG mode, where a belt is a current; in a platformer they would fight gravity, so the editor warns you and the belt pushes nothing</li>
+                <li><strong>Belt Speed</strong> - Pixels per frame. The player walks at about 4, so 2 is a noticeable shove and 5 is faster than running</li>
+                <li><strong>Collision</strong> - Solid blocks from every side. One-way lets the player jump up through it and land on top</li>
+                <li><strong>Carries enemies too</strong> - Off by default. Turn it on and enemies ride the belt as well, which is how you build a factory that feeds enemies at you</li>
+                <li><strong>Width</strong> - Drag the corner handle on a placed belt to make that one longer</li>
+            </ul>
+
+            <h4>Reading the Belt</h4>
+            <p>Arrows slide along the belt in the direction it runs, so a player can tell which way it goes before stepping on. If you give the belt a sprite or a tile, that replaces the arrows, so make sure your artwork shows the direction.</p>
+
+            <h4>Level Design</h4>
+            <p>A belt running toward a pit turns standing still into a mistake. A belt running away from one makes a jump harder than it looks. Two belts pointing at each other make a spot the player has to fight to stay in.</p>
+
+            <div class="help-tip"><p>A belt set to speed 0 is just a platform. Use that to test a shape before you decide which way it should run.</p></div>
         `
     },
     objectTemplates: {

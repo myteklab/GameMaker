@@ -205,6 +205,18 @@
 </symbol>
 
 <!-- platform: horizontal lines with arrows -->
+<symbol id="icon-ladder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="7" y1="2" x2="7" y2="22"/>
+  <line x1="17" y1="2" x2="17" y2="22"/>
+  <line x1="7" y1="7" x2="17" y2="7"/>
+  <line x1="7" y1="12" x2="17" y2="12"/>
+  <line x1="7" y1="17" x2="17" y2="17"/>
+</symbol>
+<symbol id="icon-conveyor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="2" y="9" width="20" height="6" rx="3"/>
+  <polyline points="9 10.5 12 12 9 13.5"/>
+  <polyline points="14 10.5 17 12 14 13.5"/>
+</symbol>
 <symbol id="icon-platform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
   <line x1="3" y1="10" x2="21" y2="10"/>
   <line x1="3" y1="14" x2="21" y2="14"/>
@@ -1123,6 +1135,18 @@
                         <span class="obj-icon"><svg class="gm-icon"><use href="#icon-platform"/></svg></span>
                     </div>
                     <span class="obj-label">Platforms</span>
+                </div>
+                <div class="object-category platformer-only" onclick="showObjectPlacementModal('ladder')">
+                    <div class="object-btn" id="btn-ladder" style="background: #c8913c;">
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-ladder"/></svg></span>
+                    </div>
+                    <span class="obj-label">Ladders</span>
+                </div>
+                <div class="object-category" onclick="showObjectPlacementModal('conveyor')">
+                    <div class="object-btn" id="btn-conveyor" style="background: #5a6672;">
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-conveyor"/></svg></span>
+                    </div>
+                    <span class="obj-label">Conveyors</span>
                 </div>
                 <div class="object-category platformer-only" onclick="showObjectPlacementModal('mysteryBlock')">
                     <div class="object-btn" id="btn-mysteryBlock" style="background: #f1c40f;">
@@ -2541,6 +2565,222 @@
         <div class="modal-buttons">
             <button class="btn" onclick="saveSpringTemplate()">Save</button>
             <button class="btn" onclick="closeSpringTemplateEditor()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Ladder Templates Modal -->
+<div class="modal-overlay template-modal" id="ladder-templates-modal" onclick="if(event.target === this) closeLadderTemplatesModal()">
+    <div class="modal">
+        <h2>Ladder Types</h2>
+        <p style="color: var(--text-3); font-size: 12px; margin-bottom: 10px;">Hold up or down inside a ladder to climb it</p>
+        <div class="template-list" id="ladder-templates-list">
+            <!-- Populated by JavaScript -->
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" style="background: var(--danger);" onclick="showAddLadderTemplate()">+ Add Ladder</button>
+            <button class="btn" onclick="closeLadderTemplatesModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Ladder Template Editor -->
+<div class="template-editor" id="ladder-template-editor">
+    <div class="template-editor-content">
+        <h3 id="ladder-template-title">Add Ladder Type <span class="help-icon" onclick="showHelp('ladders')">?</span></h3>
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="ladder-template-name" placeholder="e.g., Rope Ladder">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Sprite URL (optional)</label>
+                <div class="input-with-browse">
+                    <input type="text" id="ladder-template-sprite" placeholder="https://...">
+                    <button type="button" class="browse-library-btn" onclick="openAssetPicker('ladder-template-sprite')">Browse</button>
+                </div>
+            </div>
+            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                <label>Cols</label>
+                <input type="number" id="ladder-template-cols" value="1" min="1" max="32" title="Frames per row">
+            </div>
+            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                <label>Rows</label>
+                <input type="number" id="ladder-template-rows" value="1" min="1" max="16" title="Number of rows">
+            </div>
+            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                <label>Speed</label>
+                <input type="number" id="ladder-template-animspeed" value="8" min="1" max="30" title="Animation speed: 1 = fastest, 30 = slowest">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Tile (from tileset)</label>
+            <select id="ladder-template-tile" onchange="updateObjectTilePreview('ladder-template-tile', 'ladder-template-tile-preview')">
+                <option value="">-- None (use sprite/color) --</option>
+            </select>
+            <div id="ladder-template-tile-preview" style="margin-top:4px;height:24px;display:flex;align-items:center;gap:5px;">
+                <span style="color:var(--text-3);font-size:10px;">Select a tile to preview</span>
+            </div>
+            <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">The tile repeats down the ladder, one per rung height.</span>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Width (px)</label>
+                <input type="number" id="ladder-template-width" value="32" min="8" max="128">
+            </div>
+            <div class="form-group">
+                <label>Height (px)</label>
+                <input type="number" id="ladder-template-height" value="96" min="16" max="1024">
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Drag the corner of a placed ladder to resize just that one.</span>
+            </div>
+            <div class="form-group">
+                <label>Climb Speed</label>
+                <input type="number" id="ladder-template-climbspeed" value="2" min="0.5" max="10" step="0.5">
+            </div>
+        </div>
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="ladder-template-jumpoff" checked style="width: auto;">
+                <span>Jump lets go of the ladder</span>
+            </label>
+        </div>
+        <div class="form-group" style="max-width: 160px;">
+            <label>Fallback Color</label>
+            <input type="color" id="ladder-template-color" value="#c8913c">
+        </div>
+        <div class="form-group">
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Grab Sound</label>
+            <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <input type="text" id="ladder-template-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('ladder-template-sound')">
+                <button type="button" class="browse-library-btn" onclick="openAssetPicker('ladder-template-sound', 'sounds')">Browse</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('ladder-template-sound', 'Ladder Grab Sound')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('ladder-template-sound')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('ladder-template-sound')" style="background: var(--success); display: none;">&#9654;</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('ladder-template-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" onclick="saveLadderTemplate()">Save</button>
+            <button class="btn" onclick="closeLadderTemplateEditor()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Conveyor Templates Modal -->
+<div class="modal-overlay template-modal" id="conveyor-templates-modal" onclick="if(event.target === this) closeConveyorTemplatesModal()">
+    <div class="modal">
+        <h2>Conveyor Types</h2>
+        <p style="color: var(--text-3); font-size: 12px; margin-bottom: 10px;">Belts that carry whatever stands on them</p>
+        <div class="template-list" id="conveyor-templates-list">
+            <!-- Populated by JavaScript -->
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" style="background: var(--danger);" onclick="showAddConveyorTemplate()">+ Add Conveyor</button>
+            <button class="btn" onclick="closeConveyorTemplatesModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Conveyor Template Editor -->
+<div class="template-editor" id="conveyor-template-editor">
+    <div class="template-editor-content">
+        <h3 id="conveyor-template-title">Add Conveyor Type <span class="help-icon" onclick="showHelp('conveyors')">?</span></h3>
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="conveyor-template-name" placeholder="e.g., Factory Belt">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Sprite URL (optional)</label>
+                <div class="input-with-browse">
+                    <input type="text" id="conveyor-template-sprite" placeholder="https://...">
+                    <button type="button" class="browse-library-btn" onclick="openAssetPicker('conveyor-template-sprite')">Browse</button>
+                </div>
+            </div>
+            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                <label>Cols</label>
+                <input type="number" id="conveyor-template-cols" value="1" min="1" max="32" title="Frames per row">
+            </div>
+            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                <label>Rows</label>
+                <input type="number" id="conveyor-template-rows" value="1" min="1" max="16" title="Number of rows">
+            </div>
+            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                <label>Speed</label>
+                <input type="number" id="conveyor-template-animspeed" value="8" min="1" max="30" title="Animation speed: 1 = fastest, 30 = slowest">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Tile (from tileset)</label>
+            <select id="conveyor-template-tile" onchange="updateObjectTilePreview('conveyor-template-tile', 'conveyor-template-tile-preview')">
+                <option value="">-- None (use sprite/color) --</option>
+            </select>
+            <div id="conveyor-template-tile-preview" style="margin-top:4px;height:24px;display:flex;align-items:center;gap:5px;">
+                <span style="color:var(--text-3);font-size:10px;">Select a tile to preview</span>
+            </div>
+            <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">The tile repeats along the belt.</span>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Width (px)</label>
+                <input type="number" id="conveyor-template-width" value="96" min="16" max="1024">
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Drag the corner of a placed belt to resize just that one.</span>
+            </div>
+            <div class="form-group">
+                <label>Height (px)</label>
+                <input type="number" id="conveyor-template-height" value="16" min="8" max="128">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Direction</label>
+                <select id="conveyor-template-direction" onchange="updateConveyorDirectionHint()">
+                    <option value="right">Right</option>
+                    <option value="left">Left</option>
+                    <option value="up">Up</option>
+                    <option value="down">Down</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Belt Speed</label>
+                <input type="number" id="conveyor-template-beltspeed" value="2" min="0" max="12" step="0.5">
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Player walk speed is about 4.</span>
+            </div>
+            <div class="form-group platformer-only">
+                <label>Collision</label>
+                <select id="conveyor-template-collision">
+                    <option value="solid">Solid (all sides)</option>
+                    <option value="oneway">One-way (land from above)</option>
+                </select>
+            </div>
+        </div>
+        <div id="conveyor-direction-hint" style="display:none;font-size:10px;color:var(--warning, #f1c40f);margin-bottom:8px;">
+            Up and down belts only carry in Top-Down RPG mode. In a platformer they would fight gravity, so this belt will not push.
+        </div>
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="conveyor-template-affects-enemies" style="width: auto;">
+                <span>Carries enemies too</span>
+            </label>
+        </div>
+        <div class="form-group" style="max-width: 160px;">
+            <label>Fallback Color</label>
+            <input type="color" id="conveyor-template-color" value="#5a6672">
+        </div>
+        <div class="form-group">
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Step-On Sound</label>
+            <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <input type="text" id="conveyor-template-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('conveyor-template-sound')">
+                <button type="button" class="browse-library-btn" onclick="openAssetPicker('conveyor-template-sound', 'sounds')">Browse</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('conveyor-template-sound', 'Conveyor Sound')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('conveyor-template-sound')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('conveyor-template-sound')" style="background: var(--success); display: none;">&#9654;</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('conveyor-template-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" onclick="saveConveyorTemplate()">Save</button>
+            <button class="btn" onclick="closeConveyorTemplateEditor()">Cancel</button>
         </div>
     </div>
 </div>

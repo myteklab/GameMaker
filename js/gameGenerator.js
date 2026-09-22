@@ -41,6 +41,8 @@ function collectSfxIds() {
         { arr: typeof doorTemplates !== 'undefined' ? doorTemplates : [], props: ['interactSound'] },
         { arr: typeof mysteryBlockTemplates !== 'undefined' ? mysteryBlockTemplates : [], props: ['hitSound', 'emptyHitSound'] },
         { arr: typeof movingPlatformTemplates !== 'undefined' ? movingPlatformTemplates : [], props: ['moveSound', 'collapseSound'] },
+        { arr: typeof ladderTemplates !== 'undefined' ? ladderTemplates : [], props: ['grabSound'] },
+        { arr: typeof conveyorTemplates !== 'undefined' ? conveyorTemplates : [], props: ['moveSound'] },
         { arr: typeof terrainZoneTemplates !== 'undefined' ? terrainZoneTemplates : [], props: ['entrySound', 'loopSound'] }
     ];
 
@@ -2253,7 +2255,9 @@ ${includeComments ? `    // ═════════════════�
         // Platform riding - keeps player attached to fast-moving platforms
         ridingPlatformIndex: -1,  // Index of platform player is standing on (-1 = none)
         previousRidingPlatformIndex: -1, // Previous frame's platform index (for edge tolerance)
-        platformGraceFrames: 0    // Extra coyote frames after leaving a moving platform
+        platformGraceFrames: 0,   // Extra coyote frames after leaving a moving platform
+        climbing: false,          // Holding onto a ladder (gravity is off while it lasts)
+        jumpedThisFrame: false
     };
 
     // Helper to apply squash & stretch intensity
@@ -3870,6 +3874,8 @@ ${includeComments ? `    // ═════════════════�
     var powerupTemplates = ${JSON.stringify(powerupTemplates)};
     var springTemplates = ${JSON.stringify(springTemplates)};
     var movingPlatformTemplates = ${JSON.stringify(movingPlatformTemplates)};
+    var ladderTemplates = ${JSON.stringify(ladderTemplates)};
+    var conveyorTemplates = ${JSON.stringify(conveyorTemplates)};
 
     // Background layers can drift on their own (pixels per second, clouds that
     // keep moving while the player stands still) and choose how repeated copies
@@ -4056,7 +4062,7 @@ ${includeComments ? `    // ═════════════════�
         // Every template type whose editor offers a sprite belongs here. Springs
         // and moving platforms were missing, so their sprites never loaded and
         // the game drew the fallback color instead.
-        var allTemplates = [].concat(enemyTemplates, collectibleTemplates, hazardTemplates, powerupTemplates, npcTemplates, doorTemplates, springTemplates, movingPlatformTemplates);
+        var allTemplates = [].concat(enemyTemplates, collectibleTemplates, hazardTemplates, powerupTemplates, npcTemplates, doorTemplates, springTemplates, movingPlatformTemplates, ladderTemplates, conveyorTemplates);
         for (var i = 0; i < allTemplates.length; i++) {
             var tmpl = allTemplates[i];
             if (tmpl.sprite && !loadedSprites[tmpl.sprite]) {
@@ -5050,6 +5056,8 @@ ${includeComments ? `    // ═════════════════�
             else if (obj.type === 'powerup') templates = powerupTemplates;
             else if (obj.type === 'spring') templates = springTemplates;
             else if (obj.type === 'movingPlatform') templates = movingPlatformTemplates;
+            else if (obj.type === 'ladder') templates = ladderTemplates;
+            else if (obj.type === 'conveyor') templates = conveyorTemplates;
             else if (obj.type === 'npc') templates = npcTemplates;
             else if (obj.type === 'door') templates = doorTemplates;
             else if (obj.type === 'mysteryBlock') templates = mysteryBlockTemplates;
@@ -5189,6 +5197,29 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.activated = false;
                     gameObj.activatedColor = template.activatedColor || '#2ecc71';
                     gameObj.activateSound = template.activateSound || '';
+                }
+
+                // Ladder-specific
+                if (obj.type === 'ladder') {
+                    gameObj.climbSpeed = Math.max(0.5, parseFloat(template.climbSpeed) || 2);
+                    gameObj.jumpOff = template.jumpOff !== false;
+                    gameObj.tileKey = template.tileKey || '';
+                    gameObj.grabSound = template.grabSound || '';
+                }
+
+                // Conveyor-specific
+                if (obj.type === 'conveyor') {
+                    gameObj.beltSpeed = Math.max(0, parseFloat(template.beltSpeed) || 2);
+                    gameObj.direction = template.direction || 'right';
+                    gameObj.collisionMode = template.collisionMode || 'solid';
+                    gameObj.affectsEnemies = !!template.affectsEnemies;
+                    gameObj.tileKey = template.tileKey || '';
+                    gameObj.moveSound = template.moveSound || '';
+                    // The platform collision path reads these; a belt never moves itself.
+                    gameObj.activation = 'always';
+                    gameObj.activated = true;
+                    gameObj.deltaX = 0;
+                    gameObj.deltaY = 0;
                 }
 
                 // Moving Platform-specific
@@ -5720,6 +5751,7 @@ ${includeComments ? `    // ═════════════════�
         player.speedY = 0;
         player.canDoubleJump = false;
         player.jumpKeyHeld = false;
+        player.climbing = false;
     }
 
     function restartGame() {
@@ -6105,9 +6137,11 @@ ${includeComments ? `    // ═════════════════�
         player.previousRidingPlatformIndex = player.ridingPlatformIndex; // Save for tolerance check (used in updateGameObjects)
         if (!IS_TOPDOWN && player.ridingPlatformIndex >= 0) {
             var ridingPlatform = activeObjects[player.ridingPlatformIndex];
-            if (ridingPlatform && ridingPlatform.type === 'movingPlatform' && ridingPlatform.active !== false) {
+            var ridingType = ridingPlatform && ridingPlatform.type;
+            if (ridingPlatform && (ridingType === 'movingPlatform' || ridingType === 'conveyor') && ridingPlatform.active !== false) {
                 // Update the platform first to get its current delta
-                updateMovingPlatform(ridingPlatform);
+                if (ridingType === 'conveyor') setConveyorDelta(ridingPlatform);
+                else updateMovingPlatform(ridingPlatform);
                 ridingPlatform.updatedThisFrame = true; // Prevent double-update in collision loop
                 // Apply platform movement to player
                 player.x += ridingPlatform.deltaX;
@@ -6202,8 +6236,10 @@ ${includeComments ? `        // ────────────────
 ` : ''}        // Animate when moving (check both X and Y in top-down mode)
         var isMoving = IS_TOPDOWN
             ? (Math.abs(player.speedX) > 0.5 || Math.abs(player.speedY) > 0.5)
-            : (Math.abs(player.speedX) > 0.5);
-        var airborne = !IS_TOPDOWN && (!player.onGround || JUMP_MODE === 'fly');
+            : (Math.abs(player.speedX) > 0.5 || (player.climbing && Math.abs(player.speedY) > 0.5));
+        // On a ladder the player is off the ground but not falling, so the fall
+        // clip would be wrong for the whole climb.
+        var airborne = !IS_TOPDOWN && !player.climbing && (!player.onGround || JUMP_MODE === 'fly');
         var hurtNow = !!(player.hurtStart && (Date.now() - player.hurtStart) < hurtClipMs());
         var clipName = playerClipName(isMoving, airborne, player.speedY < 0, hurtNow, player.facingDirection);
         var usingRoster = !!(myCustomSpriteLoaded && myCustomSpriteImage);
@@ -6221,9 +6257,27 @@ ${includeComments ? `            // ──────────────�
             // We set a negative speedY because Y increases downward in canvas.
             // Jump modes: 'normal' (standard), 'double' (air jump), 'fly' (flappy bird)
             // ───────────────────────────────────────────────────────────────────────
-` : ''}            // Update coyote time: give player configurable frames to jump after leaving ground
+` : ''}            // LADDERS. Hold up or down inside one to grab it; the grab box reaches a
+            // few pixels past the ends so you can also catch it from the ground at
+            // the bottom or the ledge at the top.
+            var ladder = ladderAtPlayer();
+            var climbUpKey = (keys['ArrowUp'] || keys['KeyW']);
+            var climbDownKey = (keys['ArrowDown'] || keys['KeyS']);
+            if (!ladder) {
+                player.climbing = false;
+            } else if (!player.climbing && (climbUpKey || climbDownKey)) {
+                player.climbing = true;
+                if (ladder.grabSound) playSound(ladder.grabSound);
+            }
+            player.jumpedThisFrame = false;
+
+            // Update coyote time: give player configurable frames to jump after leaving ground
             // Also count platform riding as grounded (for fast-moving platform support)
             var onPlatform = wasRidingPlatform || player.platformGraceFrames > 0;
+            // Letting go of a ladder by jumping runs the ordinary jump, sound and all.
+            if (player.climbing && ladder && ladder.jumpOff) {
+                coyoteTime = Math.max(coyoteTime, 2);
+            }
             if (player.onGround || onPlatform) {
                 coyoteTime = COYOTE_TIME_FRAMES;
                 player.canDoubleJump = (JUMP_MODE === 'double'); // Reset double jump when grounded
@@ -6242,6 +6296,7 @@ ${includeComments ? `            // ──────────────�
                 if (jumpKeyPressed && !player.jumpKeyHeld && (now - player.lastFlapTime > flapCooldown)) {
                     // Flap! Give upward boost, cap upward speed
                     player.speedY = Math.max(player.speedY - FLY_FLAP_POWER, -FLY_FLAP_POWER * 1.5);
+                    player.jumpedThisFrame = true;
                     player.lastFlapTime = now;
                     playSound('jump');
                     vibrate(20); // Light haptic feedback on flap
@@ -6263,6 +6318,7 @@ ${includeComments ? `            // ──────────────�
                         // Normal ground/coyote jump
                         player.speedY = -effectiveJumpPower;
                         player.onGround = false;
+                        player.jumpedThisFrame = true;
                         coyoteTime = 0; // Use up coyote time
                         player.ridingPlatformIndex = -1; // Detach from platform
                         player.platformGraceFrames = 0; // Use up platform grace
@@ -6277,6 +6333,7 @@ ${includeComments ? `            // ──────────────�
                     } else if (player.canDoubleJump && JUMP_MODE === 'double') {
                         // Double jump (slightly weaker, 85% power)
                         player.speedY = -effectiveJumpPower * 0.85;
+                        player.jumpedThisFrame = true;
                         player.canDoubleJump = false;
                         player.ridingPlatformIndex = -1; // Detach from platform
                         player.platformGraceFrames = 0; // Use up platform grace
@@ -6298,10 +6355,18 @@ ${includeComments ? `            // ──────────────�
             // Every frame, we add GRAVITY to speedY (accelerating downward).
             // We cap the speed at 12 to prevent falling too fast (terminal velocity).
             // ───────────────────────────────────────────────────────────────────────
-` : ''}            // Apply terrain zone gravity multiplier and cheat modifiers
-            var terrainGravityMult = getTerrainGravityMultiplier();
-            player.speedY += getEffectiveGravity() * terrainGravityMult;
-            if (player.speedY > 12) player.speedY = 12;
+` : ''}            if (player.jumpedThisFrame) {
+                player.climbing = false;
+            }
+
+            if (player.climbing && ladder) {
+                climbLadder(ladder, climbUpKey, climbDownKey);
+            } else {
+                // Apply terrain zone gravity multiplier and cheat modifiers
+                var terrainGravityMult = getTerrainGravityMultiplier();
+                player.speedY += getEffectiveGravity() * terrainGravityMult;
+                if (player.speedY > 12) player.speedY = 12;
+            }
         } // End platformer-only jump/gravity
 
 ${includeComments ? `        // ───────────────────────────────────────────────────────────────────────
@@ -6442,6 +6507,7 @@ ${includeComments ? `        // ────────────────
 
         // Update NPC/Door interaction system (Top-Down RPG)
         if (IS_TOPDOWN) {
+            applyTopDownConveyors();
             updateInteractionPrompt();
             updateDialogue();
         }
@@ -6780,8 +6846,11 @@ ${includeComments ? `        // ────────────────
                 updateNPC(obj);
             }
 
-            // Update moving platform position and handle collision
-            if (obj.type === 'movingPlatform' && !IS_TOPDOWN) {
+            // Update moving platform position and handle collision. A conveyor
+            // runs the same collision, it just never moves itself: the belt
+            // speed goes straight into deltaX and the riding code carries the
+            // player with it.
+            if ((obj.type === 'movingPlatform' || obj.type === 'conveyor') && !IS_TOPDOWN) {
                 // Fixed frame time for 60fps (in milliseconds)
                 var frameTimeMs = 1000 / 60;
 
@@ -6805,7 +6874,8 @@ ${includeComments ? `        // ────────────────
 
                 // Only update if not already updated via riding logic
                 if (!obj.updatedThisFrame) {
-                    updateMovingPlatform(obj);
+                    if (obj.type === 'conveyor') setConveyorDelta(obj);
+                    else updateMovingPlatform(obj);
                 }
                 obj.updatedThisFrame = false; // Reset for next frame
 
@@ -6947,6 +7017,13 @@ ${includeComments ? `        // ────────────────
                             }
                         }
                     }
+                }
+
+                if (obj.type === 'conveyor') {
+                    if (playerStandingOnPlatform && !wasRidingThisPlatform && obj.moveSound) {
+                        playSound(obj.moveSound);
+                    }
+                    if (obj.affectsEnemies) carryEnemiesOnConveyor(obj);
                 }
 
                 // Handle collapsing platform logic
@@ -8330,6 +8407,159 @@ ${includeComments ? `        // ────────────────
         } else {
             obj.x = obj.startX + r - r * Math.cos(obj.angle);
             obj.y = obj.startY - r * Math.sin(obj.angle);
+        }
+    }
+
+    // The belt body plus arrows that slide along it. The arrows are the only
+    // thing that tells a player which way a plain-colored belt runs, so they
+    // move even when the game is paused on a still frame.
+    function drawConveyorBelt(obj, x, y, w, h, color) {
+        var dir = obj.direction || 'right';
+        var vertical = (dir === 'up' || dir === 'down');
+        var sign = (dir === 'left' || dir === 'up') ? -1 : 1;
+        var speed = obj.beltSpeed || 0;
+
+        ctx.fillStyle = color || '#5a6672';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = 'rgba(255,255,255,0.10)';
+        ctx.fillRect(x, y, w, Math.max(1, h * 0.18));
+        ctx.fillStyle = 'rgba(0,0,0,0.30)';
+        ctx.fillRect(x, y + h - Math.max(1, h * 0.18), w, Math.max(1, h * 0.18));
+
+        var along = vertical ? h : w;
+        var across = vertical ? w : h;
+        var spacing = Math.max(12, across * 1.2);
+        var size = Math.max(3, across * 0.3);
+        var travel = ((Date.now() * 0.03 * speed) % spacing + spacing) % spacing;
+        var offset = sign > 0 ? travel : spacing - travel;
+
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        for (var d = offset - spacing; d < along + spacing; d += spacing) {
+            var mid = d + size;
+            if (mid < -size || mid > along + size) continue;
+            ctx.beginPath();
+            if (vertical) {
+                var cx = x + w / 2;
+                ctx.moveTo(cx, y + mid + sign * size);
+                ctx.lineTo(cx - size, y + mid - sign * size * 0.6);
+                ctx.lineTo(cx + size, y + mid - sign * size * 0.6);
+            } else {
+                var cy = y + h / 2;
+                ctx.moveTo(x + mid + sign * size, cy);
+                ctx.lineTo(x + mid - sign * size * 0.6, cy - size);
+                ctx.lineTo(x + mid - sign * size * 0.6, cy + size);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    // The ladder the player can grab right now, or null. The box is grown a
+    // little so a player standing on the floor at the foot of a ladder, or on the
+    // ledge at its head, still counts as touching it.
+    var LADDER_GRAB_MARGIN = 6;
+    function ladderAtPlayer() {
+        if (IS_TOPDOWN) return null;
+        var hb = getPlayerHitbox();
+        var centerX = hb.x + hb.width / 2;
+        for (var i = 0; i < activeObjects.length; i++) {
+            var obj = activeObjects[i];
+            if (obj.type !== 'ladder' || obj.active === false) continue;
+            var box = objectBox(obj);
+            // Center on the rungs rather than overlap, or you would grab a ladder
+            // while only brushing it with a shoulder.
+            if (centerX < box.left || centerX > box.right) continue;
+            if (hb.y + hb.height < box.top - LADDER_GRAB_MARGIN) continue;
+            if (hb.y > box.bottom + LADDER_GRAB_MARGIN) continue;
+            return obj;
+        }
+        return null;
+    }
+
+    function climbLadder(ladder, upKey, downKey) {
+        var box = objectBox(ladder);
+        var hb = getPlayerHitbox();
+        var feet = hb.y + hb.height;
+        var speed = ladder.climbSpeed || 2;
+        player.onGround = false;
+        player.canDoubleJump = false;
+
+        if (upKey) {
+            // Stop with the feet level with the top rung, so the head of the
+            // ladder feels like a floor instead of launching the player past it.
+            player.speedY = (feet - speed <= box.top) ? Math.min(0, box.top - feet) : -speed;
+        } else if (downKey) {
+            player.speedY = speed;
+            // Ridden off the bottom end: let go and fall.
+            if (feet >= box.bottom) player.climbing = false;
+        } else {
+            player.speedY = 0;
+        }
+    }
+
+    // A belt does not travel, so its whole motion is the delta it hands to
+    // whatever is standing on it. Vertical belts are a top-down idea (a current);
+    // in a platformer they would fight gravity, so they push nothing.
+    function conveyorPush(obj) {
+        var speed = obj.beltSpeed || 0;
+        switch (obj.direction) {
+            case 'left': return { x: -speed, y: 0 };
+            case 'up': return IS_TOPDOWN ? { x: 0, y: -speed } : { x: 0, y: 0 };
+            case 'down': return IS_TOPDOWN ? { x: 0, y: speed } : { x: 0, y: 0 };
+            default: return { x: speed, y: 0 };
+        }
+    }
+
+    function setConveyorDelta(obj) {
+        var push = conveyorPush(obj);
+        obj.deltaX = push.x;
+        obj.deltaY = 0;
+    }
+
+    function objectBox(obj) {
+        var w = obj.width || RENDER_SIZE;
+        var h = obj.height || RENDER_SIZE;
+        return { left: obj.x - w / 2, right: obj.x + w / 2, top: obj.y - h / 2, bottom: obj.y + h / 2, w: w, h: h };
+    }
+
+    // Enemies ride a belt too when the type says so. They keep their own patrol
+    // math, the belt just adds to where they end up.
+    function carryEnemiesOnConveyor(obj) {
+        var belt = objectBox(obj);
+        var push = conveyorPush(obj);
+        if (!push.x && !push.y) return;
+        for (var e = 0; e < activeObjects.length; e++) {
+            var en = activeObjects[e];
+            if (en.type !== 'enemy' || !en.active) continue;
+            var box = objectBox(en);
+            if (box.right <= belt.left || box.left >= belt.right) continue;
+            if (IS_TOPDOWN) {
+                if (box.bottom <= belt.top || box.top >= belt.bottom) continue;
+            } else {
+                // standing on it, within a few pixels of the belt surface
+                if (box.bottom < belt.top - 4 || box.bottom > belt.top + belt.h) continue;
+            }
+            en.x += push.x;
+            en.y += push.y;
+            if (en.startX !== undefined) en.startX += push.x;
+            if (en.startY !== undefined) en.startY += push.y;
+        }
+    }
+
+    // Top-down has no surfaces to stand on, so a belt is a current: overlap it
+    // and it carries you.
+    function applyTopDownConveyors() {
+        var hb = getPlayerHitbox();
+        for (var i = 0; i < activeObjects.length; i++) {
+            var obj = activeObjects[i];
+            if (obj.type !== 'conveyor' || obj.active === false) continue;
+            var belt = objectBox(obj);
+            if (hb.x + hb.width <= belt.left || hb.x >= belt.right) continue;
+            if (hb.y + hb.height <= belt.top || hb.y >= belt.bottom) continue;
+            var push = conveyorPush(obj);
+            player.x += push.x;
+            player.y += push.y;
+            if (obj.affectsEnemies) carryEnemiesOnConveyor(obj);
         }
     }
 
@@ -9929,7 +10159,37 @@ ${includeComments ? `        // ────────────────
                 var tileDrawn = false;
                 ctx.imageSmoothingEnabled = false;
 
-                if (tile.custom && customTileImages[obj.tileKey]) {
+                // Ladders and belts are drawn long on purpose, so one tile stretched
+                // over the whole thing would smear. Repeat it instead.
+                var repeatTile = (obj.type === 'ladder' || obj.type === 'conveyor');
+                if (repeatTile) {
+                    var stepX = (obj.type === 'ladder') ? objW : RENDER_SIZE;
+                    var stepY = (obj.type === 'ladder') ? RENDER_SIZE : objH;
+                    for (var tty = 0; tty < Math.ceil(objH / stepY); tty++) {
+                        for (var ttx = 0; ttx < Math.ceil(objW / stepX); ttx++) {
+                            var cellX = screenX + ttx * stepX;
+                            var cellY = screenY + tty * stepY;
+                            var cellW = Math.min(stepX, screenX + objW - cellX);
+                            var cellH = Math.min(stepY, screenY + objH - cellY);
+                            if (tile.custom && customTileImages[obj.tileKey]) {
+                                var rImg = customTileImages[obj.tileKey];
+                                if (tile.animated && typeof animatedTileImages !== 'undefined' && animatedTileImages[obj.tileKey]) {
+                                    rImg = animatedTileImages[obj.tileKey][animatedTileCurrentFrames[obj.tileKey] || 0];
+                                }
+                                if (rImg && rImg.complete && rImg.naturalWidth > 0) {
+                                    drawCustomTileImage(rImg, tile, 0, 0, TILE_SIZE, TILE_SIZE, cellX, cellY, cellW, cellH);
+                                    tileDrawn = true;
+                                }
+                            } else if (tileset.complete && tileset.naturalWidth > 0) {
+                                ctx.drawImage(tileset,
+                                    tile.col * TILE_SIZE, tile.row * TILE_SIZE,
+                                    TILE_SIZE * (cellW / stepX), TILE_SIZE * (cellH / stepY),
+                                    cellX, cellY, cellW, cellH);
+                                tileDrawn = true;
+                            }
+                        }
+                    }
+                } else if (tile.custom && customTileImages[obj.tileKey]) {
                     // Custom tile
                     var ctImg;
                     if (tile.animated && typeof animatedTileImages !== 'undefined' && animatedTileImages[obj.tileKey]) {
@@ -9988,6 +10248,8 @@ ${includeComments ? `        // ────────────────
                         case 'npc': color = color || '#3498db'; emoji = emoji || '👤'; break;
                         case 'door': color = color || '#8b4513'; emoji = emoji || '🚪'; break;
                         case 'mysteryBlock': color = color || '#f1c40f'; emoji = emoji || '?'; break;
+                        case 'ladder': color = color || '#c8913c'; break;
+                        case 'conveyor': color = color || '#5a6672'; break;
                         default: color = color || '#fff'; emoji = emoji || '?';
                     }
                 }
@@ -10243,6 +10505,22 @@ ${includeComments ? `        // ────────────────
                     ctx.beginPath();
                     ctx.arc(dx + dw * 0.78, dy + dh * 0.52, Math.max(2, dw * 0.08), 0, Math.PI * 2);
                     ctx.fill();
+                } else if (obj.type === 'ladder') {
+                    // Two rails and rungs, spaced by the tile size so a ladder
+                    // dragged taller grows more rungs instead of longer ones.
+                    var railW = Math.max(2, objW * 0.14);
+                    ctx.fillStyle = color || '#c8913c';
+                    ctx.fillRect(screenX, screenY, railW, objH);
+                    ctx.fillRect(screenX + objW - railW, screenY, railW, objH);
+                    var rungGap = Math.max(10, RENDER_SIZE * 0.5);
+                    var rungH = Math.max(2, railW * 0.7);
+                    for (var ry = screenY + rungGap * 0.5; ry <= screenY + objH - rungH; ry += rungGap) {
+                        ctx.fillRect(screenX + railW * 0.4, ry, objW - railW * 0.8, rungH);
+                    }
+                    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+                    ctx.fillRect(screenX + objW - railW * 0.45, screenY, railW * 0.45, objH);
+                } else if (obj.type === 'conveyor') {
+                    drawConveyorBelt(obj, screenX, screenY, objW, objH, color);
                 } else if (!IS_TOPDOWN && obj.type === 'spring') {
                     // Draw a spring pad with coil
                     var sx = screenX;
@@ -10544,7 +10822,7 @@ ${includeComments ? `        // ────────────────
 
                 // Draw custom symbol text for types that have user-set symbols
                 // (procedural icons above handle the defaults, this catches custom overrides)
-                var defaultSymbols = {'enemy':'','collectible':'','hazard':'','powerup':'','spring':'','goal':'','checkpoint':'','npc':'','door':'','movingPlatform':'','mysteryBlock':''};
+                var defaultSymbols = {'enemy':'','collectible':'','hazard':'','powerup':'','spring':'','goal':'','checkpoint':'','npc':'','door':'','movingPlatform':'','mysteryBlock':'','ladder':'','conveyor':''};
                 if (!(obj.type in defaultSymbols)) {
                     // Unknown type or terrain zone - draw the emoji
                     ctx.fillStyle = color;

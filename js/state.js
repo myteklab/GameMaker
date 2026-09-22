@@ -531,6 +531,46 @@ let movingPlatformTemplates = [
     }
 ];
 
+// Ladder templates - climbable in platformer mode
+let ladderTemplates = [
+    {
+        id: 'ladder',
+        name: 'Ladder',
+        sprite: '',
+        spritesheetCols: 1,
+        spritesheetRows: 1,
+        animSpeed: 8,
+        width: 32,
+        height: 96,
+        climbSpeed: 2,         // pixels per frame up or down
+        jumpOff: true,         // jump detaches from the ladder
+        tileKey: '',
+        color: '#c8913c',
+        grabSound: ''
+    }
+];
+
+// Conveyor templates - a surface that carries whatever stands on it
+let conveyorTemplates = [
+    {
+        id: 'conveyor',
+        name: 'Conveyor',
+        sprite: '',
+        spritesheetCols: 1,
+        spritesheetRows: 1,
+        animSpeed: 8,
+        width: 96,
+        height: 16,
+        beltSpeed: 2,           // pixels per frame
+        direction: 'right',     // 'right', 'left', 'up', 'down' (up/down are top-down only)
+        collisionMode: 'solid', // 'solid' or 'oneway', platformer only
+        affectsEnemies: false,
+        tileKey: '',
+        color: '#5a6672',
+        moveSound: ''
+    }
+];
+
 // NPC templates - for top-down RPG mode
 let npcTemplates = [
     {
@@ -675,6 +715,10 @@ function getTemplate(type, templateId) {
             return springTemplates.find(t => t.id === templateId) || springTemplates[0];
         case 'movingPlatform':
             return movingPlatformTemplates.find(t => t.id === templateId) || movingPlatformTemplates[0];
+        case 'ladder':
+            return ladderTemplates.find(t => t.id === templateId) || ladderTemplates[0];
+        case 'conveyor':
+            return conveyorTemplates.find(t => t.id === templateId) || conveyorTemplates[0];
         case 'npc':
             return npcTemplates.find(t => t.id === templateId) || npcTemplates[0];
         case 'door':
@@ -701,6 +745,8 @@ function getTemplates(type) {
         case 'powerup': return powerupTemplates;
         case 'spring': return springTemplates;
         case 'movingPlatform': return movingPlatformTemplates;
+        case 'ladder': return ladderTemplates;
+        case 'conveyor': return conveyorTemplates;
         case 'npc': return npcTemplates;
         case 'door': return doorTemplates;
         case 'mysteryBlock': return mysteryBlockTemplates;

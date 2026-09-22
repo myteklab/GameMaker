@@ -182,7 +182,19 @@ function checkIncompatibleObjects(newType) {
             return t && t.behavior === 'jump';
         }).length;
         if (jumpEnemies > 0) incompatible.push(`• ${jumpEnemies} Jumping enemy(ies) will pace instead`);
+
+        // Nothing to climb when there is no gravity
+        const ladders = gameObjects.filter(o => o.type === 'ladder').length;
+        if (ladders > 0) incompatible.push(`• ${ladders} Ladder(s) will stop working (no climbing in top-down)`);
     } else if (newType === 'platformer') {
+        // A belt pointing up or down would fight gravity
+        const verticalBelts = gameObjects.filter(o => {
+            if (o.type !== 'conveyor') return false;
+            const t = conveyorTemplates.find(t => t.id === o.templateId);
+            return t && (t.direction === 'up' || t.direction === 'down');
+        }).length;
+        if (verticalBelts > 0) incompatible.push(`• ${verticalBelts} Up/down conveyor(s) will stop pushing`);
+
         // NPCs don't exist in platformer mode
         const npcs = gameObjects.filter(o => o.type === 'npc').length;
         if (npcs > 0) incompatible.push(`• ${npcs} NPC(s) will be hidden (no dialogue in platformer)`);

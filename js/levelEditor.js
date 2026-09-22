@@ -488,6 +488,8 @@ function getObjectColor(type, templateId) {
         powerup: '#e91e63',
         spring: '#9b59b6',
         movingPlatform: '#8B4513',
+        ladder: '#c8913c',
+        conveyor: '#5a6672',
         mysteryBlock: '#f1c40f',
         checkpoint: '#3498db',
         goal: '#2ecc71',

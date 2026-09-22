@@ -25,6 +25,8 @@ function serializeProject() {
         powerupTemplates: powerupTemplates,
         springTemplates: springTemplates,
         movingPlatformTemplates: movingPlatformTemplates,
+        ladderTemplates: ladderTemplates,
+        conveyorTemplates: conveyorTemplates,
         npcTemplates: npcTemplates,
         doorTemplates: doorTemplates,
         mysteryBlockTemplates: mysteryBlockTemplates,
@@ -268,6 +270,28 @@ function loadProjectData(data) {
             moveSound: t.moveSound || '',
             showInactiveOutline: t.showInactiveOutline !== false, // Default true
             inactiveOutlineColor: t.inactiveOutlineColor || '#ffff00'
+        }));
+    }
+    // Load Ladder templates
+    if (data.ladderTemplates && data.ladderTemplates.length > 0) {
+        ladderTemplates = data.ladderTemplates.map(t => ({
+            ...t,
+            climbSpeed: t.climbSpeed || 2,
+            jumpOff: t.jumpOff !== false,
+            tileKey: t.tileKey || '',
+            grabSound: t.grabSound || ''
+        }));
+    }
+    // Load Conveyor templates
+    if (data.conveyorTemplates && data.conveyorTemplates.length > 0) {
+        conveyorTemplates = data.conveyorTemplates.map(t => ({
+            ...t,
+            beltSpeed: t.beltSpeed || 2,
+            direction: t.direction || 'right',
+            collisionMode: t.collisionMode || 'solid',
+            affectsEnemies: !!t.affectsEnemies,
+            tileKey: t.tileKey || '',
+            moveSound: t.moveSound || ''
         }));
     }
     // Load NPC templates (for top-down RPG mode)

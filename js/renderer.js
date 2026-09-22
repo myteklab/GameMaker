@@ -645,7 +645,48 @@ function drawGameObjects() {
         var s = Math.min(objWidth, objHeight) * 0.35;
         var effect = template?.effect || '';
 
-        if (obj.type === 'enemy') {
+        if (obj.type === 'ladder') {
+            const railW = Math.max(2, objWidth * 0.14);
+            ctx.fillStyle = color;
+            ctx.fillRect(screenX, screenY, railW, objHeight);
+            ctx.fillRect(screenX + objWidth - railW, screenY, railW, objHeight);
+            const rungGap = Math.max(8, tileSize * 0.5);
+            const rungH = Math.max(2, railW * 0.7);
+            for (let ry = screenY + rungGap * 0.5; ry <= screenY + objHeight - rungH; ry += rungGap) {
+                ctx.fillRect(screenX + railW * 0.4, ry, objWidth - railW * 0.8, rungH);
+            }
+        } else if (obj.type === 'conveyor') {
+            const dir = template?.direction || 'right';
+            const vertical = (dir === 'up' || dir === 'down');
+            const sign = (dir === 'left' || dir === 'up') ? -1 : 1;
+            ctx.fillStyle = color;
+            ctx.fillRect(screenX, screenY, objWidth, objHeight);
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(screenX, screenY + objHeight - Math.max(1, objHeight * 0.18), objWidth, Math.max(1, objHeight * 0.18));
+            // Static arrows here: the editor canvas only redraws on change, so an
+            // animated belt would sit frozen at whatever phase the last draw left.
+            const along = vertical ? objHeight : objWidth;
+            const across = vertical ? objWidth : objHeight;
+            const spacing = Math.max(12, across * 1.2);
+            const size = Math.max(3, across * 0.3);
+            ctx.fillStyle = 'rgba(255,255,255,0.75)';
+            for (let d = spacing * 0.5; d < along; d += spacing) {
+                ctx.beginPath();
+                if (vertical) {
+                    const cx = screenX + objWidth / 2;
+                    ctx.moveTo(cx, screenY + d + sign * size);
+                    ctx.lineTo(cx - size, screenY + d - sign * size * 0.6);
+                    ctx.lineTo(cx + size, screenY + d - sign * size * 0.6);
+                } else {
+                    const cy = screenY + objHeight / 2;
+                    ctx.moveTo(screenX + d + sign * size, cy);
+                    ctx.lineTo(screenX + d - sign * size * 0.6, cy - size);
+                    ctx.lineTo(screenX + d - sign * size * 0.6, cy + size);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+        } else if (obj.type === 'enemy') {
             // Enemy face
             ctx.fillStyle = color;
             ctx.beginPath();

@@ -3153,6 +3153,309 @@ function selectMysteryBlockForPlacement() {
 // OBJECT PLACEMENT MODAL
 // ============================================
 
+// ============================================
+// LADDER TEMPLATES
+// ============================================
+
+function showLadderTemplatesModal() {
+    document.getElementById('ladder-templates-modal').classList.add('visible');
+    renderLadderTemplatesList();
+}
+
+function closeLadderTemplatesModal() {
+    document.getElementById('ladder-templates-modal').classList.remove('visible');
+}
+
+function renderLadderTemplatesList() {
+    const container = document.getElementById('ladder-templates-list');
+    if (!container) return;
+
+    let html = '';
+    ladderTemplates.forEach((template, index) => {
+        html += `
+            <div class="template-item" data-id="${template.id}">
+                <div class="template-preview" style="${getTemplatePreviewBackground(template)}">
+                    ${getTemplatePreviewHTML(template, '<svg class="gm-icon"><use href="#icon-ladder"/></svg>')}
+                </div>
+                <div class="template-info">
+                    <div class="template-name">${template.name}</div>
+                    <div class="template-details">Climb speed: ${template.climbSpeed}${template.jumpOff === false ? ' · no jumping off' : ''}</div>
+                </div>
+                <div class="template-actions">
+                    <button class="btn btn-small" onclick="editLadderTemplate('${template.id}')">Edit</button>
+                    ${index > 0 ? `<button class="btn btn-small btn-danger" onclick="deleteLadderTemplate('${template.id}')">Delete</button>` : ''}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function fillLadderForm(t) {
+    document.getElementById('ladder-template-name').value = t.name || '';
+    document.getElementById('ladder-template-sprite').value = t.sprite || '';
+    document.getElementById('ladder-template-cols').value = t.spritesheetCols || 1;
+    document.getElementById('ladder-template-rows').value = t.spritesheetRows || 1;
+    document.getElementById('ladder-template-animspeed').value = t.animSpeed || 8;
+    document.getElementById('ladder-template-width').value = t.width || 32;
+    document.getElementById('ladder-template-height').value = t.height || 96;
+    document.getElementById('ladder-template-climbspeed').value = t.climbSpeed || 2;
+    document.getElementById('ladder-template-jumpoff').checked = t.jumpOff !== false;
+    document.getElementById('ladder-template-color').value = t.color || '#c8913c';
+    document.getElementById('ladder-template-sound').value = t.grabSound || '';
+    populateObjectTileSelector('ladder-template-tile');
+    document.getElementById('ladder-template-tile').value = t.tileKey || '';
+    updateObjectTilePreview('ladder-template-tile', 'ladder-template-tile-preview');
+    if (typeof updateSoundButtonStates === 'function') updateSoundButtonStates('ladder-template-sound');
+}
+
+function showAddLadderTemplate() {
+    editingTemplateId = null;
+    document.getElementById('ladder-template-title').textContent = 'Add Ladder Type';
+    fillLadderForm({});
+    document.getElementById('ladder-template-editor').classList.add('visible');
+}
+
+function editLadderTemplate(id) {
+    const template = ladderTemplates.find(t => t.id === id);
+    if (!template) return;
+    editingTemplateId = id;
+    document.getElementById('ladder-template-title').textContent = 'Edit Ladder Type';
+    fillLadderForm(template);
+    document.getElementById('ladder-template-editor').classList.add('visible');
+}
+
+function saveLadderTemplate() {
+    const name = document.getElementById('ladder-template-name').value.trim();
+    if (!name) {
+        showToast('Please enter a name', 'error');
+        return;
+    }
+
+    const templateData = {
+        name: name,
+        sprite: document.getElementById('ladder-template-sprite').value.trim(),
+        spritesheetCols: parseInt(document.getElementById('ladder-template-cols').value) || 1,
+        spritesheetRows: parseInt(document.getElementById('ladder-template-rows').value) || 1,
+        animSpeed: parseInt(document.getElementById('ladder-template-animspeed').value) || 8,
+        width: parseInt(document.getElementById('ladder-template-width').value) || 32,
+        height: parseInt(document.getElementById('ladder-template-height').value) || 96,
+        climbSpeed: Math.max(0.5, parseFloat(document.getElementById('ladder-template-climbspeed').value) || 2),
+        jumpOff: document.getElementById('ladder-template-jumpoff').checked,
+        tileKey: document.getElementById('ladder-template-tile').value || '',
+        color: document.getElementById('ladder-template-color').value || '#c8913c',
+        grabSound: document.getElementById('ladder-template-sound').value.trim()
+    };
+
+    if (editingTemplateId) {
+        const index = ladderTemplates.findIndex(t => t.id === editingTemplateId);
+        if (index !== -1) {
+            templateData.id = editingTemplateId;
+            ladderTemplates[index] = templateData;
+            showToast('Ladder type updated', 'success');
+        }
+        markDirty();
+        closeLadderTemplateEditor();
+        renderLadderTemplatesList();
+        draw();
+    } else {
+        templateData.id = generateTemplateId('ladder', name);
+        ladderTemplates.push(templateData);
+        markDirty();
+        closeLadderTemplateEditor();
+        renderLadderTemplatesList();
+        draw();
+        closeLadderTemplatesModal();
+        selectObjectForPlacement('ladder', templateData.id);
+    }
+}
+
+function closeLadderTemplateEditor() {
+    document.getElementById('ladder-template-editor').classList.remove('visible');
+    editingTemplateId = null;
+}
+
+function deleteLadderTemplate(id) {
+    if (id === 'ladder') {
+        showToast('Cannot delete the default ladder', 'error');
+        return;
+    }
+    const template = ladderTemplates.find(t => t.id === id);
+    const instanceCount = countTemplateInstances('ladder', id);
+    const warning = instanceCount > 0
+        ? `Delete "${template.name}"? ${instanceCount} placed ladder(s) will be removed.`
+        : `Delete "${template.name}"?`;
+    if (!confirm(warning)) return;
+    removeTemplateInstancesFromAllLevels('ladder', id);
+    ladderTemplates = ladderTemplates.filter(t => t.id !== id);
+    markDirty();
+    renderLadderTemplatesList();
+    draw();
+    showToast('Ladder type deleted', 'success');
+}
+
+// ============================================
+// CONVEYOR TEMPLATES
+// ============================================
+
+function showConveyorTemplatesModal() {
+    document.getElementById('conveyor-templates-modal').classList.add('visible');
+    renderConveyorTemplatesList();
+}
+
+function closeConveyorTemplatesModal() {
+    document.getElementById('conveyor-templates-modal').classList.remove('visible');
+}
+
+const CONVEYOR_DIRECTION_LABEL = { right: 'Right', left: 'Left', up: 'Up', down: 'Down' };
+
+function renderConveyorTemplatesList() {
+    const container = document.getElementById('conveyor-templates-list');
+    if (!container) return;
+
+    let html = '';
+    conveyorTemplates.forEach((template, index) => {
+        const dir = CONVEYOR_DIRECTION_LABEL[template.direction] || 'Right';
+        html += `
+            <div class="template-item" data-id="${template.id}">
+                <div class="template-preview" style="${getTemplatePreviewBackground(template)}">
+                    ${getTemplatePreviewHTML(template, '<svg class="gm-icon"><use href="#icon-conveyor"/></svg>')}
+                </div>
+                <div class="template-info">
+                    <div class="template-name">${template.name}</div>
+                    <div class="template-details">${dir} at ${template.beltSpeed}${template.affectsEnemies ? ' · carries enemies' : ''}</div>
+                </div>
+                <div class="template-actions">
+                    <button class="btn btn-small" onclick="editConveyorTemplate('${template.id}')">Edit</button>
+                    ${index > 0 ? `<button class="btn btn-small btn-danger" onclick="deleteConveyorTemplate('${template.id}')">Delete</button>` : ''}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function fillConveyorForm(t) {
+    document.getElementById('conveyor-template-name').value = t.name || '';
+    document.getElementById('conveyor-template-sprite').value = t.sprite || '';
+    document.getElementById('conveyor-template-cols').value = t.spritesheetCols || 1;
+    document.getElementById('conveyor-template-rows').value = t.spritesheetRows || 1;
+    document.getElementById('conveyor-template-animspeed').value = t.animSpeed || 8;
+    document.getElementById('conveyor-template-width').value = t.width || 96;
+    document.getElementById('conveyor-template-height').value = t.height || 16;
+    document.getElementById('conveyor-template-beltspeed').value = t.beltSpeed !== undefined ? t.beltSpeed : 2;
+    document.getElementById('conveyor-template-direction').value = t.direction || 'right';
+    document.getElementById('conveyor-template-collision').value = t.collisionMode || 'solid';
+    document.getElementById('conveyor-template-affects-enemies').checked = !!t.affectsEnemies;
+    document.getElementById('conveyor-template-color').value = t.color || '#5a6672';
+    document.getElementById('conveyor-template-sound').value = t.moveSound || '';
+    populateObjectTileSelector('conveyor-template-tile');
+    document.getElementById('conveyor-template-tile').value = t.tileKey || '';
+    updateObjectTilePreview('conveyor-template-tile', 'conveyor-template-tile-preview');
+    if (typeof updateSoundButtonStates === 'function') updateSoundButtonStates('conveyor-template-sound');
+    updateConveyorDirectionHint();
+}
+
+// Up and down belts are a top-down idea; in a platformer they would fight
+// gravity, so the editor says so rather than letting the setting quietly do nothing.
+function updateConveyorDirectionHint() {
+    const hint = document.getElementById('conveyor-direction-hint');
+    if (!hint) return;
+    const dir = document.getElementById('conveyor-template-direction').value;
+    const topDown = typeof gameSettings !== 'undefined' && gameSettings.gameType === 'topdown';
+    const vertical = (dir === 'up' || dir === 'down');
+    hint.style.display = (vertical && !topDown) ? 'block' : 'none';
+}
+
+function showAddConveyorTemplate() {
+    editingTemplateId = null;
+    document.getElementById('conveyor-template-title').textContent = 'Add Conveyor Type';
+    fillConveyorForm({});
+    document.getElementById('conveyor-template-editor').classList.add('visible');
+}
+
+function editConveyorTemplate(id) {
+    const template = conveyorTemplates.find(t => t.id === id);
+    if (!template) return;
+    editingTemplateId = id;
+    document.getElementById('conveyor-template-title').textContent = 'Edit Conveyor Type';
+    fillConveyorForm(template);
+    document.getElementById('conveyor-template-editor').classList.add('visible');
+}
+
+function saveConveyorTemplate() {
+    const name = document.getElementById('conveyor-template-name').value.trim();
+    if (!name) {
+        showToast('Please enter a name', 'error');
+        return;
+    }
+
+    const templateData = {
+        name: name,
+        sprite: document.getElementById('conveyor-template-sprite').value.trim(),
+        spritesheetCols: parseInt(document.getElementById('conveyor-template-cols').value) || 1,
+        spritesheetRows: parseInt(document.getElementById('conveyor-template-rows').value) || 1,
+        animSpeed: parseInt(document.getElementById('conveyor-template-animspeed').value) || 8,
+        width: parseInt(document.getElementById('conveyor-template-width').value) || 96,
+        height: parseInt(document.getElementById('conveyor-template-height').value) || 16,
+        beltSpeed: Math.max(0, parseFloat(document.getElementById('conveyor-template-beltspeed').value) || 0),
+        direction: document.getElementById('conveyor-template-direction').value || 'right',
+        collisionMode: document.getElementById('conveyor-template-collision').value || 'solid',
+        affectsEnemies: document.getElementById('conveyor-template-affects-enemies').checked,
+        tileKey: document.getElementById('conveyor-template-tile').value || '',
+        color: document.getElementById('conveyor-template-color').value || '#5a6672',
+        moveSound: document.getElementById('conveyor-template-sound').value.trim()
+    };
+
+    if (editingTemplateId) {
+        const index = conveyorTemplates.findIndex(t => t.id === editingTemplateId);
+        if (index !== -1) {
+            templateData.id = editingTemplateId;
+            conveyorTemplates[index] = templateData;
+            showToast('Conveyor type updated', 'success');
+        }
+        markDirty();
+        closeConveyorTemplateEditor();
+        renderConveyorTemplatesList();
+        draw();
+    } else {
+        templateData.id = generateTemplateId('conveyor', name);
+        conveyorTemplates.push(templateData);
+        markDirty();
+        closeConveyorTemplateEditor();
+        renderConveyorTemplatesList();
+        draw();
+        closeConveyorTemplatesModal();
+        selectObjectForPlacement('conveyor', templateData.id);
+    }
+}
+
+function closeConveyorTemplateEditor() {
+    document.getElementById('conveyor-template-editor').classList.remove('visible');
+    editingTemplateId = null;
+}
+
+function deleteConveyorTemplate(id) {
+    if (id === 'conveyor') {
+        showToast('Cannot delete the default conveyor', 'error');
+        return;
+    }
+    const template = conveyorTemplates.find(t => t.id === id);
+    const instanceCount = countTemplateInstances('conveyor', id);
+    const warning = instanceCount > 0
+        ? `Delete "${template.name}"? ${instanceCount} placed conveyor(s) will be removed.`
+        : `Delete "${template.name}"?`;
+    if (!confirm(warning)) return;
+    removeTemplateInstancesFromAllLevels('conveyor', id);
+    conveyorTemplates = conveyorTemplates.filter(t => t.id !== id);
+    markDirty();
+    renderConveyorTemplatesList();
+    draw();
+    showToast('Conveyor type deleted', 'success');
+}
+
 function showObjectPlacementModal(type) {
     const modal = document.getElementById('object-placement-modal');
     const title = document.getElementById('object-placement-title');
@@ -3167,7 +3470,9 @@ function showObjectPlacementModal(type) {
         'movingPlatform': 'Select Moving Platform',
         'npc': 'Select NPC Type',
         'door': 'Select Door Type',
-        'mysteryBlock': 'Select Mystery Block'
+        'mysteryBlock': 'Select Mystery Block',
+        'ladder': 'Select Ladder Type',
+        'conveyor': 'Select Conveyor Type'
     };
 
     const addLabels = {
@@ -3179,7 +3484,9 @@ function showObjectPlacementModal(type) {
         'movingPlatform': '+ Add Platform',
         'npc': '+ Add NPC',
         'door': '+ Add Door',
-        'mysteryBlock': '+ Add Mystery Block'
+        'mysteryBlock': '+ Add Mystery Block',
+        'ladder': '+ Add Ladder',
+        'conveyor': '+ Add Conveyor'
     };
 
     const editFuncs = {
@@ -3191,7 +3498,9 @@ function showObjectPlacementModal(type) {
         'movingPlatform': 'editMovingPlatformTemplate',
         'npc': 'editNPCTemplate',
         'door': 'editDoorTemplate',
-        'mysteryBlock': 'editMysteryBlockTemplate'
+        'mysteryBlock': 'editMysteryBlockTemplate',
+        'ladder': 'editLadderTemplate',
+        'conveyor': 'editConveyorTemplate'
     };
 
     const deleteFuncs = {
@@ -3203,7 +3512,9 @@ function showObjectPlacementModal(type) {
         'movingPlatform': 'deleteMovingPlatformTemplate',
         'npc': 'deleteNPCTemplate',
         'door': 'deleteDoorTemplate',
-        'mysteryBlock': 'deleteMysteryBlockTemplate'
+        'mysteryBlock': 'deleteMysteryBlockTemplate',
+        'ladder': 'deleteLadderTemplate',
+        'conveyor': 'deleteConveyorTemplate'
     };
 
     const addFuncs = {
@@ -3215,7 +3526,9 @@ function showObjectPlacementModal(type) {
         'movingPlatform': 'showAddMovingPlatformTemplate',
         'npc': 'showAddNPCTemplate',
         'door': 'showAddDoorTemplate',
-        'mysteryBlock': 'showAddMysteryBlockTemplate'
+        'mysteryBlock': 'showAddMysteryBlockTemplate',
+        'ladder': 'showAddLadderTemplate',
+        'conveyor': 'showAddConveyorTemplate'
     };
 
     title.textContent = titles[type] || 'Select Object';
@@ -3233,7 +3546,9 @@ function showObjectPlacementModal(type) {
         'movingPlatform': '═',
         'npc': '<svg class="gm-icon"><use href="#icon-person"/></svg>',
         'door': '<svg class="gm-icon"><use href="#icon-door"/></svg>',
-        'mysteryBlock': '?'
+        'mysteryBlock': '?',
+        'ladder': '<svg class="gm-icon"><use href="#icon-ladder"/></svg>',
+        'conveyor': '<svg class="gm-icon"><use href="#icon-conveyor"/></svg>'
     };
 
     templates.forEach((template, index) => {

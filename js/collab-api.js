@@ -231,6 +231,8 @@
             safe(function () { m.hazard = hazardTemplates; });
             safe(function () { m.powerup = powerupTemplates; });
             safe(function () { m.spring = springTemplates; });
+            safe(function () { m.ladder = ladderTemplates; });
+            safe(function () { m.conveyor = conveyorTemplates; });
             safe(function () { m.movingPlatform = movingPlatformTemplates; });
             safe(function () { m.npc = npcTemplates; });
             safe(function () { m.door = doorTemplates; });
@@ -244,6 +246,7 @@
         refreshTemplates: function () {
             ['renderEnemyTemplatesList', 'renderCollectibleTemplatesList', 'renderHazardTemplatesList',
              'renderPowerupTemplatesList', 'renderSpringTemplatesList', 'renderMovingPlatformTemplatesList',
+             'renderLadderTemplatesList', 'renderConveyorTemplatesList',
              'renderNPCTemplatesList', 'renderDoorTemplatesList', 'renderMysteryBlockTemplatesList',
              'renderTerrainZoneTemplatesList', 'renderCheatCodeTemplatesList'].forEach(function (fn) {
                 safe(function () { if (typeof window[fn] === 'function') window[fn](); });
