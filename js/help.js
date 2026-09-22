@@ -735,6 +735,10 @@ const helpContent = {
                 <li><strong>Detection Range</strong> - How far the enemy can "see" (for chasers)</li>
             </ul>
 
+            <h4>Shooting</h4>
+            <p>Tick <strong>This enemy shoots</strong> to make a type fire at the player. Aim it <strong>the way it faces</strong>, <strong>straight at the player</strong>, at <strong>a fixed angle</strong> (0 points right, 90 points down), in <strong>a fan</strong> of several shots, or in <strong>every direction</strong> at once. Set how often it fires, how close the player has to be (0 means always), and the shot's speed, damage, size, color, sprite and sound. A stationary enemy that shoots every direction makes a good turret.</p>
+            <p>Shots stop at walls, disappear after their time is up, and hurt the player by the same rules as walking into the enemy, so the moment of safety after a hit still counts.</p>
+
             <h4>Defeating Enemies</h4>
             <p>Players can defeat enemies by:</p>
             <ul>

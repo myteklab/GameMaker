@@ -1612,6 +1612,10 @@ ${includeComments ? `    // ═════════════════�
 
     // Projectile state
     var projectiles = [];
+    // Shots fired by enemies. Each one carries its own look and damage: those
+    // are set per enemy type, not once for the whole game like the player's.
+    var enemyShots = [];
+    var enemyShotSprites = {};
     var lastFireTime = 0;
     var currentAmmo = PROJECTILE_START_AMMO;
     var projectileSprite = null;
@@ -4511,6 +4515,7 @@ ${includeComments ? `    // ═════════════════�
         }
 
         currentLevelIndex = index;
+        enemyShots.length = 0;   // shots in flight belong to the level that fired them
         var lvl = allLevels[index];
 
         // Check if this is a menu level
@@ -5126,6 +5131,21 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.deathTime = 0; // Timestamp when enemy was killed (for respawn)
                     gameObj.velocityY = 0;
                     gameObj.onGround = false;
+                    gameObj.shootEnabled = template.shootEnabled === true;
+                    gameObj.shootAim = template.shootAim || 'facing';
+                    gameObj.shootAngle = parseFloat(template.shootAngle) || 0;
+                    gameObj.shootCount = Math.max(1, Math.min(12, parseInt(template.shootCount) || 3));
+                    gameObj.shootSpread = parseFloat(template.shootSpread) || 30;
+                    gameObj.shootInterval = parseFloat(template.shootInterval) || 2;
+                    gameObj.shootRange = parseFloat(template.shootRange) || 0;
+                    gameObj.shootSpeed = (parseFloat(template.shootSpeed) || 4) * TILE_SCALE;
+                    gameObj.shootDamage = parseInt(template.shootDamage) || 1;
+                    gameObj.shootLifetime = parseFloat(template.shootLifetime) || 3;
+                    gameObj.shootSize = (parseFloat(template.shootSize) || 10) * TILE_SCALE;
+                    gameObj.shootColor = template.shootColor || '#ff6b6b';
+                    gameObj.shootSprite = template.shootSprite || '';
+                    gameObj.shootSound = template.shootSound || '';
+                    gameObj.nextShotAt = 0;
                     // a path sketched on this placed enemy replaces its usual movement
                     gameObj.path = prepareObjectPath(obj.path);
                     if (gameObj.path) {
@@ -6411,6 +6431,7 @@ ${includeComments ? `        // ────────────────
 
         // Update projectiles
         updateProjectiles();
+        updateEnemyShots();
         updateRemoteProjectiles();
 
         // Update emitted items from mystery blocks
@@ -6745,6 +6766,7 @@ ${includeComments ? `        // ────────────────
 
             // Update enemy behavior (pace, stationary, follow, jump)
             if (obj.type === 'enemy') {
+                updateEnemyShooting(obj, Date.now());
                 updateEnemy(obj);
             }
 
@@ -7825,6 +7847,141 @@ ${includeComments ? `        // ────────────────
     }
 
     // Update enemy based on behavior type
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ENEMY SHOOTING
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function enemyShotSprite(url) {
+        if (!url) return null;
+        if (!enemyShotSprites[url]) {
+            var img = new Image();
+            img.src = url;
+            enemyShotSprites[url] = img;
+        }
+        var s = enemyShotSprites[url];
+        return (s && s.complete && s.naturalWidth > 0) ? s : null;
+    }
+
+    // angle in radians: 0 points right, and down is positive, like the canvas
+    function fireEnemyShot(obj, angle) {
+        var size = obj.shootSize || 10;
+        enemyShots.push({
+            x: obj.x + Math.cos(angle) * ((obj.width || RENDER_SIZE) / 2),
+            y: obj.y + Math.sin(angle) * ((obj.height || RENDER_SIZE) / 2),
+            speedX: Math.cos(angle) * (obj.shootSpeed || 4),
+            speedY: Math.sin(angle) * (obj.shootSpeed || 4),
+            width: size,
+            height: size,
+            damage: obj.shootDamage || 1,
+            color: obj.shootColor || '#ff6b6b',
+            sprite: obj.shootSprite || '',
+            lifetime: (obj.shootLifetime || 3) * 1000,
+            spawnTime: Date.now(),
+            direction: Math.cos(angle) < 0 ? -1 : 1,
+            from: obj.enemyId || null
+        });
+    }
+
+    // Aim the way it faces, straight at the player, at a fixed angle, in a fan,
+    // or every direction at once. The first wait is shortened by a random slice
+    // so a row of the same enemy does not fire in lockstep.
+    function updateEnemyShooting(obj, now) {
+        if (!obj.shootEnabled || !obj.active || levelComplete || gameOver) return;
+        var wait = Math.max(200, (obj.shootInterval || 2) * 1000);
+        if (!obj.nextShotAt) {
+            obj.nextShotAt = now + Math.random() * wait;
+            return;
+        }
+        if (now < obj.nextShotAt) return;
+        obj.nextShotAt = now + wait;
+
+        var pcx = player.x + player.width / 2;
+        var pcy = player.y + player.height / 2;
+        var range = (obj.shootRange || 0) * RENDER_SIZE;
+        if (range > 0 && Math.hypot(pcx - obj.x, pcy - obj.y) > range) return;
+
+        var toPlayer = Math.atan2(pcy - obj.y, pcx - obj.x);
+        var facing = obj.direction < 0 ? Math.PI : 0;
+        var count = obj.shootCount || 3;
+
+        if (obj.shootAim === 'radial') {
+            for (var i = 0; i < count; i++) fireEnemyShot(obj, (i / count) * Math.PI * 2);
+        } else if (obj.shootAim === 'spread') {
+            var spread = (obj.shootSpread || 30) * Math.PI / 180;
+            for (var j = 0; j < count; j++) {
+                var along = count === 1 ? 0.5 : j / (count - 1);
+                fireEnemyShot(obj, facing - spread / 2 + spread * along);
+            }
+        } else if (obj.shootAim === 'player') {
+            fireEnemyShot(obj, toPlayer);
+        } else if (obj.shootAim === 'angle') {
+            fireEnemyShot(obj, (obj.shootAngle || 0) * Math.PI / 180);
+        } else {
+            fireEnemyShot(obj, facing);
+        }
+        if (obj.shootSound) playSound(obj.shootSound);
+    }
+
+    function updateEnemyShots() {
+        var now = Date.now();
+        for (var i = enemyShots.length - 1; i >= 0; i--) {
+            var s = enemyShots[i];
+            s.x += s.speedX;
+            s.y += s.speedY;
+            var gone = (now - s.spawnTime > s.lifetime)
+                || isSolidAt(s.x, s.y)
+                || s.x < 0 || s.y < 0
+                || s.x > level[0].length * RENDER_SIZE || s.y > level.length * RENDER_SIZE;
+            if (!gone) {
+                var hb = getPlayerHitbox();
+                if (s.x > hb.x && s.x < hb.x + hb.width && s.y > hb.y && s.y < hb.y + hb.height) {
+                    hitPlayerWithEnemyShot(s.damage);
+                    gone = true;
+                }
+            }
+            if (gone) enemyShots.splice(i, 1);
+        }
+    }
+
+    // The same rules as walking into an enemy: the invincibility after a hit
+    // counts, and a shield takes the hit instead.
+    function hitPlayerWithEnemyShot(damage) {
+        if (levelComplete || gameOver) return;
+        if (Date.now() < player.invincibleUntil || isCheatInvincible()) return;
+        if (activeEffects.shield > 0) {
+            activeEffects.shield--;
+            return;
+        }
+        for (var d = 0; d < (damage || 1); d++) {
+            loseLife();
+            if (gameOver) return;
+        }
+    }
+
+    function drawEnemyShots(camX, camY) {
+        for (var i = 0; i < enemyShots.length; i++) {
+            var s = enemyShots[i];
+            var cx = s.x - camX;
+            var cy = s.y - camY;
+            var img = enemyShotSprite(s.sprite);
+            ctx.save();
+            if (img) {
+                ctx.translate(cx, cy);
+                if (!IS_TOPDOWN && s.direction < 0) ctx.scale(-1, 1);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(img, -s.width / 2, -s.height / 2, s.width, s.height);
+            } else {
+                ctx.fillStyle = s.color;
+                ctx.shadowColor = s.color;
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(cx, cy, s.width / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
     function updateEnemy(obj) {
         var behavior = obj.behavior || 'pace';
         var baseSpeed = obj.speed || 2;
@@ -9221,6 +9378,7 @@ ${includeComments ? `        // ────────────────
 
         // Draw projectiles
         drawProjectiles(camX, camY);
+        drawEnemyShots(camX, camY);
         drawRemoteProjectiles(camX, camY);
 
         // Draw emitted items from mystery blocks
