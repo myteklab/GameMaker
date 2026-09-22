@@ -6315,6 +6315,10 @@ ${includeComments ? `            // ──────────────�
             // few pixels past the ends so you can also catch it from the ground at
             // the bottom or the ledge at the top.
             var ladder = ladderAtPlayer();
+            // Whether the player was on the ladder BEFORE this frame's input. The
+            // press that grabs a ladder must not also hop off it, which is what
+            // happens when you catch one near its top.
+            var climbingBeforeInput = player.climbing;
             var climbUpKey = (keys['ArrowUp'] || keys['KeyW']);
             var climbDownKey = (keys['ArrowDown'] || keys['KeyS']);
             // Having jumped off, the player must let go of the climb key and press
@@ -6328,6 +6332,12 @@ ${includeComments ? `            // ──────────────�
                 player.ladderNeedsRepress = false;
             }
             if (!ladder) {
+                // Sliding off the side of a ladder leaves a moment to jump, the
+                // same grace leaving a moving platform gets. A ladder is only a
+                // tile wide, so a normal tap of left or right carries the player
+                // clear of it in about eight frames; without this the jump they
+                // press next does nothing at all and the ladder feels broken.
+                if (player.climbing) player.platformGraceFrames = Math.max(player.platformGraceFrames || 0, 10);
                 player.climbing = false;
             } else if (!player.climbing && !player.ladderNeedsRepress && (climbUpKey || climbDownKey)) {
                 player.climbing = true;
@@ -6347,10 +6357,17 @@ ${includeComments ? `            // ──────────────�
             var upJustPressed = climbUpKey && !player.ladderUpHeld;
             player.ladderUpHeld = climbUpKey;
             var atTopPushingUp = false;
-            if (ladder && player.climbing && ladder.jumpOff && upJustPressed) {
+            if (ladder && climbingBeforeInput && player.climbing && ladder.jumpOff && upJustPressed) {
                 var ladderBox = objectBox(ladder);
                 var climbHb = getPlayerHitbox();
-                atTopPushingUp = (climbHb.y + climbHb.height - (ladder.climbSpeed || 2)) <= ladderBox.top;
+                // Half a tile, not one climb step. The old window was the distance
+                // the player moves in a single frame, about two pixels, so the same
+                // press hopped or climbed depending on where in the rung you
+                // happened to be. Nobody can aim at two pixels. Arriving with Up
+                // already held still does nothing, because this needs a FRESH
+                // press, so the top still parks you.
+                var topReach = Math.max(ladder.climbSpeed || 2, RENDER_SIZE / 2);
+                atTopPushingUp = (climbHb.y + climbHb.height - topReach) <= ladderBox.top;
             }
 
 
