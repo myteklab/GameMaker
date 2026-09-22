@@ -645,7 +645,25 @@ function drawGameObjects() {
         var s = Math.min(objWidth, objHeight) * 0.35;
         var effect = template?.effect || '';
 
-        if (obj.type === 'ladder') {
+        if (obj.type === 'crate') {
+            const edge = Math.max(2, Math.min(objWidth, objHeight) * 0.12);
+            ctx.fillStyle = color;
+            ctx.fillRect(screenX, screenY, objWidth, objHeight);
+            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            ctx.fillRect(screenX, screenY + objHeight - edge, objWidth, edge);
+            ctx.fillRect(screenX + objWidth - edge, screenY, edge, objHeight);
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fillRect(screenX, screenY, objWidth, edge);
+            ctx.fillRect(screenX, screenY, edge, objHeight);
+            ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+            ctx.lineWidth = Math.max(1, edge * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(screenX + edge, screenY + edge);
+            ctx.lineTo(screenX + objWidth - edge, screenY + objHeight - edge);
+            ctx.moveTo(screenX + objWidth - edge, screenY + edge);
+            ctx.lineTo(screenX + edge, screenY + objHeight - edge);
+            ctx.stroke();
+        } else if (obj.type === 'ladder') {
             const railW = Math.max(2, objWidth * 0.14);
             ctx.fillStyle = color;
             ctx.fillRect(screenX, screenY, railW, objHeight);

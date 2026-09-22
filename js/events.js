@@ -341,6 +341,7 @@ function onCanvasMouseDown(e) {
                             'powerup': 'collectible',
                             'spring': 'spring',
                             'movingPlatform': 'movingPlatform',
+                            'crate': 'movingPlatform',
                             'ladder': 'movingPlatform',
                             'conveyor': 'movingPlatform',
                             'mysteryBlock': 'mysteryBlock',

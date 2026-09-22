@@ -3154,6 +3154,153 @@ function selectMysteryBlockForPlacement() {
 // ============================================
 
 // ============================================
+// CRATE TEMPLATES
+// ============================================
+
+function showCrateTemplatesModal() {
+    document.getElementById('crate-templates-modal').classList.add('visible');
+    renderCrateTemplatesList();
+}
+
+function closeCrateTemplatesModal() {
+    document.getElementById('crate-templates-modal').classList.remove('visible');
+}
+
+function renderCrateTemplatesList() {
+    const container = document.getElementById('crate-templates-list');
+    if (!container) return;
+
+    let html = '';
+    crateTemplates.forEach((template, index) => {
+        html += `
+            <div class="template-item" data-id="${template.id}">
+                <div class="template-preview" style="${getTemplatePreviewBackground(template)}">
+                    ${getTemplatePreviewHTML(template, '<svg class="gm-icon"><use href="#icon-crate"/></svg>')}
+                </div>
+                <div class="template-info">
+                    <div class="template-name">${template.name}</div>
+                    <div class="template-details">Push speed: ${template.pushSpeed}</div>
+                </div>
+                <div class="template-actions">
+                    <button class="btn btn-small" onclick="editCrateTemplate('${template.id}')">Edit</button>
+                    ${index > 0 ? `<button class="btn btn-small btn-danger" onclick="deleteCrateTemplate('${template.id}')">Delete</button>` : ''}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function fillCrateForm(t) {
+    document.getElementById('crate-template-name').value = t.name || '';
+    document.getElementById('crate-template-sprite').value = t.sprite || '';
+    document.getElementById('crate-template-cols').value = t.spritesheetCols || 1;
+    document.getElementById('crate-template-rows').value = t.spritesheetRows || 1;
+    document.getElementById('crate-template-animspeed').value = t.animSpeed || 8;
+    document.getElementById('crate-template-width').value = t.width || 32;
+    document.getElementById('crate-template-height').value = t.height || 32;
+    document.getElementById('crate-template-pushspeed').value = t.pushSpeed !== undefined ? t.pushSpeed : 2;
+    document.getElementById('crate-template-symbol').value = t.symbol || '';
+    document.getElementById('crate-template-color').value = t.color || '#a9743f';
+    document.getElementById('crate-template-push-sound').value = t.pushSound || '';
+    document.getElementById('crate-template-land-sound').value = t.landSound || '';
+    populateObjectTileSelector('crate-template-tile');
+    document.getElementById('crate-template-tile').value = t.tileKey || '';
+    updateObjectTilePreview('crate-template-tile', 'crate-template-tile-preview');
+    if (typeof updateSoundButtonStates === 'function') {
+        updateSoundButtonStates('crate-template-push-sound');
+        updateSoundButtonStates('crate-template-land-sound');
+    }
+}
+
+function showAddCrateTemplate() {
+    editingTemplateId = null;
+    document.getElementById('crate-template-title').textContent = 'Add Crate Type';
+    fillCrateForm({});
+    document.getElementById('crate-template-editor').classList.add('visible');
+}
+
+function editCrateTemplate(id) {
+    const template = crateTemplates.find(t => t.id === id);
+    if (!template) return;
+    editingTemplateId = id;
+    document.getElementById('crate-template-title').textContent = 'Edit Crate Type';
+    fillCrateForm(template);
+    document.getElementById('crate-template-editor').classList.add('visible');
+}
+
+function saveCrateTemplate() {
+    const name = document.getElementById('crate-template-name').value.trim();
+    if (!name) {
+        showToast('Please enter a name', 'error');
+        return;
+    }
+
+    const templateData = {
+        name: name,
+        sprite: document.getElementById('crate-template-sprite').value.trim(),
+        spritesheetCols: parseInt(document.getElementById('crate-template-cols').value) || 1,
+        spritesheetRows: parseInt(document.getElementById('crate-template-rows').value) || 1,
+        animSpeed: parseInt(document.getElementById('crate-template-animspeed').value) || 8,
+        width: parseInt(document.getElementById('crate-template-width').value) || 32,
+        height: parseInt(document.getElementById('crate-template-height').value) || 32,
+        pushSpeed: Math.max(0.25, parseFloat(document.getElementById('crate-template-pushspeed').value) || 2),
+        tileKey: document.getElementById('crate-template-tile').value || '',
+        symbol: document.getElementById('crate-template-symbol').value || '',
+        color: document.getElementById('crate-template-color').value || '#a9743f',
+        pushSound: document.getElementById('crate-template-push-sound').value.trim(),
+        landSound: document.getElementById('crate-template-land-sound').value.trim()
+    };
+
+    if (editingTemplateId) {
+        const index = crateTemplates.findIndex(t => t.id === editingTemplateId);
+        if (index !== -1) {
+            templateData.id = editingTemplateId;
+            crateTemplates[index] = templateData;
+            showToast('Crate type updated', 'success');
+        }
+        markDirty();
+        closeCrateTemplateEditor();
+        renderCrateTemplatesList();
+        draw();
+    } else {
+        templateData.id = generateTemplateId('crate', name);
+        crateTemplates.push(templateData);
+        markDirty();
+        closeCrateTemplateEditor();
+        renderCrateTemplatesList();
+        draw();
+        closeCrateTemplatesModal();
+        selectObjectForPlacement('crate', templateData.id);
+    }
+}
+
+function closeCrateTemplateEditor() {
+    document.getElementById('crate-template-editor').classList.remove('visible');
+    editingTemplateId = null;
+}
+
+function deleteCrateTemplate(id) {
+    if (id === 'crate') {
+        showToast('Cannot delete the default crate', 'error');
+        return;
+    }
+    const template = crateTemplates.find(t => t.id === id);
+    const instanceCount = countTemplateInstances('crate', id);
+    const warning = instanceCount > 0
+        ? `Delete "${template.name}"? ${instanceCount} placed crate(s) will be removed.`
+        : `Delete "${template.name}"?`;
+    if (!confirm(warning)) return;
+    removeTemplateInstancesFromAllLevels('crate', id);
+    crateTemplates = crateTemplates.filter(t => t.id !== id);
+    markDirty();
+    renderCrateTemplatesList();
+    draw();
+    showToast('Crate type deleted', 'success');
+}
+
+// ============================================
 // LADDER TEMPLATES
 // ============================================
 
@@ -3471,6 +3618,7 @@ function showObjectPlacementModal(type) {
         'npc': 'Select NPC Type',
         'door': 'Select Door Type',
         'mysteryBlock': 'Select Mystery Block',
+        'crate': 'Select Crate Type',
         'ladder': 'Select Ladder Type',
         'conveyor': 'Select Conveyor Type'
     };
@@ -3485,6 +3633,7 @@ function showObjectPlacementModal(type) {
         'npc': '+ Add NPC',
         'door': '+ Add Door',
         'mysteryBlock': '+ Add Mystery Block',
+        'crate': '+ Add Crate',
         'ladder': '+ Add Ladder',
         'conveyor': '+ Add Conveyor'
     };
@@ -3499,6 +3648,7 @@ function showObjectPlacementModal(type) {
         'npc': 'editNPCTemplate',
         'door': 'editDoorTemplate',
         'mysteryBlock': 'editMysteryBlockTemplate',
+        'crate': 'editCrateTemplate',
         'ladder': 'editLadderTemplate',
         'conveyor': 'editConveyorTemplate'
     };
@@ -3513,6 +3663,7 @@ function showObjectPlacementModal(type) {
         'npc': 'deleteNPCTemplate',
         'door': 'deleteDoorTemplate',
         'mysteryBlock': 'deleteMysteryBlockTemplate',
+        'crate': 'deleteCrateTemplate',
         'ladder': 'deleteLadderTemplate',
         'conveyor': 'deleteConveyorTemplate'
     };
@@ -3527,6 +3678,7 @@ function showObjectPlacementModal(type) {
         'npc': 'showAddNPCTemplate',
         'door': 'showAddDoorTemplate',
         'mysteryBlock': 'showAddMysteryBlockTemplate',
+        'crate': 'showAddCrateTemplate',
         'ladder': 'showAddLadderTemplate',
         'conveyor': 'showAddConveyorTemplate'
     };
@@ -3547,6 +3699,7 @@ function showObjectPlacementModal(type) {
         'npc': '<svg class="gm-icon"><use href="#icon-person"/></svg>',
         'door': '<svg class="gm-icon"><use href="#icon-door"/></svg>',
         'mysteryBlock': '?',
+        'crate': '<svg class="gm-icon"><use href="#icon-crate"/></svg>',
         'ladder': '<svg class="gm-icon"><use href="#icon-ladder"/></svg>',
         'conveyor': '<svg class="gm-icon"><use href="#icon-conveyor"/></svg>'
     };

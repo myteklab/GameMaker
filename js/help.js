@@ -496,6 +496,7 @@ const helpContent = {
                 <li><strong>Goal</strong> - Level completion point</li>
                 <li><strong>Hazard</strong> - Instant damage zone</li>
                 <li><strong>Spring</strong> - Bounces player upward</li>
+                <li><strong>Crate</strong> - A block you can shove around and stand on</li>
                 <li><strong>Ladder</strong> - Climb up and down instead of jumping</li>
                 <li><strong>Conveyor</strong> - A belt that carries whatever stands on it</li>
                 <li><strong>Checkpoint</strong> - Respawn point when player dies</li>
@@ -778,6 +779,37 @@ const helpContent = {
             <p>Introduce each kind somewhere safe before using it over a pit.</p>
 
             <div class="help-tip"><p>Start a shooting enemy slow: one projectile every 2 seconds, speed 3 or 4. Fast projectiles are hard to read, and a player who cannot see what hit them just feels cheated.</p></div>
+        `
+    },
+    crates: {
+        title: 'Crates',
+        content: `
+            <h4>Shoving Things Around</h4>
+            <p>A crate is the only object in the game that the player both bumps into and moves. Walk into its side and it slides along. Jump on top and it holds you up. Push it off a ledge and it falls.</p>
+
+            <h4>What Stops a Crate</h4>
+            <ul>
+                <li>Solid tiles</li>
+                <li>Another crate. A crate will not shove a second crate, so a row of them is a wall</li>
+                <li>A solid moving platform or conveyor. A one-way one catches a crate falling onto its top, the same way it catches the player</li>
+            </ul>
+            <p>If a crate cannot move, the player stops against it like a wall. If it can only move part way, the player slows to match it, which is what makes a low Push Speed feel heavy.</p>
+
+            <h4>Settings</h4>
+            <ul>
+                <li><strong>Push Speed</strong> - Pixels per frame while being shoved. The player walks at about 4, so 2 feels like real weight and 4 feels like the crate is on wheels</li>
+                <li><strong>Width and Height</strong> - A crate wider than a gap bridges it. Drag the corner of a placed crate to resize just that one</li>
+                <li><strong>Symbol</strong> - A crate is square, so one character works here if you would rather show a box emoji than the drawn planks</li>
+                <li><strong>Push Sound</strong> and <strong>Landing Sound</strong> - The push sound repeats at most a few times a second, not every frame</li>
+            </ul>
+
+            <h4>It Works With Your Other Objects</h4>
+            <p>A crate rides a conveyor, so a belt feeding crates at the player is a level all by itself. A crate rides a moving platform. A crate pushed onto a one-way platform sits on it. Stand on a crate that is riding something and you go along with it.</p>
+
+            <h4>Level Design</h4>
+            <p>A crate turns a wall into a puzzle. The jump the player cannot make becomes possible once they drag something over to stand on, and that is a different kind of thinking than timing a jump. Put a crate somewhere awkward and you have asked a question without writing a word.</p>
+
+            <div class="help-tip"><p>Crates work in Top-Down RPG mode too, where you can shove them in all four directions.</p></div>
         `
     },
     ladders: {

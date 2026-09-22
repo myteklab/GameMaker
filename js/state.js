@@ -531,6 +531,26 @@ let movingPlatformTemplates = [
     }
 ];
 
+// Crate templates - solid objects the player can shove around
+let crateTemplates = [
+    {
+        id: 'crate',
+        name: 'Crate',
+        sprite: '',
+        spritesheetCols: 1,
+        spritesheetRows: 1,
+        animSpeed: 8,
+        width: 32,
+        height: 32,
+        pushSpeed: 2,          // pixels per frame while being shoved
+        tileKey: '',
+        color: '#a9743f',
+        symbol: '',            // empty = draw planks
+        pushSound: '',
+        landSound: ''
+    }
+];
+
 // Ladder templates - climbable in platformer mode
 let ladderTemplates = [
     {
@@ -715,6 +735,8 @@ function getTemplate(type, templateId) {
             return springTemplates.find(t => t.id === templateId) || springTemplates[0];
         case 'movingPlatform':
             return movingPlatformTemplates.find(t => t.id === templateId) || movingPlatformTemplates[0];
+        case 'crate':
+            return crateTemplates.find(t => t.id === templateId) || crateTemplates[0];
         case 'ladder':
             return ladderTemplates.find(t => t.id === templateId) || ladderTemplates[0];
         case 'conveyor':
@@ -745,6 +767,7 @@ function getTemplates(type) {
         case 'powerup': return powerupTemplates;
         case 'spring': return springTemplates;
         case 'movingPlatform': return movingPlatformTemplates;
+        case 'crate': return crateTemplates;
         case 'ladder': return ladderTemplates;
         case 'conveyor': return conveyorTemplates;
         case 'npc': return npcTemplates;

@@ -25,6 +25,7 @@ function serializeProject() {
         powerupTemplates: powerupTemplates,
         springTemplates: springTemplates,
         movingPlatformTemplates: movingPlatformTemplates,
+        crateTemplates: crateTemplates,
         ladderTemplates: ladderTemplates,
         conveyorTemplates: conveyorTemplates,
         npcTemplates: npcTemplates,
@@ -270,6 +271,16 @@ function loadProjectData(data) {
             moveSound: t.moveSound || '',
             showInactiveOutline: t.showInactiveOutline !== false, // Default true
             inactiveOutlineColor: t.inactiveOutlineColor || '#ffff00'
+        }));
+    }
+    // Load Crate templates
+    if (data.crateTemplates && data.crateTemplates.length > 0) {
+        crateTemplates = data.crateTemplates.map(t => ({
+            ...t,
+            pushSpeed: t.pushSpeed || 2,
+            tileKey: t.tileKey || '',
+            pushSound: t.pushSound || '',
+            landSound: t.landSound || ''
         }));
     }
     // Load Ladder templates

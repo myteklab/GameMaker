@@ -205,6 +205,13 @@
 </symbol>
 
 <!-- platform: horizontal lines with arrows -->
+<symbol id="icon-crate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="3" width="18" height="18" rx="1"/>
+  <line x1="3" y1="7" x2="21" y2="7"/>
+  <line x1="3" y1="17" x2="21" y2="17"/>
+  <line x1="7" y1="7" x2="17" y2="17"/>
+  <line x1="17" y1="7" x2="7" y2="17"/>
+</symbol>
 <symbol id="icon-ladder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <line x1="7" y1="2" x2="7" y2="22"/>
   <line x1="17" y1="2" x2="17" y2="22"/>
@@ -1135,6 +1142,12 @@
                         <span class="obj-icon"><svg class="gm-icon"><use href="#icon-platform"/></svg></span>
                     </div>
                     <span class="obj-label">Platforms</span>
+                </div>
+                <div class="object-category" onclick="showObjectPlacementModal('crate')">
+                    <div class="object-btn" id="btn-crate" style="background: #a9743f;">
+                        <span class="obj-icon"><svg class="gm-icon"><use href="#icon-crate"/></svg></span>
+                    </div>
+                    <span class="obj-label">Crates</span>
                 </div>
                 <div class="object-category platformer-only" onclick="showObjectPlacementModal('ladder')">
                     <div class="object-btn" id="btn-ladder" style="background: #c8913c;">
@@ -2565,6 +2578,113 @@
         <div class="modal-buttons">
             <button class="btn" onclick="saveSpringTemplate()">Save</button>
             <button class="btn" onclick="closeSpringTemplateEditor()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Crate Templates Modal -->
+<div class="modal-overlay template-modal" id="crate-templates-modal" onclick="if(event.target === this) closeCrateTemplatesModal()">
+    <div class="modal">
+        <h2>Crate Types</h2>
+        <p style="color: var(--text-3); font-size: 12px; margin-bottom: 10px;">Blocks the player can shove around and stand on</p>
+        <div class="template-list" id="crate-templates-list">
+            <!-- Populated by JavaScript -->
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" style="background: var(--danger);" onclick="showAddCrateTemplate()">+ Add Crate</button>
+            <button class="btn" onclick="closeCrateTemplatesModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Crate Template Editor -->
+<div class="template-editor" id="crate-template-editor">
+    <div class="template-editor-content">
+        <h3 id="crate-template-title">Add Crate Type <span class="help-icon" onclick="showHelp('crates')">?</span></h3>
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="crate-template-name" placeholder="e.g., Heavy Box">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Sprite URL (optional)</label>
+                <div class="input-with-browse">
+                    <input type="text" id="crate-template-sprite" placeholder="https://...">
+                    <button type="button" class="browse-library-btn" onclick="openAssetPicker('crate-template-sprite')">Browse</button>
+                </div>
+            </div>
+            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                <label>Cols</label>
+                <input type="number" id="crate-template-cols" value="1" min="1" max="32" title="Frames per row">
+            </div>
+            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                <label>Rows</label>
+                <input type="number" id="crate-template-rows" value="1" min="1" max="16" title="Number of rows">
+            </div>
+            <div class="form-group" style="flex: 0.4; min-width: 60px;">
+                <label>Speed</label>
+                <input type="number" id="crate-template-animspeed" value="8" min="1" max="30" title="Animation speed: 1 = fastest, 30 = slowest">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Tile (from tileset)</label>
+            <select id="crate-template-tile" onchange="updateObjectTilePreview('crate-template-tile', 'crate-template-tile-preview')">
+                <option value="">-- None (use sprite/color) --</option>
+            </select>
+            <div id="crate-template-tile-preview" style="margin-top:4px;height:24px;display:flex;align-items:center;gap:5px;">
+                <span style="color:var(--text-3);font-size:10px;">Select a tile to preview</span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Width (px)</label>
+                <input type="number" id="crate-template-width" value="32" min="8" max="256">
+            </div>
+            <div class="form-group">
+                <label>Height (px)</label>
+                <input type="number" id="crate-template-height" value="32" min="8" max="256">
+            </div>
+            <div class="form-group">
+                <label>Push Speed</label>
+                <input type="number" id="crate-template-pushspeed" value="2" min="0.25" max="10" step="0.25">
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Lower feels heavier. The player slows to this while shoving.</span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group" style="flex: 0.3;">
+                <label>Symbol</label>
+                <input type="text" id="crate-template-symbol" value="" maxlength="2" placeholder="none">
+            </div>
+            <div class="form-group" style="flex: 0.3;">
+                <label>Fallback Color</label>
+                <input type="color" id="crate-template-color" value="#a9743f">
+            </div>
+        </div>
+        <div class="form-group">
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Push Sound</label>
+            <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <input type="text" id="crate-template-push-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('crate-template-push-sound')">
+                <button type="button" class="browse-library-btn" onclick="openAssetPicker('crate-template-push-sound', 'sounds')">Browse</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('crate-template-push-sound', 'Crate Push Sound')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('crate-template-push-sound')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('crate-template-push-sound')" style="background: var(--success); display: none;">&#9654;</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('crate-template-push-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Landing Sound</label>
+            <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <input type="text" id="crate-template-land-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('crate-template-land-sound')">
+                <button type="button" class="browse-library-btn" onclick="openAssetPicker('crate-template-land-sound', 'sounds')">Browse</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('crate-template-land-sound', 'Crate Landing Sound')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('crate-template-land-sound')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('crate-template-land-sound')" style="background: var(--success); display: none;">&#9654;</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('crate-template-land-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn" onclick="saveCrateTemplate()">Save</button>
+            <button class="btn" onclick="closeCrateTemplateEditor()">Cancel</button>
         </div>
     </div>
 </div>

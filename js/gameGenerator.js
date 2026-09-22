@@ -42,6 +42,7 @@ function collectSfxIds() {
         { arr: typeof mysteryBlockTemplates !== 'undefined' ? mysteryBlockTemplates : [], props: ['hitSound', 'emptyHitSound'] },
         { arr: typeof movingPlatformTemplates !== 'undefined' ? movingPlatformTemplates : [], props: ['moveSound', 'collapseSound'] },
         { arr: typeof ladderTemplates !== 'undefined' ? ladderTemplates : [], props: ['grabSound'] },
+        { arr: typeof crateTemplates !== 'undefined' ? crateTemplates : [], props: ['pushSound', 'landSound'] },
         { arr: typeof conveyorTemplates !== 'undefined' ? conveyorTemplates : [], props: ['moveSound'] },
         { arr: typeof terrainZoneTemplates !== 'undefined' ? terrainZoneTemplates : [], props: ['entrySound', 'loopSound'] }
     ];
@@ -3874,6 +3875,7 @@ ${includeComments ? `    // ═════════════════�
     var powerupTemplates = ${JSON.stringify(powerupTemplates)};
     var springTemplates = ${JSON.stringify(springTemplates)};
     var movingPlatformTemplates = ${JSON.stringify(movingPlatformTemplates)};
+    var crateTemplates = ${JSON.stringify(crateTemplates)};
     var ladderTemplates = ${JSON.stringify(ladderTemplates)};
     var conveyorTemplates = ${JSON.stringify(conveyorTemplates)};
 
@@ -4062,7 +4064,7 @@ ${includeComments ? `    // ═════════════════�
         // Every template type whose editor offers a sprite belongs here. Springs
         // and moving platforms were missing, so their sprites never loaded and
         // the game drew the fallback color instead.
-        var allTemplates = [].concat(enemyTemplates, collectibleTemplates, hazardTemplates, powerupTemplates, npcTemplates, doorTemplates, springTemplates, movingPlatformTemplates, ladderTemplates, conveyorTemplates);
+        var allTemplates = [].concat(enemyTemplates, collectibleTemplates, hazardTemplates, powerupTemplates, npcTemplates, doorTemplates, springTemplates, movingPlatformTemplates, ladderTemplates, conveyorTemplates, crateTemplates);
         for (var i = 0; i < allTemplates.length; i++) {
             var tmpl = allTemplates[i];
             if (tmpl.sprite && !loadedSprites[tmpl.sprite]) {
@@ -5057,6 +5059,7 @@ ${includeComments ? `    // ═════════════════�
             else if (obj.type === 'spring') templates = springTemplates;
             else if (obj.type === 'movingPlatform') templates = movingPlatformTemplates;
             else if (obj.type === 'ladder') templates = ladderTemplates;
+            else if (obj.type === 'crate') templates = crateTemplates;
             else if (obj.type === 'conveyor') templates = conveyorTemplates;
             else if (obj.type === 'npc') templates = npcTemplates;
             else if (obj.type === 'door') templates = doorTemplates;
@@ -5197,6 +5200,18 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.activated = false;
                     gameObj.activatedColor = template.activatedColor || '#2ecc71';
                     gameObj.activateSound = template.activateSound || '';
+                }
+
+                // Crate-specific
+                if (obj.type === 'crate') {
+                    gameObj.pushSpeed = Math.max(0.25, parseFloat(template.pushSpeed) || 2);
+                    gameObj.tileKey = template.tileKey || '';
+                    gameObj.pushSound = template.pushSound || '';
+                    gameObj.landSound = template.landSound || '';
+                    gameObj.speedY = 0;
+                    gameObj.deltaX = 0;
+                    gameObj.deltaY = 0;
+                    gameObj.pushSoundUntil = 0;
                 }
 
                 // Ladder-specific
@@ -6138,10 +6153,10 @@ ${includeComments ? `    // ═════════════════�
         if (!IS_TOPDOWN && player.ridingPlatformIndex >= 0) {
             var ridingPlatform = activeObjects[player.ridingPlatformIndex];
             var ridingType = ridingPlatform && ridingPlatform.type;
-            if (ridingPlatform && (ridingType === 'movingPlatform' || ridingType === 'conveyor') && ridingPlatform.active !== false) {
+            if (ridingPlatform && (ridingType === 'movingPlatform' || ridingType === 'conveyor' || ridingType === 'crate') && ridingPlatform.active !== false) {
                 // Update the platform first to get its current delta
                 if (ridingType === 'conveyor') setConveyorDelta(ridingPlatform);
-                else updateMovingPlatform(ridingPlatform);
+                else if (ridingType !== 'crate') updateMovingPlatform(ridingPlatform);
                 ridingPlatform.updatedThisFrame = true; // Prevent double-update in collision loop
                 // Apply platform movement to player
                 player.x += ridingPlatform.deltaX;
@@ -6507,6 +6522,7 @@ ${includeComments ? `        // ────────────────
 
         // Update NPC/Door interaction system (Top-Down RPG)
         if (IS_TOPDOWN) {
+            applyTopDownCratePush();
             applyTopDownConveyors();
             updateInteractionPrompt();
             updateDialogue();
@@ -6597,6 +6613,10 @@ ${includeComments ? `        // ────────────────
 
     function updateGameObjects() {
         if (gameOver || levelComplete) return;
+
+        // Crates fall and ride before anything checks the player against them,
+        // so the player collides with where a crate actually is this frame.
+        updateCrates();
 
         // Update run timer (speedrun feature) - starts on first input
         if (RUN_TIMER_ENABLED && runTimerStarted) {
@@ -6850,7 +6870,7 @@ ${includeComments ? `        // ────────────────
             // runs the same collision, it just never moves itself: the belt
             // speed goes straight into deltaX and the riding code carries the
             // player with it.
-            if ((obj.type === 'movingPlatform' || obj.type === 'conveyor') && !IS_TOPDOWN) {
+            if ((obj.type === 'movingPlatform' || obj.type === 'conveyor' || obj.type === 'crate') && !IS_TOPDOWN) {
                 // Fixed frame time for 60fps (in milliseconds)
                 var frameTimeMs = 1000 / 60;
 
@@ -6875,7 +6895,7 @@ ${includeComments ? `        // ────────────────
                 // Only update if not already updated via riding logic
                 if (!obj.updatedThisFrame) {
                     if (obj.type === 'conveyor') setConveyorDelta(obj);
-                    else updateMovingPlatform(obj);
+                    else if (obj.type !== 'crate') updateMovingPlatform(obj);
                 }
                 obj.updatedThisFrame = false; // Reset for next frame
 
@@ -7005,15 +7025,27 @@ ${includeComments ? `        // ────────────────
                                 player.speedY = 0;
                             }
                         } else {
-                            // Horizontal collision
-                            if (overlapLeft < overlapRight) {
-                                // Hitting left side of platform
-                                player.x = platLeft - player.collisionWidth - ((player.width - player.collisionWidth) / 2 + player.collisionOffsetX);
-                                player.speedX = 0;
-                            } else {
-                                // Hitting right side of platform
-                                player.x = platRight - ((player.width - player.collisionWidth) / 2 + player.collisionOffsetX) + 1;
-                                player.speedX = 0;
+                            // Horizontal collision. A crate gets shoved out of the
+                            // way first; whatever of the shove it refuses is what
+                            // still pushes the player back, so walking into a crate
+                            // slows the player to the crate's push speed.
+                            if (obj.type === 'crate') {
+                                var wantPush = (overlapLeft < overlapRight) ? overlapLeft : -overlapRight;
+                                var capped = (wantPush > 0 ? 1 : -1) * Math.min(Math.abs(wantPush), obj.pushSpeed);
+                                if (crateTryMove(obj, capped, 0)) notePush(obj);
+                                platLeft = obj.x - platWidth / 2;
+                                platRight = obj.x + platWidth / 2;
+                            }
+                            if (playerRight > platLeft && playerLeft < platRight) {
+                                if (overlapLeft < overlapRight) {
+                                    // Hitting left side of platform
+                                    player.x = platLeft - player.collisionWidth - ((player.width - player.collisionWidth) / 2 + player.collisionOffsetX);
+                                    player.speedX = 0;
+                                } else {
+                                    // Hitting right side of platform
+                                    player.x = platRight - ((player.width - player.collisionWidth) / 2 + player.collisionOffsetX) + 1;
+                                    player.speedX = 0;
+                                }
                             }
                         }
                     }
@@ -8407,6 +8439,211 @@ ${includeComments ? `        // ────────────────
         } else {
             obj.x = obj.startX + r - r * Math.cos(obj.angle);
             obj.y = obj.startY - r * Math.sin(obj.angle);
+        }
+    }
+
+    // A crate reads as something you can shove: a lid, a base, and braces. A
+    // student who sets a symbol gets that instead, since a crate is square
+    // enough for one glyph to work.
+    function drawCrate(obj, x, y, w, h, color) {
+        if (obj.symbol) {
+            ctx.fillStyle = color || '#a9743f';
+            ctx.fillRect(x, y, w, h);
+            ctx.fillStyle = '#fff';
+            ctx.font = (Math.min(w, h) * 0.6) + 'px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(obj.symbol, x + w / 2, y + h / 2);
+            return;
+        }
+        var edge = Math.max(2, Math.min(w, h) * 0.12);
+        ctx.fillStyle = color || '#a9743f';
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillRect(x, y + h - edge, w, edge);
+        ctx.fillRect(x + w - edge, y, edge, h);
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fillRect(x, y, w, edge);
+        ctx.fillRect(x, y, edge, h);
+        ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+        ctx.lineWidth = Math.max(1, edge * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(x + edge, y + edge);
+        ctx.lineTo(x + w - edge, y + h - edge);
+        ctx.moveTo(x + w - edge, y + edge);
+        ctx.lineTo(x + edge, y + h - edge);
+        ctx.stroke();
+        ctx.strokeRect(x + edge * 0.5, y + edge * 0.5, w - edge, h - edge);
+    }
+
+    // ── CRATES ──────────────────────────────────────────────────────────────
+    // A crate is the one object that both blocks the player and gets moved by
+    // them. Everything it collides with lives behind crateBlocked, so terrain,
+    // other crates and platforms all read the same way.
+
+    function crateBoxAt(obj, x, y) {
+        var w = obj.width || RENDER_SIZE, h = obj.height || RENDER_SIZE;
+        return { left: x - w / 2, right: x + w / 2, top: y - h / 2, bottom: y + h / 2, w: w, h: h };
+    }
+
+    // Sample a grid across the box at half a tile, edges included, so a crate
+    // cannot straddle a gap it should fall into or clip a wall thinner than it.
+    function boxHitsTerrain(box) {
+        var EPS = 0.01, step = RENDER_SIZE / 2;
+        var xs = [], ys = [];
+        for (var x = box.left; x < box.right - EPS; x += step) xs.push(x);
+        xs.push(box.right - EPS);
+        for (var y = box.top; y < box.bottom - EPS; y += step) ys.push(y);
+        ys.push(box.bottom - EPS);
+        for (var a = 0; a < xs.length; a++) {
+            for (var b = 0; b < ys.length; b++) {
+                if (isSolidAt(xs[a], ys[b])) return true;
+            }
+        }
+        return false;
+    }
+
+    function boxesOverlap(a, b) {
+        return a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
+    }
+
+    // Would a crate sitting in this box be stuck? dy > 0 means it is heading
+    // down, which is the only direction a one-way platform stops it.
+    function crateBlocked(obj, box, dy) {
+        if (boxHitsTerrain(box)) return true;
+        for (var i = 0; i < activeObjects.length; i++) {
+            var other = activeObjects[i];
+            if (other === obj || other.active === false) continue;
+            if (other.type === 'crate') {
+                if (boxesOverlap(box, crateBoxAt(other, other.x, other.y))) return true;
+            } else if (other.type === 'movingPlatform' || other.type === 'conveyor') {
+                if (other.collapseState === 'collapsed') continue;
+                var pb = crateBoxAt(other, other.x, other.y);
+                if (!boxesOverlap(box, pb)) continue;
+                if (other.collisionMode === 'oneway') {
+                    // Only catches a crate falling onto its top, the way it only
+                    // catches the player.
+                    if (dy > 0 && box.bottom - dy <= pb.top + 2) return true;
+                } else {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Step a crate a pixel at a time so it ends up flush against whatever stops
+    // it, and report how far it actually got.
+    function crateTryMove(obj, dx, dy) {
+        var want = dx || dy;
+        if (!want) return 0;
+        var horizontal = !!dx;
+        var stepSize = want > 0 ? 1 : -1;
+        var moved = 0;
+        var remaining = Math.abs(want);
+        while (remaining > 0) {
+            var step = Math.min(1, remaining) * stepSize;
+            var nx = horizontal ? obj.x + step : obj.x;
+            var ny = horizontal ? obj.y : obj.y + step;
+            if (crateBlocked(obj, crateBoxAt(obj, nx, ny), horizontal ? 0 : step)) break;
+            obj.x = nx; obj.y = ny;
+            moved += step;
+            remaining -= Math.abs(step);
+        }
+        if (horizontal) obj.deltaX += moved; else obj.deltaY += moved;
+        return moved;
+    }
+
+    // The platform or belt a crate is standing on, if any.
+    function crateCarrier(obj) {
+        var box = crateBoxAt(obj, obj.x, obj.y);
+        for (var i = 0; i < activeObjects.length; i++) {
+            var other = activeObjects[i];
+            if (other.active === false) continue;
+            if (other.type !== 'movingPlatform' && other.type !== 'conveyor') continue;
+            if (other.collapseState === 'collapsed') continue;
+            var pb = crateBoxAt(other, other.x, other.y);
+            if (box.right <= pb.left || box.left >= pb.right) continue;
+            if (Math.abs(box.bottom - pb.top) <= 2) return other;
+        }
+        return null;
+    }
+
+    function updateCrates() {
+        for (var i = 0; i < activeObjects.length; i++) {
+            var obj = activeObjects[i];
+            if (obj.type !== 'crate' || obj.active === false) continue;
+            obj.deltaX = 0;
+            obj.deltaY = 0;
+            if (IS_TOPDOWN) continue;
+
+            // Ride whatever it is standing on before gravity, so a belt or a
+            // platform moves the crate the same frame it moves the player.
+            var carrier = crateCarrier(obj);
+            if (carrier) {
+                var push = carrier.type === 'conveyor' ? conveyorPush(carrier).x : (carrier.deltaX || 0);
+                if (push) crateTryMove(obj, push, 0);
+                if (carrier.type === 'movingPlatform' && carrier.deltaY < 0) crateTryMove(obj, 0, carrier.deltaY);
+            }
+
+            obj.speedY = (obj.speedY || 0) + GRAVITY;
+            if (obj.speedY > 12) obj.speedY = 12;
+            var fell = crateTryMove(obj, 0, obj.speedY);
+            if (fell < obj.speedY) {
+                if (obj.speedY > 2 && obj.landSound) playSound(obj.landSound);
+                obj.speedY = 0;
+            }
+
+            // Shoved into a pit: stop simulating it once it is past the level,
+            // or it falls and collision-tests forever.
+            if (obj.y - (obj.height || RENDER_SIZE) / 2 > level.length * RENDER_SIZE + RENDER_SIZE * 2) {
+                obj.active = false;
+            }
+        }
+    }
+
+    // Top-down has no standing on things, so the player simply cannot walk into
+    // a crate: shove it, and take back whatever of the move the crate refused.
+    function applyTopDownCratePush() {
+        var hb = getPlayerHitbox();
+        var pbox = { left: hb.x, right: hb.x + hb.width, top: hb.y, bottom: hb.y + hb.height };
+        for (var i = 0; i < activeObjects.length; i++) {
+            var obj = activeObjects[i];
+            if (obj.type !== 'crate' || obj.active === false) continue;
+            var box = crateBoxAt(obj, obj.x, obj.y);
+            if (!boxesOverlap(pbox, box)) continue;
+
+            var overlapLeft = pbox.right - box.left;
+            var overlapRight = box.right - pbox.left;
+            var overlapTop = pbox.bottom - box.top;
+            var overlapBottom = box.bottom - pbox.top;
+            var minX = Math.min(overlapLeft, overlapRight);
+            var minY = Math.min(overlapTop, overlapBottom);
+
+            if (minX < minY) {
+                var wantX = overlapLeft < overlapRight ? overlapLeft : -overlapRight;
+                var stepX = Math.sign(wantX) * Math.min(Math.abs(wantX), obj.pushSpeed);
+                var movedX = crateTryMove(obj, stepX, 0);
+                player.x -= (wantX - movedX);
+                if (movedX) notePush(obj);
+                else player.speedX = 0;
+            } else {
+                var wantY = overlapTop < overlapBottom ? overlapTop : -overlapBottom;
+                var stepY = Math.sign(wantY) * Math.min(Math.abs(wantY), obj.pushSpeed);
+                var movedY = crateTryMove(obj, 0, stepY);
+                player.y -= (wantY - movedY);
+                if (movedY) notePush(obj);
+                else player.speedY = 0;
+            }
+        }
+    }
+
+    // One push sound per shove, not one per frame.
+    function notePush(obj) {
+        var now = Date.now();
+        if (obj.pushSound && now > (obj.pushSoundUntil || 0)) {
+            playSound(obj.pushSound);
+            obj.pushSoundUntil = now + 400;
         }
     }
 
@@ -10250,6 +10487,7 @@ ${includeComments ? `        // ────────────────
                         case 'mysteryBlock': color = color || '#f1c40f'; emoji = emoji || '?'; break;
                         case 'ladder': color = color || '#c8913c'; break;
                         case 'conveyor': color = color || '#5a6672'; break;
+                        case 'crate': color = color || '#a9743f'; break;
                         default: color = color || '#fff'; emoji = emoji || '?';
                     }
                 }
@@ -10521,6 +10759,8 @@ ${includeComments ? `        // ────────────────
                     ctx.fillRect(screenX + objW - railW * 0.45, screenY, railW * 0.45, objH);
                 } else if (obj.type === 'conveyor') {
                     drawConveyorBelt(obj, screenX, screenY, objW, objH, color);
+                } else if (obj.type === 'crate') {
+                    drawCrate(obj, screenX, screenY, objW, objH, color);
                 } else if (!IS_TOPDOWN && obj.type === 'spring') {
                     // Draw a spring pad with coil
                     var sx = screenX;
@@ -10822,7 +11062,7 @@ ${includeComments ? `        // ────────────────
 
                 // Draw custom symbol text for types that have user-set symbols
                 // (procedural icons above handle the defaults, this catches custom overrides)
-                var defaultSymbols = {'enemy':'','collectible':'','hazard':'','powerup':'','spring':'','goal':'','checkpoint':'','npc':'','door':'','movingPlatform':'','mysteryBlock':'','ladder':'','conveyor':''};
+                var defaultSymbols = {'enemy':'','collectible':'','hazard':'','powerup':'','spring':'','goal':'','checkpoint':'','npc':'','door':'','movingPlatform':'','mysteryBlock':'','ladder':'','conveyor':'','crate':''};
                 if (!(obj.type in defaultSymbols)) {
                     // Unknown type or terrain zone - draw the emoji
                     ctx.fillStyle = color;
