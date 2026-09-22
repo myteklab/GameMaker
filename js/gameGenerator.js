@@ -2258,7 +2258,9 @@ ${includeComments ? `    // ═════════════════�
         previousRidingPlatformIndex: -1, // Previous frame's platform index (for edge tolerance)
         platformGraceFrames: 0,   // Extra coyote frames after leaving a moving platform
         climbing: false,          // Holding onto a ladder (gravity is off while it lasts)
-        jumpedThisFrame: false
+        jumpedThisFrame: false,
+        ladderNeedsRepress: false, // Set after jumping off, cleared when the climb key is let go
+        climbDistance: 0
     };
 
     // Helper to apply squash & stretch intensity
@@ -5785,6 +5787,7 @@ ${includeComments ? `    // ═════════════════�
         player.jumpKeyHeld = false;
         player.climbing = false;
         player.climbDistance = 0;
+        player.ladderNeedsRepress = false;
     }
 
     function restartGame() {
@@ -6296,13 +6299,21 @@ ${includeComments ? `            // ──────────────�
             var ladder = ladderAtPlayer();
             var climbUpKey = (keys['ArrowUp'] || keys['KeyW']);
             var climbDownKey = (keys['ArrowDown'] || keys['KeyS']);
+            // Having jumped off, the player must let go of the climb key and press
+            // it again to grab on. Up is held to climb and Up is also a jump key,
+            // so without this they re-grab the same ladder mid-arc and the jump
+            // looks like it did nothing.
+            if (player.ladderNeedsRepress && !climbUpKey && !climbDownKey) {
+                player.ladderNeedsRepress = false;
+            }
             if (!ladder) {
                 player.climbing = false;
-            } else if (!player.climbing && (climbUpKey || climbDownKey)) {
+            } else if (!player.climbing && !player.ladderNeedsRepress && (climbUpKey || climbDownKey)) {
                 player.climbing = true;
                 if (ladder.grabSound) playSound(ladder.grabSound);
             }
             player.jumpedThisFrame = false;
+
 
             // Update coyote time: give player configurable frames to jump after leaving ground
             // Also count platform riding as grounded (for fast-moving platform support)
@@ -6320,7 +6331,12 @@ ${includeComments ? `            // ──────────────�
 
             // Allow jumping if on ground, on/near a platform, OR within coyote time window
             var canJump = player.onGround || onPlatform || coyoteTime > 0;
-            var jumpKeyPressed = (keys['ArrowUp'] || keys['KeyW'] || keys['Space']);
+            // On a ladder, Up means climb, so Space alone can mean jump off.
+            // Sharing the key made grabbing a ladder with Up held fire a jump on
+            // the very same frame, which read as the ladder refusing to hold you.
+            var jumpKeyPressed = player.climbing
+                ? !!keys['Space']
+                : (keys['ArrowUp'] || keys['KeyW'] || keys['Space']);
 
             if (JUMP_MODE === 'fly') {
                 // Fly mode (Flappy Bird style): tap to flap anytime with cooldown
@@ -6388,8 +6404,9 @@ ${includeComments ? `            // ──────────────�
             // Every frame, we add GRAVITY to speedY (accelerating downward).
             // We cap the speed at 12 to prevent falling too fast (terminal velocity).
             // ───────────────────────────────────────────────────────────────────────
-` : ''}            if (player.jumpedThisFrame) {
+` : ''}            if (player.jumpedThisFrame && player.climbing) {
                 player.climbing = false;
+                player.ladderNeedsRepress = true;
             }
 
             if (player.climbing && ladder) {
