@@ -469,10 +469,11 @@ const helpContent = {
             <h4>Object Categories</h4>
             <p><strong>Enemies</strong> - Characters that challenge the player</p>
             <ul>
-                <li><strong>Patrol</strong> - Walks back and forth</li>
-                <li><strong>Jumper</strong> - Hops up and down</li>
-                <li><strong>Chaser</strong> - Follows the player</li>
+                <li><strong>Pace</strong> - Walks back and forth</li>
+                <li><strong>Jump</strong> - Hops up and down</li>
+                <li><strong>Follow</strong> - Chases the player when they come close</li>
                 <li><strong>Stationary</strong> - Stays in one place</li>
+                <li>Any of them can fire projectiles, and one can follow a route you draw</li>
             </ul>
 
             <p><strong>Collectibles</strong> - Items players gather</p>
@@ -644,7 +645,6 @@ const helpContent = {
                 <li><strong>Fire Key</strong> - Which button shoots (X, Z, Shift, etc.)</li>
                 <li><strong>Cooldown</strong> - Milliseconds between shots</li>
                 <li><strong>Speed</strong> - How fast projectiles travel</li>
-                <li><strong>Damage</strong> - How much health enemies lose per hit</li>
                 <li><strong>Lifetime</strong> - How long before projectiles disappear</li>
             </ul>
 
@@ -652,7 +652,7 @@ const helpContent = {
             <p>Projectiles are destroyed when they hit:</p>
             <ul>
                 <li><strong>Solid tiles</strong> - Walls, platforms, ground</li>
-                <li><strong>Enemies</strong> - Deals damage and destroys the projectile</li>
+                <li><strong>Enemies</strong> - One hit removes the enemy, whatever its size, and the projectile is used up</li>
             </ul>
 
             <h4>Collect Items with Projectiles</h4>
@@ -673,6 +673,9 @@ const helpContent = {
             </ul>
             <p>Balance tip: If shooting is too easy, enemies become trivial. If too hard, players will avoid using it!</p>
 
+            <h4>Enemies Can Fire Too</h4>
+            <p>Each enemy type has its own projectiles, set in the enemy type editor. See the <strong>Enemies</strong> help topic.</p>
+
             <div class="help-tip"><p>Add "Ammo Pack" powerups in your levels if using ammo mode, so players can replenish!</p></div>
         `
     },
@@ -685,7 +688,7 @@ const helpContent = {
             <h4>Powerup Effects</h4>
             <ul>
                 <li><strong>Extra Life</strong> - Adds one life to the player's count</li>
-                <li><strong>Heal</strong> - Restores health (if using health system)</li>
+                <li><strong>Heal</strong> - Gives hearts back (health, in top-down RPG games)</li>
                 <li><strong>Speed Boost</strong> - Temporarily increases movement speed</li>
                 <li><strong>Jump Boost</strong> - Temporarily increases jump power</li>
                 <li><strong>Invincibility</strong> - Temporary immunity to damage</li>
@@ -714,49 +717,63 @@ const helpContent = {
         `
     },
     enemyBehaviors: {
-        title: 'Enemy Behaviors',
+        title: 'Enemies',
         content: `
-            <h4>Enemy AI Patterns</h4>
-            <p>Different enemy behaviors create different challenges. Choose behaviors that match your level's design!</p>
-
-            <h4>Behavior Types</h4>
+            <h4>How An Enemy Moves</h4>
+            <p>Pick a <strong>Movement Pattern</strong> in the enemy type editor:</p>
             <ul>
-                <li><strong>Patrol</strong> - Walks left and right between walls or edges</li>
-                <li><strong>Jumper</strong> - Hops up and down in place</li>
-                <li><strong>Chaser</strong> - Moves toward the player when in range</li>
-                <li><strong>Stationary</strong> - Stays in one place (good for turrets or obstacles)</li>
+                <li><strong>Pace</strong> - Walks back and forth, turning at walls, at ledges, and at the end of its <strong>Pace Distance</strong> (in tiles)</li>
+                <li><strong>Stationary</strong> - Stays put. Good for turrets and obstacles</li>
+                <li><strong>Follow</strong> - Chases the player once they are inside its <strong>Follow Range</strong>, and paces slowly the rest of the time</li>
+                <li><strong>Jump</strong> - Hops in place. Platformer games only</li>
             </ul>
+            <p><strong>Move Speed</strong> sets how fast it travels in any of these.</p>
 
-            <h4>Enemy Properties</h4>
+            <h4>Drawing A Patrol Route</h4>
+            <p>One enemy can follow a route you draw instead of its pattern. Click the enemy where it stands in the level, choose <strong>Draw path</strong>, and drag the route you want. End near where you started to make a loop, or leave it open and the enemy walks there and back. The route belongs to that one enemy, so two enemies of the same type can patrol different routes.</p>
+
+            <h4>Touching The Player</h4>
             <ul>
-                <li><strong>Health</strong> - How many hits to defeat (1-10)</li>
-                <li><strong>Speed</strong> - How fast the enemy moves</li>
-                <li><strong>Damage</strong> - How much harm to the player on contact</li>
-                <li><strong>Detection Range</strong> - How far the enemy can "see" (for chasers)</li>
+                <li><strong>Damage</strong> - Hearts the player loses on contact</li>
+                <li><strong>Contact Sound</strong> - Plays when the player is hit</li>
+                <li><strong>Stompable</strong> - The player can defeat it by landing on top, worth <strong>Stomp Score</strong> points. Platformer games only</li>
+                <li><strong>Respawn</strong> - Seconds until a defeated enemy comes back. 0 means it stays gone</li>
             </ul>
 
             <h4>Projectiles</h4>
-            <p>Tick <strong>This enemy fires projectiles</strong> to give a type the same kind of shot the player can have. Aim it <strong>the way it faces</strong>, <strong>straight at the player</strong>, at <strong>a fixed angle</strong> (0 points right, 90 points down), in <strong>a fan</strong> of several shots, or in <strong>every direction</strong> at once. Set how often it fires, how close the player has to be (0 means always), and the projectile speed, damage, size, color, sprite and sound. A stationary enemy firing in every direction makes a good turret.</p>
-            <p>Enemy projectiles stop at walls, disappear after their time is up, and hurt the player by the same rules as walking into the enemy, so the moment of safety after a hit still counts.</p>
+            <p>Tick <strong>This enemy fires projectiles</strong> and the type gets the same kind of shot the player can have. Choose how it aims:</p>
+            <ul>
+                <li><strong>The way it faces</strong> - Straight ahead, flipping when the enemy turns</li>
+                <li><strong>Straight at the player</strong> - Follows the player wherever they stand</li>
+                <li><strong>A fixed angle</strong> - Always the same direction. 0 points right, 90 points down, 180 left, 270 up</li>
+                <li><strong>A fan of shots</strong> - Several at once, spread over the width you set</li>
+                <li><strong>Every direction</strong> - A ring of shots. A stationary enemy doing this makes a good turret</li>
+            </ul>
+            <p>Then set how often it fires, and <strong>Within</strong> how many tiles the player has to be before it starts (0 fires no matter how far away they are). The projectile itself has its own <strong>Speed</strong>, <strong>Damage</strong>, <strong>Lasts</strong> (seconds before it disappears), <strong>Size</strong>, <strong>Color</strong>, and an optional <strong>Sprite</strong> and <strong>Sound</strong>.</p>
+            <p>Enemy projectiles stop at walls and fly through other enemies. They hurt the player by the same rules as walking into the enemy, so the short moment of safety after a hit still protects them, and a shield still takes the hit.</p>
 
             <h4>Defeating Enemies</h4>
-            <p>Players can defeat enemies by:</p>
+            <p>Enemies have no health bar. One hit removes them:</p>
             <ul>
-                <li><strong>Jumping on top</strong> - Classic platformer stomp</li>
-                <li><strong>Projectiles</strong> - Shooting (if enabled)</li>
+                <li><strong>Jumping on top</strong>, if the type is stompable</li>
+                <li><strong>A player projectile</strong>, if the player has them switched on</li>
             </ul>
+            <p>Give the type a <strong>Death Particle Effect</strong> for a puff or an explosion when it goes.</p>
+
+            <h4>Size And Hitbox</h4>
+            <p><strong>Width</strong> and <strong>Height</strong> set how big the enemy is drawn. The <strong>Hitbox</strong> fields set the part that actually touches the player, and left empty they match the sprite. Press <strong>H</strong> while play testing to see hitboxes on screen. To resize one placed enemy without changing the type, click it in the level and drag the square on its corner.</p>
 
             <h4>Game Design Tip</h4>
-            <p><strong>Enemy placement is puzzle design!</strong></p>
+            <p><strong>Enemy placement is puzzle design.</strong></p>
             <ul>
-                <li><strong>Patrol enemies</strong> - Great for timing challenges over gaps</li>
-                <li><strong>Jumpers</strong> - Block vertical paths, require timing</li>
-                <li><strong>Chasers</strong> - Create tension, force quick decisions</li>
-                <li><strong>Stationary</strong> - Predictable hazards, good for learning</li>
+                <li><strong>Pacing enemies</strong> - Timing challenges over gaps</li>
+                <li><strong>Jumpers</strong> - Block a vertical path and force patience</li>
+                <li><strong>Followers</strong> - Create tension and quick decisions</li>
+                <li><strong>Turrets</strong> - A stationary enemy firing in every direction makes a room dangerous without moving an inch</li>
             </ul>
-            <p>Introduce each enemy type in a safe environment before using it in dangerous situations!</p>
+            <p>Introduce each kind somewhere safe before using it over a pit.</p>
 
-            <div class="help-tip"><p>Mix behaviors! A patrol enemy near a jumper creates complex, interesting challenges.</p></div>
+            <div class="help-tip"><p>Start a shooting enemy slow: one projectile every 2 seconds, speed 3 or 4. Fast projectiles are hard to read, and a player who cannot see what hit them just feels cheated.</p></div>
         `
     },
     objectTemplates: {
@@ -784,7 +801,7 @@ const helpContent = {
             <h4>Type-Specific Settings</h4>
             <p>Different object types have unique options:</p>
             <ul>
-                <li><strong>Enemies:</strong> Behavior, speed, health, damage</li>
+                <li><strong>Enemies:</strong> Movement, speed, damage, projectiles</li>
                 <li><strong>Collectibles:</strong> Point value</li>
                 <li><strong>Powerups:</strong> Effect type, duration, amount</li>
             </ul>
