@@ -3885,15 +3885,15 @@ ${includeComments ? `    // ═════════════════�
     }
 
     // Object templates (define behaviors and properties)
-    var enemyTemplates = ${JSON.stringify(enemyTemplates)};
-    var collectibleTemplates = ${JSON.stringify(collectibleTemplates)};
-    var hazardTemplates = ${JSON.stringify(hazardTemplates)};
-    var powerupTemplates = ${JSON.stringify(powerupTemplates)};
-    var springTemplates = ${JSON.stringify(springTemplates)};
-    var movingPlatformTemplates = ${JSON.stringify(movingPlatformTemplates)};
-    var crateTemplates = ${JSON.stringify(crateTemplates)};
-    var ladderTemplates = ${JSON.stringify(ladderTemplates)};
-    var conveyorTemplates = ${JSON.stringify(conveyorTemplates)};
+    var enemyTemplates = ${JSON.stringify(typeof enemyTemplates !== 'undefined' ? enemyTemplates : [])};
+    var collectibleTemplates = ${JSON.stringify(typeof collectibleTemplates !== 'undefined' ? collectibleTemplates : [])};
+    var hazardTemplates = ${JSON.stringify(typeof hazardTemplates !== 'undefined' ? hazardTemplates : [])};
+    var powerupTemplates = ${JSON.stringify(typeof powerupTemplates !== 'undefined' ? powerupTemplates : [])};
+    var springTemplates = ${JSON.stringify(typeof springTemplates !== 'undefined' ? springTemplates : [])};
+    var movingPlatformTemplates = ${JSON.stringify(typeof movingPlatformTemplates !== 'undefined' ? movingPlatformTemplates : [])};
+    var crateTemplates = ${JSON.stringify(typeof crateTemplates !== 'undefined' ? crateTemplates : [])};
+    var ladderTemplates = ${JSON.stringify(typeof ladderTemplates !== 'undefined' ? ladderTemplates : [])};
+    var conveyorTemplates = ${JSON.stringify(typeof conveyorTemplates !== 'undefined' ? conveyorTemplates : [])};
 
     // Background layers can drift on their own (pixels per second, clouds that
     // keep moving while the player stands still) and choose how repeated copies
@@ -4031,10 +4031,10 @@ ${includeComments ? `    // ═════════════════�
         if (platformCornerShape(obj, x, y, w, h)) ctx.stroke();
         else ctx.strokeRect(x, y, w, h);
     }
-    var npcTemplates = ${JSON.stringify(npcTemplates)};
-    var doorTemplates = ${JSON.stringify(doorTemplates)};
-    var mysteryBlockTemplates = ${JSON.stringify(mysteryBlockTemplates)};
-    var terrainZoneTemplates = ${JSON.stringify(terrainZoneTemplates)};
+    var npcTemplates = ${JSON.stringify(typeof npcTemplates !== 'undefined' ? npcTemplates : [])};
+    var doorTemplates = ${JSON.stringify(typeof doorTemplates !== 'undefined' ? doorTemplates : [])};
+    var mysteryBlockTemplates = ${JSON.stringify(typeof mysteryBlockTemplates !== 'undefined' ? mysteryBlockTemplates : [])};
+    var terrainZoneTemplates = ${JSON.stringify(typeof terrainZoneTemplates !== 'undefined' ? terrainZoneTemplates : [])};
 
     // Preload particle effects now that templates are defined
     preloadParticleEffects();
