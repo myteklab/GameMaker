@@ -855,6 +855,8 @@ const helpContent = {
                 <li><strong>Jump lets go of the ladder</strong> - On by default. Turn it off and the only way off is to climb or step away, which makes a long ladder feel like a commitment</li>
                 <li><strong>Height</strong> - The type's height. Drag the corner handle on a placed ladder to resize that one on its own, which is usually what you want</li>
                 <li><strong>Tile</strong> - A tileset tile repeats down the ladder rather than stretching</li>
+                <li><strong>Texture</strong> - Stretch to fit pulls one copy of your art over the whole ladder, which looks wrong on a tall one. Repeat draws it over and over down the ladder instead, and <strong>Repeat Size</strong> says how tall one copy is in tiles: set 3 if your image is a three-rung section</li>
+                <li><strong>Climbing Sound</strong> - Plays again every half tile climbed, so it keeps time with Climb Speed instead of running at a fixed rate</li>
             </ul>
 
             <h4>Level Design</h4>

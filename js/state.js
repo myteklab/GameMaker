@@ -544,6 +544,8 @@ let crateTemplates = [
         width: 32,
         height: 32,
         pushSpeed: 2,          // pixels per frame while being shoved
+        textureFit: 'repeat',  // crates have tiled past one tile since they shipped
+        repeatTiles: 1,
         tileKey: '',
         color: '#a9743f',
         symbol: '',            // empty = draw planks
@@ -565,9 +567,12 @@ let ladderTemplates = [
         height: 96,
         climbSpeed: 2,         // pixels per frame up or down
         jumpOff: true,         // jump detaches from the ladder
+        textureFit: 'stretch', // 'stretch' or 'repeat' down the ladder
+        repeatTiles: 1,        // tiles per copy when repeating
         tileKey: '',
         color: '#c8913c',
-        grabSound: ''
+        grabSound: '',
+        climbSound: ''         // repeats as the player climbs, like footsteps
     }
 ];
 
@@ -586,6 +591,8 @@ let conveyorTemplates = [
         direction: 'right',     // 'right', 'left', 'up', 'down' (up/down are top-down only)
         collisionMode: 'solid', // 'solid' or 'oneway', platformer only
         affectsEnemies: false,
+        textureFit: 'stretch',  // 'stretch' or 'repeat' along the belt
+        repeatTiles: 1,
         tileKey: '',
         color: '#5a6672',
         moveSound: ''

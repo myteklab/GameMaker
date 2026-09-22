@@ -2656,6 +2656,20 @@
             </div>
         </div>
         <div class="form-row">
+            <div class="form-group">
+                <label>Texture</label>
+                <select id="crate-template-texturefit" onchange="toggleRepeatTiles('crate')">
+                    <option value="stretch">Stretch to fit</option>
+                    <option value="repeat" selected>Repeat</option>
+                </select>
+            </div>
+            <div class="form-group" id="crate-repeat-tiles-group">
+                <label>Repeat Size (tiles)</label>
+                <input type="number" id="crate-template-repeattiles" value="1" min="1" max="16">
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">How big one copy of your art is, in tiles.</span>
+            </div>
+        </div>
+        <div class="form-row">
             <div class="form-group" style="flex: 0.3;">
                 <label>Symbol</label>
                 <input type="text" id="crate-template-symbol" value="" maxlength="2" placeholder="none">
@@ -2769,6 +2783,20 @@
                 <span>Jump lets go of the ladder</span>
             </label>
         </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Texture</label>
+                <select id="ladder-template-texturefit" onchange="toggleRepeatTiles('ladder')">
+                    <option value="stretch" selected>Stretch to fit</option>
+                    <option value="repeat">Repeat</option>
+                </select>
+            </div>
+            <div class="form-group" id="ladder-repeat-tiles-group">
+                <label>Repeat Size (tiles)</label>
+                <input type="number" id="ladder-template-repeattiles" value="1" min="1" max="16">
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">How tall one copy of your art is. A three-rung ladder image is 3.</span>
+            </div>
+        </div>
         <div class="form-group" style="max-width: 160px;">
             <label>Fallback Color</label>
             <input type="color" id="ladder-template-color" value="#c8913c">
@@ -2783,6 +2811,18 @@
                 <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('ladder-template-sound')" style="background: var(--success); display: none;">&#9654;</button>
                 <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('ladder-template-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
             </div>
+        </div>
+        <div class="form-group">
+            <label><svg class="gm-icon"><use href="#icon-volume"/></svg> Climbing Sound</label>
+            <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <input type="text" id="ladder-template-climb-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 120px;" onchange="updateSoundButtonStates('ladder-template-climb-sound')">
+                <button type="button" class="browse-library-btn" onclick="openAssetPicker('ladder-template-climb-sound', 'sounds')">Browse</button>
+                <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('ladder-template-climb-sound', 'Ladder Climbing Sound')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('ladder-template-climb-sound')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('ladder-template-climb-sound')" style="background: var(--success); display: none;">&#9654;</button>
+                <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('ladder-template-climb-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+            </div>
+            <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Plays again every half tile climbed, so it keeps time with Climb Speed.</span>
         </div>
         <div class="modal-buttons">
             <button class="btn" onclick="saveLadderTemplate()">Save</button>
@@ -2887,6 +2927,20 @@
                 <input type="checkbox" id="conveyor-template-affects-enemies" style="width: auto;">
                 <span>Carries enemies too</span>
             </label>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Texture</label>
+                <select id="conveyor-template-texturefit" onchange="toggleRepeatTiles('conveyor')">
+                    <option value="stretch" selected>Stretch to fit</option>
+                    <option value="repeat">Repeat</option>
+                </select>
+            </div>
+            <div class="form-group" id="conveyor-repeat-tiles-group">
+                <label>Repeat Size (tiles)</label>
+                <input type="number" id="conveyor-template-repeattiles" value="1" min="1" max="16">
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">How wide one copy of your art is, in tiles.</span>
+            </div>
         </div>
         <div class="form-group" style="max-width: 160px;">
             <label>Fallback Color</label>

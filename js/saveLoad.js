@@ -278,6 +278,8 @@ function loadProjectData(data) {
     if (data.crateTemplates && data.crateTemplates.length > 0) {
         crateTemplates = data.crateTemplates.map(t => ({
             ...t,
+            textureFit: t.textureFit || 'repeat',
+            repeatTiles: Math.max(1, parseInt(t.repeatTiles) || 1),
             pushSpeed: t.pushSpeed || 2,
             tileKey: t.tileKey || '',
             pushSound: t.pushSound || '',
@@ -288,8 +290,11 @@ function loadProjectData(data) {
     if (data.ladderTemplates && data.ladderTemplates.length > 0) {
         ladderTemplates = data.ladderTemplates.map(t => ({
             ...t,
+            textureFit: t.textureFit || 'stretch',
+            repeatTiles: Math.max(1, parseInt(t.repeatTiles) || 1),
             climbSpeed: t.climbSpeed || 2,
             jumpOff: t.jumpOff !== false,
+            climbSound: t.climbSound || '',
             tileKey: t.tileKey || '',
             grabSound: t.grabSound || ''
         }));
@@ -298,6 +303,8 @@ function loadProjectData(data) {
     if (data.conveyorTemplates && data.conveyorTemplates.length > 0) {
         conveyorTemplates = data.conveyorTemplates.map(t => ({
             ...t,
+            textureFit: t.textureFit || 'stretch',
+            repeatTiles: Math.max(1, parseInt(t.repeatTiles) || 1),
             beltSpeed: t.beltSpeed || 2,
             direction: t.direction || 'right',
             collisionMode: t.collisionMode || 'solid',

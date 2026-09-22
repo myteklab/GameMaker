@@ -366,12 +366,24 @@ function drawGameObjects() {
 
     const trimsPadding = (type) => type === 'ladder' || type === 'conveyor' || type === 'crate';
 
+    // Mirrors the engine's textureStep: a ladder repeats down its length, a belt
+    // along its length, a crate both ways, measured in tiles.
+    const textureStep = (obj, template, dw, dh, cell) => {
+        const span = Math.max(1, parseInt(template?.repeatTiles) || 1) * cell;
+        if (obj.type === 'ladder') return { x: dw, y: Math.min(span, dh) };
+        if (obj.type === 'conveyor') return { x: Math.min(span, dw), y: dh };
+        return { x: Math.min(span, dw), y: Math.min(span, dh) };
+    };
+
+    const repeatsTexture = (obj, template) => trimsPadding(obj.type) && template?.textureFit === 'repeat';
+
     // Repeat one source frame across a destination box, a tile at a time, cropping
     // the last row and column instead of squashing them. Mirrors the game's
     // tileImageAcross so a crate looks the same in both.
-    const tileImageAcross = (img, srcX, srcY, srcW, srcH, dx, dy, dw, dh, cell) => {
-        const stepX = Math.min(cell, dw);
-        const stepY = Math.min(cell, dh);
+    const tileImageAcross = (img, srcX, srcY, srcW, srcH, dx, dy, dw, dh, step) => {
+        const stepX = step.x;
+        const stepY = step.y;
+        if (stepX <= 0 || stepY <= 0) return;
         for (let y = 0; y < dh; y += stepY) {
             for (let x = 0; x < dw; x += stepX) {
                 const cellW = Math.min(stepX, dw - x);
@@ -650,8 +662,8 @@ function drawGameObjects() {
                 }
                 ctx.imageSmoothingEnabled = false;
                 const cell = tileSize * zoom;
-                if (obj.type === 'crate' && (objWidth > cell || objHeight > cell)) {
-                    tileImageAcross(cached.img, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objWidth, objHeight, cell);
+                if (repeatsTexture(obj, template)) {
+                    tileImageAcross(cached.img, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objWidth, objHeight, textureStep(obj, template, objWidth, objHeight, cell));
                 } else {
                     ctx.drawImage(
                         cached.img,
@@ -686,8 +698,8 @@ function drawGameObjects() {
                 if (cached.loaded && cached.img) {
                     ctx.imageSmoothingEnabled = false;
                     const cell = tileSize * zoom;
-                    if (obj.type === 'crate' && (objWidth > cell || objHeight > cell)) {
-                        tileImageAcross(cached.img, 0, 0, cached.img.naturalWidth, cached.img.naturalHeight, screenX, screenY, objWidth, objHeight, cell);
+                    if (trimsPadding(obj.type)) {
+                        tileImageAcross(cached.img, 0, 0, cached.img.naturalWidth, cached.img.naturalHeight, screenX, screenY, objWidth, objHeight, textureStep(obj, template, objWidth, objHeight, cell));
                     } else {
                         ctx.drawImage(cached.img, screenX, screenY, objWidth, objHeight);
                     }
@@ -699,8 +711,8 @@ function drawGameObjects() {
                 const tile = tiles[tileKey];
                 ctx.imageSmoothingEnabled = false;
                 const cell = tileSize * zoom;
-                if (obj.type === 'crate' && (objWidth > cell || objHeight > cell)) {
-                    tileImageAcross(tilesetImage, tile.x, tile.y, tileSize, tileSize, screenX, screenY, objWidth, objHeight, cell);
+                if (trimsPadding(obj.type)) {
+                    tileImageAcross(tilesetImage, tile.x, tile.y, tileSize, tileSize, screenX, screenY, objWidth, objHeight, textureStep(obj, template, objWidth, objHeight, cell));
                 } else {
                     ctx.drawImage(
                         tilesetImage,

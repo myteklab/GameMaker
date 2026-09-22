@@ -3205,6 +3205,9 @@ function fillCrateForm(t) {
     document.getElementById('crate-template-height').value = t.height || 32;
     document.getElementById('crate-template-pushspeed').value = t.pushSpeed !== undefined ? t.pushSpeed : 2;
     document.getElementById('crate-template-symbol').value = t.symbol || '';
+    document.getElementById('crate-template-texturefit').value = t.textureFit || 'repeat';
+    document.getElementById('crate-template-repeattiles').value = Math.max(1, parseInt(t.repeatTiles) || 1);
+    toggleRepeatTiles('crate');
     document.getElementById('crate-template-color').value = t.color || '#a9743f';
     document.getElementById('crate-template-push-sound').value = t.pushSound || '';
     document.getElementById('crate-template-land-sound').value = t.landSound || '';
@@ -3251,6 +3254,8 @@ function saveCrateTemplate() {
         pushSpeed: Math.max(0.25, parseFloat(document.getElementById('crate-template-pushspeed').value) || 2),
         tileKey: document.getElementById('crate-template-tile').value || '',
         symbol: document.getElementById('crate-template-symbol').value || '',
+        textureFit: document.getElementById('crate-template-texturefit').value || 'repeat',
+        repeatTiles: Math.max(1, parseInt(document.getElementById('crate-template-repeattiles').value) || 1),
         color: document.getElementById('crate-template-color').value || '#a9743f',
         pushSound: document.getElementById('crate-template-push-sound').value.trim(),
         landSound: document.getElementById('crate-template-land-sound').value.trim()
@@ -3342,6 +3347,14 @@ function renderLadderTemplatesList() {
     container.innerHTML = html;
 }
 
+// Repeat Size means nothing when the texture is stretched, so it only shows
+// when it does something.
+function toggleRepeatTiles(kind) {
+    const fit = document.getElementById(kind + '-template-texturefit');
+    const group = document.getElementById(kind + '-repeat-tiles-group');
+    if (fit && group) group.style.display = fit.value === 'repeat' ? '' : 'none';
+}
+
 function fillLadderForm(t) {
     document.getElementById('ladder-template-name').value = t.name || '';
     document.getElementById('ladder-template-sprite').value = t.sprite || '';
@@ -3352,12 +3365,19 @@ function fillLadderForm(t) {
     document.getElementById('ladder-template-height').value = t.height || 96;
     document.getElementById('ladder-template-climbspeed').value = t.climbSpeed || 2;
     document.getElementById('ladder-template-jumpoff').checked = t.jumpOff !== false;
+    document.getElementById('ladder-template-texturefit').value = t.textureFit || 'stretch';
+    document.getElementById('ladder-template-repeattiles').value = Math.max(1, parseInt(t.repeatTiles) || 1);
+    toggleRepeatTiles('ladder');
     document.getElementById('ladder-template-color').value = t.color || '#c8913c';
     document.getElementById('ladder-template-sound').value = t.grabSound || '';
+    document.getElementById('ladder-template-climb-sound').value = t.climbSound || '';
     populateObjectTileSelector('ladder-template-tile');
     document.getElementById('ladder-template-tile').value = t.tileKey || '';
     updateObjectTilePreview('ladder-template-tile', 'ladder-template-tile-preview');
-    if (typeof updateSoundButtonStates === 'function') updateSoundButtonStates('ladder-template-sound');
+    if (typeof updateSoundButtonStates === 'function') {
+        updateSoundButtonStates('ladder-template-sound');
+        updateSoundButtonStates('ladder-template-climb-sound');
+    }
 }
 
 function showAddLadderTemplate() {
@@ -3394,8 +3414,11 @@ function saveLadderTemplate() {
         climbSpeed: Math.max(0.5, parseFloat(document.getElementById('ladder-template-climbspeed').value) || 2),
         jumpOff: document.getElementById('ladder-template-jumpoff').checked,
         tileKey: document.getElementById('ladder-template-tile').value || '',
+        textureFit: document.getElementById('ladder-template-texturefit').value || 'stretch',
+        repeatTiles: Math.max(1, parseInt(document.getElementById('ladder-template-repeattiles').value) || 1),
         color: document.getElementById('ladder-template-color').value || '#c8913c',
-        grabSound: document.getElementById('ladder-template-sound').value.trim()
+        grabSound: document.getElementById('ladder-template-sound').value.trim(),
+        climbSound: document.getElementById('ladder-template-climb-sound').value.trim()
     };
 
     if (editingTemplateId) {
@@ -3499,6 +3522,9 @@ function fillConveyorForm(t) {
     document.getElementById('conveyor-template-direction').value = t.direction || 'right';
     document.getElementById('conveyor-template-collision').value = t.collisionMode || 'solid';
     document.getElementById('conveyor-template-affects-enemies').checked = !!t.affectsEnemies;
+    document.getElementById('conveyor-template-texturefit').value = t.textureFit || 'stretch';
+    document.getElementById('conveyor-template-repeattiles').value = Math.max(1, parseInt(t.repeatTiles) || 1);
+    toggleRepeatTiles('conveyor');
     document.getElementById('conveyor-template-color').value = t.color || '#5a6672';
     document.getElementById('conveyor-template-sound').value = t.moveSound || '';
     populateObjectTileSelector('conveyor-template-tile');
@@ -3555,6 +3581,8 @@ function saveConveyorTemplate() {
         collisionMode: document.getElementById('conveyor-template-collision').value || 'solid',
         affectsEnemies: document.getElementById('conveyor-template-affects-enemies').checked,
         tileKey: document.getElementById('conveyor-template-tile').value || '',
+        textureFit: document.getElementById('conveyor-template-texturefit').value || 'stretch',
+        repeatTiles: Math.max(1, parseInt(document.getElementById('conveyor-template-repeattiles').value) || 1),
         color: document.getElementById('conveyor-template-color').value || '#5a6672',
         moveSound: document.getElementById('conveyor-template-sound').value.trim()
     };

@@ -41,7 +41,7 @@ function collectSfxIds() {
         { arr: typeof doorTemplates !== 'undefined' ? doorTemplates : [], props: ['interactSound'] },
         { arr: typeof mysteryBlockTemplates !== 'undefined' ? mysteryBlockTemplates : [], props: ['hitSound', 'emptyHitSound'] },
         { arr: typeof movingPlatformTemplates !== 'undefined' ? movingPlatformTemplates : [], props: ['moveSound', 'collapseSound'] },
-        { arr: typeof ladderTemplates !== 'undefined' ? ladderTemplates : [], props: ['grabSound'] },
+        { arr: typeof ladderTemplates !== 'undefined' ? ladderTemplates : [], props: ['grabSound', 'climbSound'] },
         { arr: typeof crateTemplates !== 'undefined' ? crateTemplates : [], props: ['pushSound', 'landSound'] },
         { arr: typeof conveyorTemplates !== 'undefined' ? conveyorTemplates : [], props: ['moveSound'] },
         { arr: typeof terrainZoneTemplates !== 'undefined' ? terrainZoneTemplates : [], props: ['entrySound', 'loopSound'] }
@@ -5215,6 +5215,8 @@ ${includeComments ? `    // ═════════════════�
                 // Crate-specific
                 if (obj.type === 'crate') {
                     gameObj.pushSpeed = Math.max(0.25, parseFloat(template.pushSpeed) || 2);
+                    gameObj.textureFit = template.textureFit || 'repeat';
+                    gameObj.repeatTiles = Math.max(1, parseInt(template.repeatTiles) || 1);
                     gameObj.tileKey = template.tileKey || '';
                     gameObj.pushSound = template.pushSound || '';
                     gameObj.landSound = template.landSound || '';
@@ -5227,14 +5229,19 @@ ${includeComments ? `    // ═════════════════�
                 // Ladder-specific
                 if (obj.type === 'ladder') {
                     gameObj.climbSpeed = Math.max(0.5, parseFloat(template.climbSpeed) || 2);
+                    gameObj.textureFit = template.textureFit || 'stretch';
+                    gameObj.repeatTiles = Math.max(1, parseInt(template.repeatTiles) || 1);
                     gameObj.jumpOff = template.jumpOff !== false;
                     gameObj.tileKey = template.tileKey || '';
                     gameObj.grabSound = template.grabSound || '';
+                    gameObj.climbSound = template.climbSound || '';
                 }
 
                 // Conveyor-specific
                 if (obj.type === 'conveyor') {
                     gameObj.beltSpeed = Math.max(0, parseFloat(template.beltSpeed) || 2);
+                    gameObj.textureFit = template.textureFit || 'stretch';
+                    gameObj.repeatTiles = Math.max(1, parseInt(template.repeatTiles) || 1);
                     gameObj.direction = template.direction || 'right';
                     gameObj.collisionMode = template.collisionMode || 'solid';
                     gameObj.affectsEnemies = !!template.affectsEnemies;
@@ -5777,6 +5784,7 @@ ${includeComments ? `    // ═════════════════�
         player.canDoubleJump = false;
         player.jumpKeyHeld = false;
         player.climbing = false;
+        player.climbDistance = 0;
     }
 
     function restartGame() {
@@ -8552,9 +8560,25 @@ ${includeComments ? `        // ────────────────
 
     // Repeat one source frame across a destination box, a tile at a time, with the
     // last row and column cropped rather than squashed.
-    function tileImageAcross(img, srcX, srcY, srcW, srcH, dx, dy, dw, dh) {
-        var stepX = Math.min(RENDER_SIZE, dw);
-        var stepY = Math.min(RENDER_SIZE, dh);
+    // How far one copy of the texture reaches. A ladder repeats down its length
+    // and keeps its full width, a belt repeats along its length and keeps its
+    // height, a crate repeats both ways. Repeat Size is in tiles, so a student
+    // whose art is a three-rung section sets 3 and it never distorts.
+    function textureStep(obj, dw, dh) {
+        var span = Math.max(1, parseInt(obj.repeatTiles) || 1) * RENDER_SIZE;
+        if (obj.type === 'ladder') return { x: dw, y: Math.min(span, dh) };
+        if (obj.type === 'conveyor') return { x: Math.min(span, dw), y: dh };
+        return { x: Math.min(span, dw), y: Math.min(span, dh) };
+    }
+
+    function repeatsTexture(obj) {
+        return trimsPadding(obj.type) && obj.textureFit === 'repeat';
+    }
+
+    function tileImageAcross(img, srcX, srcY, srcW, srcH, dx, dy, dw, dh, step) {
+        var stepX = step ? step.x : Math.min(RENDER_SIZE, dw);
+        var stepY = step ? step.y : Math.min(RENDER_SIZE, dh);
+        if (stepX <= 0 || stepY <= 0) return;
         for (var y = 0; y < dh; y += stepY) {
             for (var x = 0; x < dw; x += stepX) {
                 var cellW = Math.min(stepX, dw - x);
@@ -8844,6 +8868,16 @@ ${includeComments ? `        // ────────────────
         var speed = ladder.climbSpeed || 2;
         player.onGround = false;
         player.canDoubleJump = false;
+
+        // A step sound every half tile climbed, so it keeps time with the climb
+        // speed instead of running at a fixed rate the student cannot feel.
+        if (ladder.climbSound && Math.abs(player.speedY) > 0.01) {
+            player.climbDistance = (player.climbDistance || 0) + Math.abs(player.speedY);
+            if (player.climbDistance >= RENDER_SIZE / 2) {
+                player.climbDistance = 0;
+                playSound(ladder.climbSound);
+            }
+        }
 
         if (upKey) {
             // Stop with the feet level with the top rung, so the head of the
@@ -10511,11 +10545,9 @@ ${includeComments ? `        // ────────────────
                         srcX, srcY, frameWidth, frameHeight,
                         0, 0, objW, objH
                     );
-                } else if (obj.type === 'crate' && (objW > RENDER_SIZE || objH > RENDER_SIZE)) {
-                    // A crate wider or taller than a tile repeats its texture instead
-                    // of smearing one copy across the whole box. At a tile or under
-                    // it is a single draw, exactly as before.
-                    tileImageAcross(sprite, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objW, objH);
+                } else if (repeatsTexture(obj)) {
+                    // Repeat instead of smearing one copy over the whole object.
+                    tileImageAcross(sprite, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objW, objH, textureStep(obj, objW, objH));
                 } else {
                     // Default draw (includes multi-row sprites where direction is handled via srcY)
                     ctx.drawImage(
@@ -10535,12 +10567,13 @@ ${includeComments ? `        // ────────────────
                 var tileDrawn = false;
                 ctx.imageSmoothingEnabled = false;
 
-                // Ladders, belts and crates are drawn bigger than a tile on purpose,
-                // so one tile stretched over the whole thing would smear. Repeat it.
-                var repeatTile = (obj.type === 'ladder' || obj.type === 'conveyor' || obj.type === 'crate');
+                // A tile is one tile big by definition, so these always repeat it
+                // rather than stretching one copy over a long ladder or belt.
+                var repeatTile = trimsPadding(obj.type);
                 if (repeatTile) {
-                    var stepX = (obj.type === 'ladder') ? objW : RENDER_SIZE;
-                    var stepY = (obj.type === 'conveyor') ? objH : RENDER_SIZE;
+                    var tileStep = textureStep(obj, objW, objH);
+                    var stepX = tileStep.x;
+                    var stepY = tileStep.y;
                     for (var tty = 0; tty < Math.ceil(objH / stepY); tty++) {
                         for (var ttx = 0; ttx < Math.ceil(objW / stepX); ttx++) {
                             var cellX = screenX + ttx * stepX;
