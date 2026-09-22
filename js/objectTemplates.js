@@ -273,15 +273,15 @@ function renderEnemyTemplatesList() {
 
 // Only the fields the chosen aim actually uses: a fan needs how many and how
 // wide, every direction needs only how many, a fixed angle needs the angle.
-function toggleEnemyShootOptions() {
-    const on = document.getElementById('enemy-template-shoot-enabled').checked;
-    const options = document.getElementById('enemy-shoot-options');
+function toggleEnemyProjectileOptions() {
+    const on = document.getElementById('enemy-template-projectile-enabled').checked;
+    const options = document.getElementById('enemy-projectile-options');
     if (options) options.style.display = on ? 'block' : 'none';
-    const aim = document.getElementById('enemy-template-shoot-aim').value;
+    const aim = document.getElementById('enemy-template-projectile-aim').value;
     const show = (id, yes) => { const el = document.getElementById(id); if (el) el.style.display = yes ? 'block' : 'none'; };
-    show('enemy-shoot-angle-group', aim === 'angle');
-    show('enemy-shoot-count-group', aim === 'spread' || aim === 'radial');
-    show('enemy-shoot-spread-group', aim === 'spread');
+    show('enemy-projectile-angle-group', aim === 'angle');
+    show('enemy-projectile-count-group', aim === 'spread' || aim === 'radial');
+    show('enemy-projectile-spread-group', aim === 'spread');
 }
 
 function showAddEnemyTemplate() {
@@ -301,21 +301,21 @@ function showAddEnemyTemplate() {
     document.getElementById('enemy-template-collision-height').value = '';
     document.getElementById('enemy-template-collision-offset-y').value = '0';
     document.getElementById('enemy-template-behavior').value = 'pace';
-    document.getElementById('enemy-template-shoot-enabled').checked = false;
-    document.getElementById('enemy-template-shoot-aim').value = 'facing';
-    document.getElementById('enemy-template-shoot-angle').value = '0';
-    document.getElementById('enemy-template-shoot-count').value = '3';
-    document.getElementById('enemy-template-shoot-spread').value = '30';
-    document.getElementById('enemy-template-shoot-interval').value = '2';
-    document.getElementById('enemy-template-shoot-range').value = '0';
-    document.getElementById('enemy-template-shoot-speed').value = '4';
-    document.getElementById('enemy-template-shoot-damage').value = '1';
-    document.getElementById('enemy-template-shoot-lifetime').value = '3';
-    document.getElementById('enemy-template-shoot-size').value = '10';
-    document.getElementById('enemy-template-shoot-color').value = '#ff6b6b';
-    document.getElementById('enemy-template-shoot-sprite').value = '';
-    document.getElementById('enemy-template-shoot-sound').value = '';
-    toggleEnemyShootOptions();
+    document.getElementById('enemy-template-projectile-enabled').checked = false;
+    document.getElementById('enemy-template-projectile-aim').value = 'facing';
+    document.getElementById('enemy-template-projectile-angle').value = '0';
+    document.getElementById('enemy-template-projectile-count').value = '3';
+    document.getElementById('enemy-template-projectile-spread').value = '30';
+    document.getElementById('enemy-template-projectile-interval').value = '2';
+    document.getElementById('enemy-template-projectile-range').value = '0';
+    document.getElementById('enemy-template-projectile-speed').value = '4';
+    document.getElementById('enemy-template-projectile-damage').value = '1';
+    document.getElementById('enemy-template-projectile-lifetime').value = '3';
+    document.getElementById('enemy-template-projectile-size').value = '10';
+    document.getElementById('enemy-template-projectile-color').value = '#ff6b6b';
+    document.getElementById('enemy-template-projectile-sprite').value = '';
+    document.getElementById('enemy-template-projectile-sound').value = '';
+    toggleEnemyProjectileOptions();
     document.getElementById('enemy-template-pace-distance').value = '3';
     const paceAxisEl = document.getElementById('enemy-template-pace-axis');
     if (paceAxisEl) paceAxisEl.value = 'horizontal';
@@ -365,21 +365,21 @@ function editEnemyTemplate(id) {
     document.getElementById('enemy-template-collision-height').value = template.collisionHeight || '';
     document.getElementById('enemy-template-collision-offset-y').value = template.collisionOffsetY || 0;
     document.getElementById('enemy-template-behavior').value = template.behavior || 'pace';
-    document.getElementById('enemy-template-shoot-enabled').checked = template.shootEnabled === true;
-    document.getElementById('enemy-template-shoot-aim').value = template.shootAim || 'facing';
-    document.getElementById('enemy-template-shoot-angle').value = template.shootAngle || 0;
-    document.getElementById('enemy-template-shoot-count').value = template.shootCount || 3;
-    document.getElementById('enemy-template-shoot-spread').value = template.shootSpread || 30;
-    document.getElementById('enemy-template-shoot-interval').value = template.shootInterval || 2;
-    document.getElementById('enemy-template-shoot-range').value = template.shootRange || 0;
-    document.getElementById('enemy-template-shoot-speed').value = template.shootSpeed || 4;
-    document.getElementById('enemy-template-shoot-damage').value = template.shootDamage || 1;
-    document.getElementById('enemy-template-shoot-lifetime').value = template.shootLifetime || 3;
-    document.getElementById('enemy-template-shoot-size').value = template.shootSize || 10;
-    document.getElementById('enemy-template-shoot-color').value = template.shootColor || '#ff6b6b';
-    document.getElementById('enemy-template-shoot-sprite').value = template.shootSprite || '';
-    document.getElementById('enemy-template-shoot-sound').value = template.shootSound || '';
-    toggleEnemyShootOptions();
+    document.getElementById('enemy-template-projectile-enabled').checked = template.projectileEnabled === true;
+    document.getElementById('enemy-template-projectile-aim').value = template.projectileAim || 'facing';
+    document.getElementById('enemy-template-projectile-angle').value = template.projectileAngle || 0;
+    document.getElementById('enemy-template-projectile-count').value = template.projectileCount || 3;
+    document.getElementById('enemy-template-projectile-spread').value = template.projectileSpread || 30;
+    document.getElementById('enemy-template-projectile-interval').value = template.projectileInterval || 2;
+    document.getElementById('enemy-template-projectile-range').value = template.projectileRange || 0;
+    document.getElementById('enemy-template-projectile-speed').value = template.projectileSpeed || 4;
+    document.getElementById('enemy-template-projectile-damage').value = template.projectileDamage || 1;
+    document.getElementById('enemy-template-projectile-lifetime').value = template.projectileLifetime || 3;
+    document.getElementById('enemy-template-projectile-size').value = template.projectileSize || 10;
+    document.getElementById('enemy-template-projectile-color').value = template.projectileColor || '#ff6b6b';
+    document.getElementById('enemy-template-projectile-sprite').value = template.projectileSprite || '';
+    document.getElementById('enemy-template-projectile-sound').value = template.projectileSound || '';
+    toggleEnemyProjectileOptions();
     document.getElementById('enemy-template-pace-distance').value = template.paceDistance || 3;
     const paceAxisEl = document.getElementById('enemy-template-pace-axis');
     if (paceAxisEl) paceAxisEl.value = template.paceAxis || 'horizontal';
@@ -589,20 +589,20 @@ function saveEnemyTemplate() {
         collisionHeight: parseInt(document.getElementById('enemy-template-collision-height').value) || 0,
         collisionOffsetY: parseInt(document.getElementById('enemy-template-collision-offset-y').value) || 0,
         behavior: document.getElementById('enemy-template-behavior').value,
-        shootEnabled: document.getElementById('enemy-template-shoot-enabled').checked,
-        shootAim: document.getElementById('enemy-template-shoot-aim').value || 'facing',
-        shootAngle: parseFloat(document.getElementById('enemy-template-shoot-angle').value) || 0,
-        shootCount: Math.max(1, Math.min(12, parseInt(document.getElementById('enemy-template-shoot-count').value) || 3)),
-        shootSpread: Math.max(5, Math.min(180, parseFloat(document.getElementById('enemy-template-shoot-spread').value) || 30)),
-        shootInterval: Math.max(0.2, Math.min(20, parseFloat(document.getElementById('enemy-template-shoot-interval').value) || 2)),
-        shootRange: Math.max(0, Math.min(40, parseFloat(document.getElementById('enemy-template-shoot-range').value) || 0)),
-        shootSpeed: Math.max(0.5, Math.min(20, parseFloat(document.getElementById('enemy-template-shoot-speed').value) || 4)),
-        shootDamage: Math.max(1, Math.min(10, parseInt(document.getElementById('enemy-template-shoot-damage').value) || 1)),
-        shootLifetime: Math.max(0.5, Math.min(20, parseFloat(document.getElementById('enemy-template-shoot-lifetime').value) || 3)),
-        shootSize: Math.max(4, Math.min(64, parseInt(document.getElementById('enemy-template-shoot-size').value) || 10)),
-        shootColor: document.getElementById('enemy-template-shoot-color').value || '#ff6b6b',
-        shootSprite: document.getElementById('enemy-template-shoot-sprite').value.trim(),
-        shootSound: document.getElementById('enemy-template-shoot-sound').value.trim(),
+        projectileEnabled: document.getElementById('enemy-template-projectile-enabled').checked,
+        projectileAim: document.getElementById('enemy-template-projectile-aim').value || 'facing',
+        projectileAngle: parseFloat(document.getElementById('enemy-template-projectile-angle').value) || 0,
+        projectileCount: Math.max(1, Math.min(12, parseInt(document.getElementById('enemy-template-projectile-count').value) || 3)),
+        projectileSpread: Math.max(5, Math.min(180, parseFloat(document.getElementById('enemy-template-projectile-spread').value) || 30)),
+        projectileInterval: Math.max(0.2, Math.min(20, parseFloat(document.getElementById('enemy-template-projectile-interval').value) || 2)),
+        projectileRange: Math.max(0, Math.min(40, parseFloat(document.getElementById('enemy-template-projectile-range').value) || 0)),
+        projectileSpeed: Math.max(0.5, Math.min(20, parseFloat(document.getElementById('enemy-template-projectile-speed').value) || 4)),
+        projectileDamage: Math.max(1, Math.min(10, parseInt(document.getElementById('enemy-template-projectile-damage').value) || 1)),
+        projectileLifetime: Math.max(0.5, Math.min(20, parseFloat(document.getElementById('enemy-template-projectile-lifetime').value) || 3)),
+        projectileSize: Math.max(4, Math.min(64, parseInt(document.getElementById('enemy-template-projectile-size').value) || 10)),
+        projectileColor: document.getElementById('enemy-template-projectile-color').value || '#ff6b6b',
+        projectileSprite: document.getElementById('enemy-template-projectile-sprite').value.trim(),
+        projectileSound: document.getElementById('enemy-template-projectile-sound').value.trim(),
         paceDistance: parseInt(document.getElementById('enemy-template-pace-distance').value) || 3,
         paceAxis: document.getElementById('enemy-template-pace-axis')?.value || 'horizontal',
         speed: parseFloat(document.getElementById('enemy-template-speed').value) || 2,

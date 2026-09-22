@@ -1950,17 +1950,17 @@
             </div>
 
             <div class="editor-column">
-                <div class="editor-section-header" style="margin-top: 0;"><svg class="gm-icon"><use href="#icon-swords"/></svg> Shooting</div>
+                <div class="editor-section-header" style="margin-top: 0;"><svg class="gm-icon"><use href="#icon-swords"/></svg> Projectiles</div>
             <div class="form-group" style="margin-top: 10px;">
                 <label style="display: flex; align-items: center; gap: 6px;">
-                    <input type="checkbox" id="enemy-template-shoot-enabled" style="width: 16px; height: 16px;" onchange="toggleEnemyShootOptions()">
-                    This enemy shoots
+                    <input type="checkbox" id="enemy-template-projectile-enabled" style="width: 16px; height: 16px;" onchange="toggleEnemyProjectileOptions()">
+                    This enemy fires projectiles
                 </label>
-                <div id="enemy-shoot-options" style="display: none; margin-top: 8px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 6px;">
+                <div id="enemy-projectile-options" style="display: none; margin-top: 8px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 6px;">
                     <div class="form-row">
                         <div class="form-group" style="flex: 1 1 150px; min-width: 150px;">
                             <label>Aim</label>
-                            <select id="enemy-template-shoot-aim" onchange="toggleEnemyShootOptions()">
+                            <select id="enemy-template-projectile-aim" onchange="toggleEnemyProjectileOptions()">
                                 <option value="facing">The way it faces</option>
                                 <option value="player">Straight at the player</option>
                                 <option value="angle">A fixed angle</option>
@@ -1968,67 +1968,67 @@
                                 <option value="radial">Every direction</option>
                             </select>
                         </div>
-                        <div class="form-group" id="enemy-shoot-angle-group" style="display: none;">
+                        <div class="form-group" id="enemy-projectile-angle-group" style="display: none;">
                             <label>Angle</label>
-                            <input type="number" id="enemy-template-shoot-angle" value="0" min="-360" max="360" title="Degrees: 0 points right, 90 points down, 180 points left, 270 points up">
+                            <input type="number" id="enemy-template-projectile-angle" value="0" min="-360" max="360" title="Degrees: 0 points right, 90 points down, 180 points left, 270 points up">
                         </div>
-                        <div class="form-group" id="enemy-shoot-count-group" style="display: none;">
+                        <div class="form-group" id="enemy-projectile-count-group" style="display: none;">
                             <label>How many</label>
-                            <input type="number" id="enemy-template-shoot-count" value="3" min="1" max="12">
+                            <input type="number" id="enemy-template-projectile-count" value="3" min="1" max="12">
                         </div>
-                        <div class="form-group" id="enemy-shoot-spread-group" style="display: none;">
+                        <div class="form-group" id="enemy-projectile-spread-group" style="display: none;">
                             <label>Fan width</label>
-                            <input type="number" id="enemy-template-shoot-spread" value="30" min="5" max="180" title="Degrees from the first shot to the last">
+                            <input type="number" id="enemy-template-projectile-spread" value="30" min="5" max="180" title="Degrees from the first shot to the last">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Every (sec)</label>
-                            <input type="number" id="enemy-template-shoot-interval" value="2" min="0.2" max="20" step="0.1">
+                            <input type="number" id="enemy-template-projectile-interval" value="2" min="0.2" max="20" step="0.1">
                         </div>
                         <div class="form-group">
                             <label>Within (tiles)</label>
-                            <input type="number" id="enemy-template-shoot-range" value="0" min="0" max="40" title="0 shoots however far away the player is">
+                            <input type="number" id="enemy-template-projectile-range" value="0" min="0" max="40" title="0 fires however far away the player is">
                         </div>
                         <div class="form-group">
-                            <label>Shot speed</label>
-                            <input type="number" id="enemy-template-shoot-speed" value="4" min="0.5" max="20" step="0.5">
+                            <label>Speed</label>
+                            <input type="number" id="enemy-template-projectile-speed" value="4" min="0.5" max="20" step="0.5">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Damage</label>
-                            <input type="number" id="enemy-template-shoot-damage" value="1" min="1" max="10">
+                            <input type="number" id="enemy-template-projectile-damage" value="1" min="1" max="10">
                         </div>
                         <div class="form-group">
                             <label>Lasts (sec)</label>
-                            <input type="number" id="enemy-template-shoot-lifetime" value="3" min="0.5" max="20" step="0.5">
+                            <input type="number" id="enemy-template-projectile-lifetime" value="3" min="0.5" max="20" step="0.5">
                         </div>
                         <div class="form-group">
-                            <label>Shot size</label>
-                            <input type="number" id="enemy-template-shoot-size" value="10" min="4" max="64">
+                            <label>Size</label>
+                            <input type="number" id="enemy-template-projectile-size" value="10" min="4" max="64">
                         </div>
                         <div class="form-group">
-                            <label>Shot color</label>
-                            <input type="color" id="enemy-template-shoot-color" value="#ff6b6b">
+                            <label>Color</label>
+                            <input type="color" id="enemy-template-projectile-color" value="#ff6b6b">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Shot sprite (optional)</label>
+                        <label>Sprite (optional)</label>
                         <div class="input-with-browse">
-                            <input type="text" id="enemy-template-shoot-sprite" placeholder="https://...">
-                            <button type="button" class="browse-library-btn" onclick="openAssetPicker('enemy-template-shoot-sprite', 'sprites')">Browse</button>
+                            <input type="text" id="enemy-template-projectile-sprite" placeholder="https://...">
+                            <button type="button" class="browse-library-btn" onclick="openAssetPicker('enemy-template-projectile-sprite', 'sprites')">Browse</button>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Shot sound</label>
+                        <label>Sound</label>
                         <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
-                            <input type="text" id="enemy-template-shoot-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 100px;" onchange="updateSoundButtonStates('enemy-template-shoot-sound')">
-                            <button type="button" class="browse-library-btn" onclick="openAssetPicker('enemy-template-shoot-sound', 'sounds')">Browse</button>
-                            <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('enemy-template-shoot-sound', 'Enemy Shot Sound')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
-                            <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('enemy-template-shoot-sound')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
-                            <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('enemy-template-shoot-sound')" style="background: var(--success); display: none;">&#9654;</button>
-                            <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('enemy-template-shoot-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+                            <input type="text" id="enemy-template-projectile-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 100px;" onchange="updateSoundButtonStates('enemy-template-projectile-sound')">
+                            <button type="button" class="browse-library-btn" onclick="openAssetPicker('enemy-template-projectile-sound', 'sounds')">Browse</button>
+                            <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('enemy-template-projectile-sound', 'Enemy Projectile Sound')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                            <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('enemy-template-projectile-sound')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                            <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('enemy-template-projectile-sound')" style="background: var(--success); display: none;">&#9654;</button>
+                            <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('enemy-template-projectile-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
                         </div>
                     </div>
                 </div>
