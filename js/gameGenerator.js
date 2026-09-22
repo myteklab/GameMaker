@@ -5135,6 +5135,7 @@ ${includeComments ? `    // ═════════════════�
                 gameObj.spritesheetCols = template.spritesheetCols || template.frameCount || 1;
                 gameObj.spritesheetRows = template.spritesheetRows || 1;
                 gameObj.animSpeed = template.animSpeed || 8;
+                gameObj.spriteFaces = template.spriteFaces === 'left' ? 'left' : 'right';
 
                 // Universal collision properties (all object types)
                 gameObj.spriteOffsetY = (template.spriteOffsetY || 0);
@@ -10690,8 +10691,12 @@ ${includeComments ? `        // ────────────────
                         srcX, srcY, frameWidth, frameHeight,
                         -objW / 2, -objH / 2, objW, objH
                     );
-                } else if (obj.type === 'enemy' && obj.direction < 0 && spriteRows <= 1) {
-                    // Enemy moving left with single-row sprite: flip horizontally
+                } else if (obj.type === 'enemy' && spriteRows <= 1 &&
+                           ((obj.direction < 0) !== (obj.spriteFaces === 'left'))) {
+                    // Mirror only when the way this enemy should look differs from
+                    // the way its artwork is drawn. Plenty of sprite art faces
+                    // left, and the engine used to assume every one faced right,
+                    // so those enemies walked backwards their whole life.
                     ctx.translate(screenX + objW, screenY);
                     ctx.scale(-1, 1);
                     ctx.drawImage(

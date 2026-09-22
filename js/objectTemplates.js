@@ -295,6 +295,7 @@ function showAddEnemyTemplate() {
     document.getElementById('enemy-template-cols').value = '1';
     document.getElementById('enemy-template-rows').value = '1';
     document.getElementById('enemy-template-animspeed').value = '8';
+    document.getElementById('enemy-template-spritefaces').value = 'right';
     document.getElementById('enemy-template-width').value = '32';
     document.getElementById('enemy-template-height').value = '32';
     document.getElementById('enemy-template-collision-width').value = '';
@@ -360,6 +361,7 @@ function editEnemyTemplate(id) {
     document.getElementById('enemy-template-cols').value = template.spritesheetCols || template.frameCount || 1;
     document.getElementById('enemy-template-rows').value = template.spritesheetRows || 1;
     document.getElementById('enemy-template-animspeed').value = template.animSpeed || 8;
+    document.getElementById('enemy-template-spritefaces').value = template.spriteFaces === 'left' ? 'left' : 'right';
     document.getElementById('enemy-template-width').value = template.width || 32;
     document.getElementById('enemy-template-height').value = template.height || 32;
     document.getElementById('enemy-template-collision-width').value = template.collisionWidth || '';
@@ -585,6 +587,7 @@ function saveEnemyTemplate() {
         spritesheetCols: cols,
         spritesheetRows: rows,
         animSpeed: parseInt(document.getElementById('enemy-template-animspeed').value) || 8,
+        spriteFaces: document.getElementById('enemy-template-spritefaces').value === 'left' ? 'left' : 'right',
         width: parseInt(document.getElementById('enemy-template-width').value) || 32,
         height: parseInt(document.getElementById('enemy-template-height').value) || 32,
         collisionWidth: parseInt(document.getElementById('enemy-template-collision-width').value) || 0,

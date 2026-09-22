@@ -1833,6 +1833,13 @@
                         <label>Anim Speed</label>
                         <input type="number" id="enemy-template-animspeed" value="8" min="1" max="30" title="Animation speed: 1 = fastest, 30 = slowest">
                     </div>
+                    <div class="form-group" style="flex: 0 0 110px;">
+                        <label>Sprite faces</label>
+                        <select id="enemy-template-spritefaces" title="Which way your artwork is drawn looking. The game mirrors it to face the other way.">
+                            <option value="right">Right</option>
+                            <option value="left">Left</option>
+                        </select>
+                    </div>
                     <div class="form-group" style="flex: 0 0 80px;">
                         <label style="font-size: 10px; color: var(--text-3);">Preview</label>
                         <div id="enemy-template-sprite-preview" style="width: 80px; height: 80px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">

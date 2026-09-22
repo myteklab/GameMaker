@@ -211,6 +211,7 @@ function loadProjectData(data) {
     if (data.enemyTemplates && data.enemyTemplates.length > 0) {
         enemyTemplates = data.enemyTemplates.map(t => ({
             ...t,
+            spriteFaces: t.spriteFaces === 'left' ? 'left' : 'right',
             contactSound: t.contactSound || '', // Ensure sound property exists
             // Migrate spritesheet properties for older projects
             spritesheetCols: t.spritesheetCols || t.frameCount || 1,

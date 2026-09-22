@@ -734,6 +734,9 @@ const helpContent = {
             <p><strong>Move Speed</strong> sets how fast it travels in any of these.</p>
 
             <h4>Drawing A Patrol Route</h4>
+            <h4>Which Way the Art Faces</h4>
+            <p><strong>Sprite faces</strong> tells the game which way your artwork is drawn looking. The game mirrors it to face the other way as the enemy turns around. Plenty of sprite art is drawn facing left, and if this is set wrong the enemy moonwalks: it slides one way while looking the other.</p>
+
             <h4>What Stops an Enemy</h4>
             <p>Enemies are blocked by solid tiles, by crates, by mystery blocks and by solid moving platforms and conveyors. They walk through ladders, pickups, hazards and one-way platforms, the same as you would expect. A pacing enemy that meets something solid turns around; a chasing one stops against it. That means you can shove a crate into a corridor to shut an enemy out of it.</p>
 

@@ -321,6 +321,7 @@ let enemyTemplates = [
         frameCount: 1,         // DEPRECATED - use spritesheetCols instead
         spritesheetCols: 1,    // frames per row (columns in spritesheet)
         spritesheetRows: 1,    // number of rows (1 = horizontal strip, 4 = directional grid)
+        spriteFaces: 'right', // which way the artwork is drawn looking
         width: 32,             // display width in pixels
         height: 32,            // display height in pixels
         behavior: 'pace',      // 'pace', 'stationary', 'follow', 'jump'
