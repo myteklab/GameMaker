@@ -4153,6 +4153,13 @@ ${includeComments ? `    // ═════════════════�
     var sfxDataCache = ${JSON.stringify(bundledSfxData)};
     // Note: pfxDataCache is declared earlier (before particle effects system) so it's available during preload
     var sfxAudioContext = null;
+    // Every synthesized sound used to rebuild its reverb impulse (two seconds of
+    // stereo noise), its distortion curve and its noise buffer from scratch. A jump
+    // sound cost 69ms of main thread, so a kid mashing jump ran the game at 12fps.
+    // None of the three depends on anything but the numbers they are built from.
+    var sfxReverbImpulse = null;
+    var sfxDistortionCurves = {};
+    var sfxNoiseBuffers = {};
 
     // Get or create audio context (shared for BGM and SFX on mobile)
     function getAudioContext() {
@@ -4176,6 +4183,7 @@ ${includeComments ? `    // ═════════════════�
 
     // Create reverb impulse response
     function createReverbImpulse(ctx) {
+        if (sfxReverbImpulse) return sfxReverbImpulse;
         var length = ctx.sampleRate * 2;
         var impulse = ctx.createBuffer(2, length, ctx.sampleRate);
         var left = impulse.getChannelData(0);
@@ -4185,11 +4193,13 @@ ${includeComments ? `    // ═════════════════�
             left[i] = (Math.random() * 2 - 1) * decay;
             right[i] = (Math.random() * 2 - 1) * decay;
         }
+        sfxReverbImpulse = impulse;
         return impulse;
     }
 
     // Create distortion curve
     function createDistortionCurve(amount) {
+        if (sfxDistortionCurves[amount]) return sfxDistortionCurves[amount];
         var samples = 44100;
         var curve = new Float32Array(samples);
         if (amount === 0) {
@@ -4203,6 +4213,7 @@ ${includeComments ? `    // ═════════════════�
                 curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
             }
         }
+        sfxDistortionCurves[amount] = curve;
         return curve;
     }
 
@@ -4219,31 +4230,40 @@ ${includeComments ? `    // ═════════════════�
         var filterFreq = (synthData.masterSettings && synthData.masterSettings.filterFreq) || 20000;
         var distortionAmount = (synthData.masterSettings && synthData.masterSettings.distortion) || 0;
 
-        // Create effects chain
+        // Create effects chain. A sound with no distortion and no reverb skips
+        // those nodes instead of wiring up a waveshaper that maps every sample to
+        // itself and a convolver mixed in at zero: same sound, a fraction of the work.
         var masterGain = ctx.createGain();
         var filter = ctx.createBiquadFilter();
-        var distortion = ctx.createWaveShaper();
-        var convolver = ctx.createConvolver();
-        var dryGain = ctx.createGain();
-        var wetGain = ctx.createGain();
-
         masterGain.gain.value = masterVolume;
         filter.type = 'lowpass';
         filter.frequency.value = filterFreq;
-        distortion.curve = createDistortionCurve(distortionAmount);
-        distortion.oversample = '4x';
-        convolver.buffer = createReverbImpulse(ctx);
-        dryGain.gain.value = 1 - reverbMix;
-        wetGain.gain.value = reverbMix;
 
-        // Connect chain
-        masterGain.connect(distortion);
-        distortion.connect(filter);
-        filter.connect(dryGain);
-        filter.connect(convolver);
-        convolver.connect(wetGain);
-        dryGain.connect(ctx.destination);
-        wetGain.connect(ctx.destination);
+        if (distortionAmount > 0) {
+            var distortion = ctx.createWaveShaper();
+            distortion.curve = createDistortionCurve(distortionAmount);
+            distortion.oversample = '4x';
+            masterGain.connect(distortion);
+            distortion.connect(filter);
+        } else {
+            masterGain.connect(filter);
+        }
+
+        if (reverbMix > 0) {
+            var convolver = ctx.createConvolver();
+            var dryGain = ctx.createGain();
+            var wetGain = ctx.createGain();
+            convolver.buffer = createReverbImpulse(ctx);
+            dryGain.gain.value = 1 - reverbMix;
+            wetGain.gain.value = reverbMix;
+            filter.connect(dryGain);
+            filter.connect(convolver);
+            convolver.connect(wetGain);
+            dryGain.connect(ctx.destination);
+            wetGain.connect(ctx.destination);
+        } else {
+            filter.connect(ctx.destination);
+        }
 
         // Play each layer
         var layers = synthData.layers || [];
@@ -4259,11 +4279,15 @@ ${includeComments ? `    // ═════════════════�
 
             if (layer.type === 'noise') {
                 // Noise layer
-                var bufferSize = ctx.sampleRate * duration;
-                var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-                var data = buffer.getChannelData(0);
-                for (var i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
+                var bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+                var buffer = sfxNoiseBuffers[bufferSize];
+                if (!buffer) {
+                    buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                    var data = buffer.getChannelData(0);
+                    for (var i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    sfxNoiseBuffers[bufferSize] = buffer;
                 }
                 var noiseSource = ctx.createBufferSource();
                 var noiseGain = ctx.createGain();

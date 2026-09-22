@@ -2792,6 +2792,9 @@
         }
 
         /* Toast Notification */
+        /* Above every overlay, including the confirm dialog at 10000. At 1000 this
+           sat UNDER the template editors (2100) and their 80% black backdrop, so
+           "Please enter a name" was invisible and Save looked like a dead button. */
         #toast {
             position: fixed;
             bottom: 60px;
@@ -2804,7 +2807,7 @@
             font-size: 13px;
             opacity: 0;
             transition: all 0.3s;
-            z-index: 1000;
+            z-index: 10001;
             pointer-events: none;
         }
 
@@ -4366,3 +4369,5 @@
 .object-tools-bar .otb-size { padding: 0 4px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .object-tools-bar .otb-close { width: 22px; height: 22px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 15px; line-height: 1; cursor: pointer; }
 .object-tools-bar .otb-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+
+.field-error { border-color: var(--danger) !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25); }

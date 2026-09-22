@@ -570,12 +570,44 @@ function toggleNPCWanderOptions() {
     }
 }
 
-function saveEnemyTemplate() {
-    const name = document.getElementById('enemy-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
+// A placed object that was dragged to its own size keeps it, so changing the
+// type's Width and Height leaves that one alone. Silently, which reads as the
+// size field being broken. Say how many are holding out.
+function noteSizeOverrides(type, templateId, changed) {
+    if (!changed) return;
+    if (typeof syncToCurrentLevel === 'function') syncToCurrentLevel();
+    let held = 0;
+    levels.forEach(lvl => {
+        (lvl.gameObjects || []).forEach(obj => {
+            if (obj.type === type && obj.templateId === templateId && obj.size) held++;
+        });
+    });
+    if (held > 0) {
+        showToast(held + (held > 1 ? ' placed ones keep' : ' placed one keeps') +
+                  ' a size of its own. Click it and press Reset size.', 'info');
     }
+}
+
+// Every template editor refuses to save without a name. The toast alone was not
+// enough: it sits at the bottom of the page behind the editor, so Save read as a
+// dead button. Put the cursor in the field that is actually wrong.
+function requireTemplateName(inputId) {
+    const el = document.getElementById(inputId);
+    const name = el ? el.value.trim() : '';
+    if (name) return name;
+    showToast('Please enter a name', 'error');
+    if (el) {
+        el.scrollIntoView({ block: 'nearest' });
+        el.focus();
+        el.classList.add('field-error');
+        el.addEventListener('input', () => el.classList.remove('field-error'), { once: true });
+    }
+    return null;
+}
+
+function saveEnemyTemplate() {
+    const name = requireTemplateName('enemy-template-name');
+    if (name === null) return;
 
     const cols = parseInt(document.getElementById('enemy-template-cols').value) || 1;
     const rows = parseInt(document.getElementById('enemy-template-rows').value) || 1;
@@ -628,9 +660,12 @@ function saveEnemyTemplate() {
         // Update existing template
         const index = enemyTemplates.findIndex(t => t.id === editingTemplateId);
         if (index !== -1) {
+            const prev = enemyTemplates[index];
+            const resized = prev.width !== templateData.width || prev.height !== templateData.height;
             templateData.id = editingTemplateId;
             enemyTemplates[index] = templateData;
             showToast('Enemy type updated', 'success');
+            noteSizeOverrides('enemy', editingTemplateId, resized);
         }
         markDirty();
         closeEnemyTemplateEditor();
@@ -810,11 +845,8 @@ function editCollectibleTemplate(id) {
 }
 
 function saveCollectibleTemplate() {
-    const name = document.getElementById('collectible-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('collectible-template-name');
+    if (name === null) return;
 
     const templateData = {
         name: name,
@@ -1014,11 +1046,8 @@ function editHazardTemplate(id) {
 }
 
 function saveHazardTemplate() {
-    const name = document.getElementById('hazard-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('hazard-template-name');
+    if (name === null) return;
 
     const instantKill = document.getElementById('hazard-template-instant-kill').checked;
     const templateData = {
@@ -1244,11 +1273,8 @@ function updatePowerupEffectOptions() {
 }
 
 function savePowerupTemplate() {
-    const name = document.getElementById('powerup-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('powerup-template-name');
+    if (name === null) return;
 
     const templateData = {
         name: name,
@@ -1443,11 +1469,8 @@ function editSpringTemplate(id) {
 }
 
 function saveSpringTemplate() {
-    const name = document.getElementById('spring-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('spring-template-name');
+    if (name === null) return;
 
     const templateData = {
         name: name,
@@ -1636,11 +1659,8 @@ function editTerrainZoneTemplate(id) {
 }
 
 function saveTerrainZoneTemplate() {
-    const name = document.getElementById('terrain-zone-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('terrain-zone-template-name');
+    if (name === null) return;
 
     const templateData = {
         name: name,
@@ -1912,11 +1932,8 @@ function editMovingPlatformTemplate(id) {
 }
 
 function saveMovingPlatformTemplate() {
-    const name = document.getElementById('moving-platform-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('moving-platform-template-name');
+    if (name === null) return;
 
     const templateData = {
         name: name,
@@ -2327,11 +2344,8 @@ function editNPCTemplate(id) {
 }
 
 function saveNPCTemplate() {
-    const name = document.getElementById('npc-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('npc-template-name');
+    if (name === null) return;
 
     const dialogueText = document.getElementById('npc-template-dialogue').value.trim();
     const dialogueLines = dialogueText ? dialogueText.split('\n').filter(line => line.trim()) : [];
@@ -2607,11 +2621,8 @@ function updateDoorDestLevelHint() {
 }
 
 function saveDoorTemplate() {
-    const name = document.getElementById('door-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('door-template-name');
+    if (name === null) return;
 
     const destType = document.getElementById('door-template-dest-type').value;
 
@@ -2886,11 +2897,8 @@ function editMysteryBlockTemplate(id) {
 }
 
 function saveMysteryBlockTemplate() {
-    const name = document.getElementById('mystery-block-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('mystery-block-template-name');
+    if (name === null) return;
 
     const templateData = {
         name: name,
@@ -3315,11 +3323,8 @@ function editCrateTemplate(id) {
 }
 
 function saveCrateTemplate() {
-    const name = document.getElementById('crate-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('crate-template-name');
+    if (name === null) return;
 
     const templateData = {
         name: name,
@@ -3475,11 +3480,8 @@ function editLadderTemplate(id) {
 }
 
 function saveLadderTemplate() {
-    const name = document.getElementById('ladder-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('ladder-template-name');
+    if (name === null) return;
 
     const templateData = {
         name: name,
@@ -3640,11 +3642,8 @@ function editConveyorTemplate(id) {
 }
 
 function saveConveyorTemplate() {
-    const name = document.getElementById('conveyor-template-name').value.trim();
-    if (!name) {
-        showToast('Please enter a name', 'error');
-        return;
-    }
+    const name = requireTemplateName('conveyor-template-name');
+    if (name === null) return;
 
     const templateData = {
         name: name,
