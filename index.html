@@ -1750,10 +1750,10 @@
 
 <!-- Enemy Template Editor -->
 <div class="template-editor" id="enemy-template-editor">
-    <div class="template-editor-content wide">
+    <div class="template-editor-content wide enemy-wide">
         <h3 id="enemy-template-title">Add Enemy Type <span class="help-icon" onclick="showHelp('enemyBehaviors')">?</span></h3>
 
-        <div class="editor-columns">
+        <div class="editor-columns four">
             <!-- Left Column: Appearance -->
             <div class="editor-column">
                 <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-package"/></svg> Appearance</div>
@@ -1802,7 +1802,10 @@
                     </div>
                 </div>
                 <small style="color: var(--text-3); font-size: 9px; margin-top: -8px; display: block;">Animation: 1=fastest → 30=slowest. For a 3 (cols) x 4 (rows) walk-cycle sheet, the enemy walks in 4 directions.</small>
+            </div>
 
+            <div class="editor-column">
+                <div class="editor-section-header" style="margin-top: 0;"><svg class="gm-icon"><use href="#icon-move"/></svg> Size &amp; Hitbox</div>
                 <div class="form-row" style="margin-top: 12px;">
                     <div class="form-group">
                         <label>Width (px)</label>
@@ -1846,7 +1849,6 @@
                 </div>
             </div>
 
-            <!-- Right Column: Behavior & Combat -->
             <div class="editor-column">
                 <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-gamepad"/></svg> Behavior</div>
 
@@ -1919,13 +1921,8 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Full Width: Audio & Effects -->
-        <div class="editor-full-width" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <div class="editor-section-header" style="margin-top: 0;"><svg class="gm-icon"><use href="#icon-volume"/></svg> Audio & Effects</div>
-
+                <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-volume"/></svg> Audio &amp; Effects</div>
             <div class="form-row">
                 <div class="form-group" style="flex: 1;">
                     <label>Contact Sound</label>
@@ -1941,13 +1938,27 @@
             </div>
 
             <div class="form-group" style="margin-top: 10px;">
+                <label><svg class="gm-icon"><use href="#icon-explosion"/></svg> Death Particle Effect</label>
+                <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                    <input type="text" id="enemy-template-death-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
+                        title="Particle effect when this enemy type is defeated">
+                    <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('enemy-template-death-particle', 'Enemy Death Effect', 'explosion')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                    <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('enemy-template-death-particle')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                    <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('enemy-template-death-particle')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+                </div>
+            </div>
+            </div>
+
+            <div class="editor-column">
+                <div class="editor-section-header" style="margin-top: 0;"><svg class="gm-icon"><use href="#icon-swords"/></svg> Shooting</div>
+            <div class="form-group" style="margin-top: 10px;">
                 <label style="display: flex; align-items: center; gap: 6px;">
                     <input type="checkbox" id="enemy-template-shoot-enabled" style="width: 16px; height: 16px;" onchange="toggleEnemyShootOptions()">
                     This enemy shoots
                 </label>
                 <div id="enemy-shoot-options" style="display: none; margin-top: 8px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 6px;">
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group" style="flex: 1 1 150px; min-width: 150px;">
                             <label>Aim</label>
                             <select id="enemy-template-shoot-aim" onchange="toggleEnemyShootOptions()">
                                 <option value="facing">The way it faces</option>
@@ -1972,11 +1983,11 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Every (seconds)</label>
+                            <label>Every (sec)</label>
                             <input type="number" id="enemy-template-shoot-interval" value="2" min="0.2" max="20" step="0.1">
                         </div>
                         <div class="form-group">
-                            <label>Only within (tiles)</label>
+                            <label>Within (tiles)</label>
                             <input type="number" id="enemy-template-shoot-range" value="0" min="0" max="40" title="0 shoots however far away the player is">
                         </div>
                         <div class="form-group">
@@ -1990,7 +2001,7 @@
                             <input type="number" id="enemy-template-shoot-damage" value="1" min="1" max="10">
                         </div>
                         <div class="form-group">
-                            <label>Lasts (seconds)</label>
+                            <label>Lasts (sec)</label>
                             <input type="number" id="enemy-template-shoot-lifetime" value="3" min="0.5" max="20" step="0.5">
                         </div>
                         <div class="form-group">
@@ -2022,17 +2033,8 @@
                     </div>
                 </div>
             </div>
-
-            <div class="form-group" style="margin-top: 10px;">
-                <label><svg class="gm-icon"><use href="#icon-explosion"/></svg> Death Particle Effect</label>
-                <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
-                    <input type="text" id="enemy-template-death-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
-                        title="Particle effect when this enemy type is defeated">
-                    <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('enemy-template-death-particle', 'Enemy Death Effect', 'explosion')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
-                    <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('enemy-template-death-particle')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
-                    <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('enemy-template-death-particle')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
-                </div>
             </div>
+
         </div>
 
         <div class="modal-buttons">

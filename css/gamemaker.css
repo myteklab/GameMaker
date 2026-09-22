@@ -2201,6 +2201,34 @@
             font-size: 12px;
         }
 
+        /* The enemy type carries more settings than any other: how it looks, how it
+           moves, how it fights, how it shoots, and its sounds. Three columns at a
+           desk width, folding to two and then one as the window narrows, so the
+           shooting and sound settings stop hiding below the fold. */
+        .template-editor-content.enemy-wide {
+            width: min(1320px, 96vw);
+            /* the four columns come to about 650px, which just misses the 80vh
+               the other editors use on a 768px-tall laptop screen */
+            max-height: 86vh;
+        }
+
+        .editor-columns.four {
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            align-items: start;
+            gap: 16px;
+        }
+
+        /* A column is a third as wide, so a row of four number fields wraps
+           instead of squeezing every label onto three lines. */
+        .editor-columns.four .form-row {
+            flex-wrap: wrap;
+        }
+
+        .editor-columns.four .form-row .form-group {
+            flex: 1 1 86px;
+            min-width: 86px;
+        }
+
         /* Full-width sections that span both columns */
         .editor-full-width {
             grid-column: 1 / -1;
