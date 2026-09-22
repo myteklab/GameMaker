@@ -6303,7 +6303,10 @@ ${includeComments ? `            // ──────────────�
             // it again to grab on. Up is held to climb and Up is also a jump key,
             // so without this they re-grab the same ladder mid-arc and the jump
             // looks like it did nothing.
-            if (player.ladderNeedsRepress && !climbUpKey && !climbDownKey) {
+            // Landing clears it too: once the player is back on the ground the
+            // ladder cannot eat the jump any more, and holding Up at the foot of a
+            // ladder and getting nothing feels broken.
+            if (player.ladderNeedsRepress && (player.onGround || (!climbUpKey && !climbDownKey))) {
                 player.ladderNeedsRepress = false;
             }
             if (!ladder) {
