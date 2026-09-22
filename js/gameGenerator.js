@@ -2260,7 +2260,7 @@ ${includeComments ? `    // ═════════════════�
         climbing: false,          // Holding onto a ladder (gravity is off while it lasts)
         jumpedThisFrame: false,
         ladderNeedsRepress: false, // Set after jumping off, cleared when the climb key is let go
-        ladderTopJumpUsed: false,  // One hop per press of Up at the top of a ladder
+        ladderUpHeld: false,       // Last frame's climb key, so a fresh press can be told apart
         climbDistance: 0
     };
 
@@ -5789,7 +5789,7 @@ ${includeComments ? `    // ═════════════════�
         player.climbing = false;
         player.climbDistance = 0;
         player.ladderNeedsRepress = false;
-        player.ladderTopJumpUsed = false;
+        player.ladderUpHeld = false;
     }
 
     function restartGame() {
@@ -6324,9 +6324,14 @@ ${includeComments ? `            // ──────────────�
             // hands do, and it is the behaviour students had before Up and jump
             // were separated. It fires once: atTopPushingUp goes false to true as
             // the player arrives, which is the rising edge the jump code wants.
-            if (!climbUpKey) player.ladderTopJumpUsed = false;
+            // At the top, Up cannot climb any further, so a FRESH press of it there
+            // means get off. Arriving at the top with Up already held must not hop:
+            // the player is climbing, and they are entitled to stop at the top and
+            // look around, or step sideways onto the ledge.
+            var upJustPressed = climbUpKey && !player.ladderUpHeld;
+            player.ladderUpHeld = climbUpKey;
             var atTopPushingUp = false;
-            if (ladder && player.climbing && ladder.jumpOff && climbUpKey && !player.ladderTopJumpUsed) {
+            if (ladder && player.climbing && ladder.jumpOff && upJustPressed) {
                 var ladderBox = objectBox(ladder);
                 var climbHb = getPlayerHitbox();
                 atTopPushingUp = (climbHb.y + climbHb.height - (ladder.climbSpeed || 2)) <= ladderBox.top;
@@ -6425,9 +6430,6 @@ ${includeComments ? `            // ──────────────�
 ` : ''}            if (player.jumpedThisFrame && player.climbing) {
                 player.climbing = false;
                 player.ladderNeedsRepress = true;
-                // One hop per press of Up, or holding it would bob the player off
-                // the top over and over.
-                if (atTopPushingUp) player.ladderTopJumpUsed = true;
             }
 
             if (player.climbing && ladder) {
