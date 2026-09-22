@@ -5627,6 +5627,9 @@ ${includeComments ? `    // ═════════════════�
             }, CHEAT_BUFFER_CLEAR_TIME);
         }
         // H key - toggle hitbox debug visualization (not when typing)
+        if (e.code === 'KeyP' && !isTyping) {
+            perfOverlay = !perfOverlay;
+        }
         if (e.code === 'KeyH' && !isTyping) {
             showHitboxDebug = !showHitboxDebug;
         }
@@ -10466,6 +10469,7 @@ ${includeComments ? `        // ────────────────
 
         // Draw UI (score, lives)
         drawUI();
+        drawPerfOverlay();
 
         // Draw mini-map overlay (top-down only, opt-in via game settings)
         if (MINI_MAP_ENABLED) {
@@ -11901,6 +11905,14 @@ ${includeComments ? `    // ═════════════════�
     // once on return and teleport everything.
     var MAX_CATCH_UP_UPDATES = 5;
 
+    // Enough to answer "why is it slow on YOUR machine" without us being there.
+    // perfStats.owed is the one that matters: the loop runs a fixed 60Hz step and
+    // catches up when a frame is late, so owed climbing above 1 means the device
+    // is behind, and owed pinned at MAX_CATCH_UP_UPDATES means the game itself is
+    // running in slow motion because it cannot catch up any further.
+    var perfOverlay = false;
+    var perfStats = { fps: 0, worst: 0, owed: 1, frames: 0, since: 0, worstWindow: 0 };
+
     function gameLoop(currentTime) {
         requestAnimationFrame(gameLoop);
 
@@ -11918,7 +11930,48 @@ ${includeComments ? `    // ═════════════════�
                 update();
             }
             draw();
+
+            perfStats.owed = owed;
+            perfStats.frames++;
+            if (deltaTime > perfStats.worstWindow) perfStats.worstWindow = deltaTime;
+            if (!perfStats.since) perfStats.since = currentTime;
+            if (currentTime - perfStats.since >= 1000) {
+                perfStats.fps = Math.round(perfStats.frames * 1000 / (currentTime - perfStats.since));
+                perfStats.worst = Math.round(perfStats.worstWindow);
+                perfStats.frames = 0;
+                perfStats.worstWindow = 0;
+                perfStats.since = currentTime;
+            }
         }
+    }
+
+    function drawPerfOverlay() {
+        if (!perfOverlay) return;
+        var counts = { objects: 0, enemies: 0 };
+        for (var i = 0; i < activeObjects.length; i++) {
+            if (activeObjects[i].active === false) continue;
+            counts.objects++;
+            if (activeObjects[i].type === 'enemy') counts.enemies++;
+        }
+        var lines = [
+            'FPS ' + perfStats.fps + '   worst frame ' + perfStats.worst + 'ms',
+            'steps per frame ' + perfStats.owed + (perfStats.owed >= MAX_CATCH_UP_UPDATES ? ' (SLOW MOTION)' : ''),
+            'objects ' + counts.objects + '   enemies ' + counts.enemies,
+            'shots ' + ((typeof projectiles !== 'undefined' ? projectiles.length : 0) +
+                        (typeof enemyProjectiles !== 'undefined' ? enemyProjectiles.length : 0)) +
+                '   particles ' + (typeof particles !== 'undefined' ? particles.length : 0)
+        ];
+        ctx.save();
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        var w = 0;
+        for (var L = 0; L < lines.length; L++) w = Math.max(w, ctx.measureText(lines[L]).width);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+        ctx.fillRect(6, 6, w + 12, lines.length * 14 + 10);
+        ctx.fillStyle = perfStats.fps && perfStats.fps < 40 ? '#ff6b6b' : '#8fe388';
+        for (var j = 0; j < lines.length; j++) ctx.fillText(lines[j], 12, 11 + j * 14);
+        ctx.restore();
     }
 
 ${includeComments ? `    // ═══════════════════════════════════════════════════════════════════════════
