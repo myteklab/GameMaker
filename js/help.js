@@ -853,7 +853,7 @@ const helpContent = {
             <h4>Settings</h4>
             <ul>
                 <li><strong>Climb Speed</strong> - Pixels per frame. Walking is about 4, so 2 feels like a careful climb</li>
-                <li><strong>Jump lets go of the ladder</strong> - On by default. Press <strong>Space</strong> to let go and jump; Up and Down keep their climbing job while you are holding on. Turn the setting off and the only way off is to climb or step away, which makes a long ladder feel like a commitment</li>
+                <li><strong>Jump lets go of the ladder</strong> - On by default. At the top of a ladder <strong>Up</strong> hops you off, since there is nowhere left to climb, and <strong>Space</strong> lets go and jumps from anywhere on the ladder. Turn the setting off and the only way off is to climb or step away, which makes a long ladder feel like a commitment</li>
                 <li><strong>Height</strong> - The type's height. Drag the corner handle on a placed ladder to resize that one on its own, which is usually what you want</li>
                 <li><strong>Tile</strong> - A tileset tile repeats down the ladder rather than stretching</li>
                 <li><strong>Texture</strong> - Stretch to fit pulls one copy of your art over the whole ladder, which pulls the rungs apart on a tall one. Repeat works out the beat your picture is drawn on, one rung and the gap after it, and repeats that instead, so the ladder carries on evenly however long you make it. It skips the uneven bit at the ends of the picture, so there is no seam where copies meet</li>
