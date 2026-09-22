@@ -1839,6 +1839,10 @@ ${includeComments ? `    // ═════════════════�
     }
 
     var MAX_PARTICLES_PER_EMITTER = 600;
+    // Across every triggered emitter at once. One effect can be reasonable and a
+    // stack of them still sink the frame rate, and no student can be expected to
+    // work that out from a particle designer.
+    var MAX_ACTIVE_PARTICLES = 400;
 
     function startEffectEmitters(effectData, x, y, duration, facing) {
         var configs = extractEmitterConfigs(effectData);
@@ -1855,10 +1859,15 @@ ${includeComments ? `    // ═════════════════�
             // fires. Before this a rate under about 7/s never produced one
             // inside the short trigger window and the effect looked broken.
             e.accumulator = 1;
-            // A trigger runs for at least one particle lifetime. That is the
-            // moment the effect has as many particles alive as the designer
-            // shows at steady state, so a jump puff looks like the preview did.
-            e.duration = Math.max(duration || 500, config.lifetime * 1000);
+            // A trigger EMITS for its own window and no longer. Particles keep
+            // living their full lifetime afterwards, so the puff still reads.
+            // Running the emitter for a whole particle lifetime instead turned a
+            // 150ms jump puff into a four second hose: one student's game emitted
+            // 18 diamonds a second for four seconds per jump, stacked nine live
+            // emitters while crossing a platform section, and fell to 11fps. The
+            // seeded accumulator below is what makes a short window work for slow
+            // rates, which is the problem the old rule was really solving.
+            e.duration = duration || 500;
             e.startTime = now;
             activeParticleEmitters.push(e);
         });
@@ -1942,14 +1951,18 @@ ${includeComments ? `    // ═════════════════�
         if (!PARTICLE_EFFECTS_ENABLED) return;
         var now = Date.now();
         var liveEmitters = 0;
+        var totalParticles = 0;
+        for (var t = 0; t < activeParticleEmitters.length; t++) totalParticles += activeParticleEmitters[t].particles.length;
         for (var i = 0; i < activeParticleEmitters.length; i++) {
             var e = activeParticleEmitters[i];
             var elapsed = now - e.startTime;
             if (elapsed < e.duration) {
                 e.accumulator += e.rate * dt;
-                while (e.accumulator >= 1 && e.particles.length < MAX_PARTICLES_PER_EMITTER) {
+                while (e.accumulator >= 1 && e.particles.length < MAX_PARTICLES_PER_EMITTER &&
+                       totalParticles < MAX_ACTIVE_PARTICLES) {
                     var pt = emitterSpawnPoint(e);
                     e.particles.push(makeParticle(e, pt.x, pt.y));
+                    totalParticles++;
                     e.accumulator -= 1;
                 }
                 if (e.accumulator >= 1) e.accumulator = 0; // at the cap, drop the backlog instead of bursting later
