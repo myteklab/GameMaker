@@ -327,6 +327,23 @@ const objectSpriteCache = {};
 function drawGameObjects() {
     const scaledTileSize = tileSize * zoom;
 
+    // Repeat one source frame across a destination box, a tile at a time, cropping
+    // the last row and column instead of squashing them. Mirrors the game's
+    // tileImageAcross so a crate looks the same in both.
+    const tileImageAcross = (img, srcX, srcY, srcW, srcH, dx, dy, dw, dh, cell) => {
+        const stepX = Math.min(cell, dw);
+        const stepY = Math.min(cell, dh);
+        for (let y = 0; y < dh; y += stepY) {
+            for (let x = 0; x < dw; x += stepX) {
+                const cellW = Math.min(stepX, dw - x);
+                const cellH = Math.min(stepY, dh - y);
+                ctx.drawImage(img,
+                    srcX, srcY, srcW * (cellW / stepX), srcH * (cellH / stepY),
+                    dx + x, dy + y, cellW, cellH);
+            }
+        }
+    };
+
     for (let i = 0; i < gameObjects.length; i++) {
         const obj = gameObjects[i];
         // Get template for this object to get custom size
@@ -588,11 +605,16 @@ function drawGameObjects() {
                 const frameWidth = cached.img.naturalWidth / spriteCols;
                 const frameHeight = cached.img.naturalHeight / spriteRows;
                 ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(
-                    cached.img,
-                    0, 0, frameWidth, frameHeight,  // Source: first frame only
-                    screenX, screenY, objWidth, objHeight  // Destination
-                );
+                const cell = tileSize * zoom;
+                if (obj.type === 'crate' && (objWidth > cell || objHeight > cell)) {
+                    tileImageAcross(cached.img, 0, 0, frameWidth, frameHeight, screenX, screenY, objWidth, objHeight, cell);
+                } else {
+                    ctx.drawImage(
+                        cached.img,
+                        0, 0, frameWidth, frameHeight,  // Source: first frame only
+                        screenX, screenY, objWidth, objHeight  // Destination
+                    );
+                }
                 ctx.restore();
                 continue;
             }
@@ -619,7 +641,12 @@ function drawGameObjects() {
                 const cached = objectSpriteCache[cacheKey];
                 if (cached.loaded && cached.img) {
                     ctx.imageSmoothingEnabled = false;
-                    ctx.drawImage(cached.img, screenX, screenY, objWidth, objHeight);
+                    const cell = tileSize * zoom;
+                    if (obj.type === 'crate' && (objWidth > cell || objHeight > cell)) {
+                        tileImageAcross(cached.img, 0, 0, cached.img.naturalWidth, cached.img.naturalHeight, screenX, screenY, objWidth, objHeight, cell);
+                    } else {
+                        ctx.drawImage(cached.img, screenX, screenY, objWidth, objHeight);
+                    }
                     objectDrawn = true;
                 }
             }
@@ -627,11 +654,16 @@ function drawGameObjects() {
             else if (typeof tiles === 'object' && tiles[tileKey] && tilesetImage) {
                 const tile = tiles[tileKey];
                 ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(
-                    tilesetImage,
-                    tile.x, tile.y, tileSize, tileSize,
-                    screenX, screenY, objWidth, objHeight
-                );
+                const cell = tileSize * zoom;
+                if (obj.type === 'crate' && (objWidth > cell || objHeight > cell)) {
+                    tileImageAcross(tilesetImage, tile.x, tile.y, tileSize, tileSize, screenX, screenY, objWidth, objHeight, cell);
+                } else {
+                    ctx.drawImage(
+                        tilesetImage,
+                        tile.x, tile.y, tileSize, tileSize,
+                        screenX, screenY, objWidth, objHeight
+                    );
+                }
                 objectDrawn = true;
             }
         }

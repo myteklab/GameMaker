@@ -8442,6 +8442,22 @@ ${includeComments ? `        // ────────────────
         }
     }
 
+    // Repeat one source frame across a destination box, a tile at a time, with the
+    // last row and column cropped rather than squashed.
+    function tileImageAcross(img, srcX, srcY, srcW, srcH, dx, dy, dw, dh) {
+        var stepX = Math.min(RENDER_SIZE, dw);
+        var stepY = Math.min(RENDER_SIZE, dh);
+        for (var y = 0; y < dh; y += stepY) {
+            for (var x = 0; x < dw; x += stepX) {
+                var cellW = Math.min(stepX, dw - x);
+                var cellH = Math.min(stepY, dh - y);
+                ctx.drawImage(img,
+                    srcX, srcY, srcW * (cellW / stepX), srcH * (cellH / stepY),
+                    dx + x, dy + y, cellW, cellH);
+            }
+        }
+    }
+
     // A crate reads as something you can shove: a lid, a base, and braces. A
     // student who sets a symbol gets that instead, since a crate is square
     // enough for one glyph to work.
@@ -10377,6 +10393,11 @@ ${includeComments ? `        // ────────────────
                         srcX, srcY, frameWidth, frameHeight,
                         0, 0, objW, objH
                     );
+                } else if (obj.type === 'crate' && (objW > RENDER_SIZE || objH > RENDER_SIZE)) {
+                    // A crate wider or taller than a tile repeats its texture instead
+                    // of smearing one copy across the whole box. At a tile or under
+                    // it is a single draw, exactly as before.
+                    tileImageAcross(sprite, srcX, srcY, frameWidth, frameHeight, screenX, screenY, objW, objH);
                 } else {
                     // Default draw (includes multi-row sprites where direction is handled via srcY)
                     ctx.drawImage(
@@ -10396,12 +10417,12 @@ ${includeComments ? `        // ────────────────
                 var tileDrawn = false;
                 ctx.imageSmoothingEnabled = false;
 
-                // Ladders and belts are drawn long on purpose, so one tile stretched
-                // over the whole thing would smear. Repeat it instead.
-                var repeatTile = (obj.type === 'ladder' || obj.type === 'conveyor');
+                // Ladders, belts and crates are drawn bigger than a tile on purpose,
+                // so one tile stretched over the whole thing would smear. Repeat it.
+                var repeatTile = (obj.type === 'ladder' || obj.type === 'conveyor' || obj.type === 'crate');
                 if (repeatTile) {
                     var stepX = (obj.type === 'ladder') ? objW : RENDER_SIZE;
-                    var stepY = (obj.type === 'ladder') ? RENDER_SIZE : objH;
+                    var stepY = (obj.type === 'conveyor') ? objH : RENDER_SIZE;
                     for (var tty = 0; tty < Math.ceil(objH / stepY); tty++) {
                         for (var ttx = 0; ttx < Math.ceil(objW / stepX); ttx++) {
                             var cellX = screenX + ttx * stepX;
