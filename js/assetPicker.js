@@ -47,35 +47,21 @@
                     currentTargetInput.dispatchEvent(new Event('change', { bubbles: true }));
                     currentTargetInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-                    // If the asset has spritesheet metadata, try to auto-fill cols/rows
+                    // Set Cols and Rows to match the artwork just picked. The old
+                    // values belong to the old sprite and almost never fit the new
+                    // one. This used to look for <id>-cols after stripping only a
+                    // "-url" suffix, so for enemy-template-sprite it searched for
+                    // enemy-template-sprite-cols and never found anything.
+                    let meta = null;
                     if (asset.metadata) {
                         try {
-                            const meta = typeof asset.metadata === 'string'
-                                ? JSON.parse(asset.metadata)
-                                : asset.metadata;
-
-                            // Find related cols/rows inputs
-                            // Try common patterns: setting-sprite-cols, setting-sprite-rows
-                            // Also try baseId-cols for other sprite inputs
-                            const baseId = inputId.replace(/-url$/, '');
-
-                            if (meta.columns) {
-                                const colsInput = document.getElementById(baseId + '-cols');
-                                if (colsInput) {
-                                    colsInput.value = meta.columns;
-                                    colsInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                }
-                            }
-                            if (meta.rows) {
-                                const rowsInput = document.getElementById(baseId + '-rows');
-                                if (rowsInput) {
-                                    rowsInput.value = meta.rows;
-                                    rowsInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                }
-                            }
+                            meta = typeof asset.metadata === 'string' ? JSON.parse(asset.metadata) : asset.metadata;
                         } catch (e) {
-                            console.log('Could not parse asset metadata');
+                            meta = null;
                         }
+                    }
+                    if (typeof applySpriteGrid === 'function') {
+                        applySpriteGrid(inputId, asset.file_url, meta);
                     }
 
                     currentTargetInput = null;

@@ -3160,6 +3160,81 @@ function selectMysteryBlockForPlacement() {
 // ============================================
 
 // ============================================
+// SPRITE GRID DETECTION
+// ============================================
+
+// Work out how a sprite sheet is cut up, so picking new artwork does not inherit
+// the last sprite's Cols and Rows. Keeping the old numbers almost never works:
+// a 3x4 character sheet left on 1x1 animates nothing, and 1x1 art left on 3x4
+// shows a third of a picture.
+//
+// The rule comes from what the library actually holds. Frames are square, so the
+// grid is the image divided by gcd(width, height), and only three shapes are
+// trusted:
+//   a strip across          (rows 1, cols 2+)   64x32 blob  -> 2x1
+//   a directional sheet     (rows 4)            48x64 hero  -> 3x4
+//   one picture             (1x1)               16x16 tile  -> 1x1
+// Anything else falls back to 1x1. That is deliberate: a 16x32 tree divides into
+// 1x2 and is not two frames, it is one tall tree, and guessing wrong there is
+// worse than not guessing.
+function detectSpriteGrid(width, height) {
+    if (!width || !height) return { cols: 1, rows: 1 };
+    const gcd = (a, b) => b ? gcd(b, a % b) : a;
+    const frame = gcd(width, height);
+    if (frame < 8) return { cols: 1, rows: 1 };
+    const cols = width / frame, rows = height / frame;
+    if (cols > 32 || rows > 32) return { cols: 1, rows: 1 };
+    if (rows === 1 && cols >= 2) return { cols, rows: 1 };
+    if (rows === 4) return { cols, rows: 4 };
+    if (rows === 1 && cols === 1) return { cols: 1, rows: 1 };
+    return { cols: 1, rows: 1 };
+}
+
+// Fill in the Cols and Rows beside a sprite field for the artwork now in it.
+// meta is the asset record's own columns/rows when the library knows them, which
+// beats anything measured.
+function applySpriteGrid(spriteInputId, url, meta) {
+    const base = spriteInputId.replace(/-sprite$/, '');
+    const colsEl = document.getElementById(base + '-cols');
+    const rowsEl = document.getElementById(base + '-rows');
+    if (!colsEl || !rowsEl || !url) return;
+
+    const set = (cols, rows) => {
+        colsEl.value = cols;
+        rowsEl.value = rows;
+        colsEl.dispatchEvent(new Event('input', { bubbles: true }));
+        rowsEl.dispatchEvent(new Event('input', { bubbles: true }));
+        if (typeof updateSpritePreview === 'function') {
+            try { updateSpritePreview(base); } catch (e) { /* preview is optional */ }
+        }
+    };
+
+    if (meta && (meta.columns || meta.rows)) {
+        set(parseInt(meta.columns) || 1, parseInt(meta.rows) || 1);
+        return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+        const g = detectSpriteGrid(img.naturalWidth, img.naturalHeight);
+        set(g.cols, g.rows);
+    };
+    img.onerror = () => { /* leave whatever is there rather than guess blind */ };
+    img.src = url;
+}
+
+// Typing or pasting a sprite URL should set Cols and Rows too. isTrusted keeps
+// this from racing the asset picker, which dispatches its own change event and
+// then calls applySpriteGrid itself with the library's metadata.
+document.addEventListener('change', function (e) {
+    const el = e.target;
+    if (!el || !el.id || !/-template-sprite$/.test(el.id)) return;
+    if (!e.isTrusted) return;
+    applySpriteGrid(el.id, (el.value || '').trim(), null);
+});
+
+// ============================================
 // CRATE TEMPLATES
 // ============================================
 
