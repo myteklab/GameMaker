@@ -5123,6 +5123,9 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.paceAxis = template.paceAxis || 'horizontal'; // For top-down mode
                     gameObj.speed = (template.speed || 2) * TILE_SCALE;
                     gameObj.damage = template.damage || 1;
+                    gameObj.maxHealth = Math.max(1, Math.min(20, parseInt(template.health) || 1));
+                    gameObj.health = gameObj.maxHealth;
+                    gameObj.hitFlashUntil = 0;
                     gameObj.followRange = (template.followRange || 5) * RENDER_SIZE;
                     gameObj.jumpPower = template.jumpPower || 8;
                     gameObj.stompable = template.stompable || false;
@@ -6556,6 +6559,8 @@ ${includeComments ? `        // ────────────────
                     respawnObj.direction = 1;
                     respawnObj.velocityY = 0;
                     respawnObj.deathTime = 0;
+                    respawnObj.health = respawnObj.maxHealth || 1;   // back to full, not to one hit from death
+                    respawnObj.hitFlashUntil = 0;
                     // Sync respawn to other players
                     if (MULTIPLAYER_ENABLED && multiplayerReady && socket) {
                         socket.emit('gm_enemy_respawn', {
@@ -7958,6 +7963,24 @@ ${includeComments ? `        // ────────────────
         }
     }
 
+    // A hit that does not finish an enemy still has to show, or a player facing a
+    // three-hit enemy thinks their shots are doing nothing at all.
+    function drawEnemyHitFlashes(camX, camY) {
+        var now = Date.now();
+        for (var i = 0; i < activeObjects.length; i++) {
+            var obj = activeObjects[i];
+            if (!obj.active || obj.type !== 'enemy') continue;
+            if (!obj.hitFlashUntil || now > obj.hitFlashUntil) continue;
+            var w = obj.width || RENDER_SIZE;
+            var h = obj.height || RENDER_SIZE;
+            ctx.save();
+            ctx.globalAlpha = 0.55 * ((obj.hitFlashUntil - now) / 120);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(obj.x - w / 2 - camX, obj.y - h / 2 - camY, w, h);
+            ctx.restore();
+        }
+    }
+
     function drawEnemyProjectiles(camX, camY) {
         for (var i = 0; i < enemyProjectiles.length; i++) {
             var s = enemyProjectiles[i];
@@ -8504,10 +8527,22 @@ ${includeComments ? `        // ────────────────
                     var enemyRadius = (obj.width || RENDER_SIZE) / 2;
 
                     if (dist < enemyRadius + Math.max(p.width, p.height) / 2) {
+                        if (SOUND_PROJECTILE_HIT) playSound(SOUND_PROJECTILE_HIT);
+                        // Tougher enemies take several hits. PROJECTILE_DAMAGE is what
+                        // each one counts for, which is what the player's Damage setting
+                        // has always claimed to do.
+                        obj.health = (obj.health || 1) - PROJECTILE_DAMAGE;
+                        if (obj.health > 0) {
+                            obj.hitFlashUntil = Date.now() + 120;
+                            remove = true;
+                            break;
+                        }
                         obj.active = false;
+                        // without this an enemy shot down never came back, however its
+                        // Respawn was set; only stomping recorded the time of death
+                        obj.deathTime = Date.now();
                         sendEnemyKilled(obj);
                         score += 25;
-                        if (SOUND_PROJECTILE_HIT) playSound(SOUND_PROJECTILE_HIT);
                         var hitEnemyTemplate = enemyTemplates.find(function(t) { return t.id === obj.templateId; });
                         if (hitEnemyTemplate && hitEnemyTemplate.particleEffect) {
                             spawnParticleEffectFromURL(hitEnemyTemplate.particleEffect, obj.x + obj.width/2, obj.y + obj.height/2, 300, obj.direction < 0 ? 'left' : 'right');
@@ -9375,6 +9410,7 @@ ${includeComments ? `        // ────────────────
         // ───────────────────────────────────────────────────────────────────────
 ` : ''}        // Draw game objects
         drawGameObjects(camX, camY);
+        drawEnemyHitFlashes(camX, camY);
 
         // Draw projectiles
         drawProjectiles(camX, camY);

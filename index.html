@@ -1847,6 +1847,32 @@
                         <span style="color: #00ff00;">Green</span> = hitbox
                     </div>
                 </div>
+
+<div class="editor-section-header"><svg class="gm-icon"><use href="#icon-volume"/></svg> Audio &amp; Effects</div>
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label>Contact Sound</label>
+                    <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                        <input type="text" id="enemy-template-contact-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 100px;" onchange="updateSoundButtonStates('enemy-template-contact-sound')">
+                        <button type="button" class="browse-library-btn" onclick="openAssetPicker('enemy-template-contact-sound', 'sounds')">Browse</button>
+                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('enemy-template-contact-sound', 'Enemy Contact Sound')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
+                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('enemy-template-contact-sound')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                        <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('enemy-template-contact-sound')" style="background: var(--success); display: none;">▶</button>
+                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('enemy-template-contact-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+                <label><svg class="gm-icon"><use href="#icon-explosion"/></svg> Death Particle Effect</label>
+                <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
+                    <input type="text" id="enemy-template-death-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
+                        title="Particle effect when this enemy type is defeated">
+                    <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('enemy-template-death-particle', 'Enemy Death Effect', 'explosion')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
+                    <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('enemy-template-death-particle')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
+                    <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('enemy-template-death-particle')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+                </div>
+            </div>
             </div>
 
             <div class="editor-column">
@@ -1903,6 +1929,10 @@
                         <input type="number" id="enemy-template-damage" value="1" min="1" max="10">
                     </div>
                     <div class="form-group">
+                        <label>Hits to defeat</label>
+                        <input type="number" id="enemy-template-health" value="1" min="1" max="20" title="How many player projectiles it takes. Stomping still defeats it in one.">
+                    </div>
+                    <div class="form-group">
                         <label>Respawn (sec)</label>
                         <input type="number" id="enemy-template-respawn-time" value="0" min="0" max="300" step="1" title="Seconds until enemy respawns after defeat (0 = no respawn)">
                     </div>
@@ -1921,32 +1951,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="editor-section-header"><svg class="gm-icon"><use href="#icon-volume"/></svg> Audio &amp; Effects</div>
-            <div class="form-row">
-                <div class="form-group" style="flex: 1;">
-                    <label>Contact Sound</label>
-                    <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
-                        <input type="text" id="enemy-template-contact-sound" placeholder="URL or sfx:id" style="flex: 1; min-width: 100px;" onchange="updateSoundButtonStates('enemy-template-contact-sound')">
-                        <button type="button" class="browse-library-btn" onclick="openAssetPicker('enemy-template-contact-sound', 'sounds')">Browse</button>
-                        <button type="button" class="browse-library-btn sfx-create-btn" onclick="openSoundEffectStudio('enemy-template-contact-sound', 'Enemy Contact Sound')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-music"/></svg> Create</button>
-                        <button type="button" class="browse-library-btn sfx-edit-btn" onclick="editSoundEffectStudio('enemy-template-contact-sound')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
-                        <button type="button" class="browse-library-btn sfx-preview-btn" onclick="testSoundFromInput('enemy-template-contact-sound')" style="background: var(--success); display: none;">▶</button>
-                        <button type="button" class="browse-library-btn sfx-unlink-btn" onclick="unlinkSoundEffectStudio('enemy-template-contact-sound')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-top: 10px;">
-                <label><svg class="gm-icon"><use href="#icon-explosion"/></svg> Death Particle Effect</label>
-                <div class="input-with-browse" style="display: flex; gap: 4px; flex-wrap: wrap;">
-                    <input type="text" id="enemy-template-death-particle" placeholder="pfx:id" style="flex: 1; min-width: 100px;"
-                        title="Particle effect when this enemy type is defeated">
-                    <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('enemy-template-death-particle', 'Enemy Death Effect', 'explosion')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
-                    <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('enemy-template-death-particle')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
-                    <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('enemy-template-death-particle')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
-                </div>
-            </div>
             </div>
 
             <div class="editor-column">

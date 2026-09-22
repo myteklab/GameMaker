@@ -646,13 +646,14 @@ const helpContent = {
                 <li><strong>Cooldown</strong> - Milliseconds between shots</li>
                 <li><strong>Speed</strong> - How fast projectiles travel</li>
                 <li><strong>Lifetime</strong> - How long before projectiles disappear</li>
+                <li><strong>Damage</strong> - How many hits each projectile counts for, against an enemy type with more than one <strong>Hits to defeat</strong></li>
             </ul>
 
             <h4>Collision Behavior</h4>
             <p>Projectiles are destroyed when they hit:</p>
             <ul>
                 <li><strong>Solid tiles</strong> - Walls, platforms, ground</li>
-                <li><strong>Enemies</strong> - One hit removes the enemy, whatever its size, and the projectile is used up</li>
+                <li><strong>Enemies</strong> - Takes a hit off the enemy and the projectile is used up</li>
             </ul>
 
             <h4>Collect Items with Projectiles</h4>
@@ -753,11 +754,12 @@ const helpContent = {
             <p>Enemy projectiles stop at walls and fly through other enemies. They hurt the player by the same rules as walking into the enemy, so the short moment of safety after a hit still protects them, and a shield still takes the hit.</p>
 
             <h4>Defeating Enemies</h4>
-            <p>Enemies have no health bar. One hit removes them:</p>
+            <p>Two ways:</p>
             <ul>
-                <li><strong>Jumping on top</strong>, if the type is stompable</li>
-                <li><strong>A player projectile</strong>, if the player has them switched on</li>
+                <li><strong>Jumping on top</strong>, if the type is stompable. A stomp always defeats it in one</li>
+                <li><strong>A player projectile</strong>, if the player has them switched on. This is where <strong>Hits to defeat</strong> comes in: leave it at 1 and the first hit finishes the enemy, or raise it for a tough enemy or a boss. It flashes white when a hit lands but does not finish it</li>
             </ul>
+            <p>A defeated enemy that respawns comes back at full strength.</p>
             <p>Give the type a <strong>Death Particle Effect</strong> for a puff or an explosion when it goes.</p>
 
             <h4>Size And Hitbox</h4>

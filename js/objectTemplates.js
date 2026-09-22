@@ -321,6 +321,7 @@ function showAddEnemyTemplate() {
     if (paceAxisEl) paceAxisEl.value = 'horizontal';
     document.getElementById('enemy-template-speed').value = '2';
     document.getElementById('enemy-template-damage').value = '1';
+    document.getElementById('enemy-template-health').value = '1';
     document.getElementById('enemy-template-color').value = '#ff4444';
     document.getElementById('enemy-template-contact-sound').value = '';
     document.getElementById('enemy-template-stompable').checked = false;
@@ -385,6 +386,7 @@ function editEnemyTemplate(id) {
     if (paceAxisEl) paceAxisEl.value = template.paceAxis || 'horizontal';
     document.getElementById('enemy-template-speed').value = template.speed || 2;
     document.getElementById('enemy-template-damage').value = template.damage || 1;
+    document.getElementById('enemy-template-health').value = template.health || 1;
     document.getElementById('enemy-template-color').value = template.color || '#ff4444';
     document.getElementById('enemy-template-contact-sound').value = template.contactSound || '';
     // Update button states for sfx: values
@@ -607,6 +609,7 @@ function saveEnemyTemplate() {
         paceAxis: document.getElementById('enemy-template-pace-axis')?.value || 'horizontal',
         speed: parseFloat(document.getElementById('enemy-template-speed').value) || 2,
         damage: parseInt(document.getElementById('enemy-template-damage').value) || 1,
+        health: Math.max(1, Math.min(20, parseInt(document.getElementById('enemy-template-health').value) || 1)),
         followRange: parseInt(document.getElementById('enemy-template-follow-range')?.value) || 5,
         jumpPower: parseFloat(document.getElementById('enemy-template-jump-power')?.value) || 8,
         color: document.getElementById('enemy-template-color').value || '#ff4444',
