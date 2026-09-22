@@ -2260,6 +2260,7 @@ ${includeComments ? `    // ═════════════════�
         climbing: false,          // Holding onto a ladder (gravity is off while it lasts)
         jumpedThisFrame: false,
         ladderNeedsRepress: false, // Set after jumping off, cleared when the climb key is let go
+        ladderTopJumpUsed: false,  // One hop per press of Up at the top of a ladder
         climbDistance: 0
     };
 
@@ -5788,6 +5789,7 @@ ${includeComments ? `    // ═════════════════�
         player.climbing = false;
         player.climbDistance = 0;
         player.ladderNeedsRepress = false;
+        player.ladderTopJumpUsed = false;
     }
 
     function restartGame() {
@@ -6317,6 +6319,19 @@ ${includeComments ? `            // ──────────────�
             }
             player.jumpedThisFrame = false;
 
+            // At the top of a ladder, Up cannot climb any further, so it means
+            // "get off". Holding Up all the way up and hopping off the top is what
+            // hands do, and it is the behaviour students had before Up and jump
+            // were separated. It fires once: atTopPushingUp goes false to true as
+            // the player arrives, which is the rising edge the jump code wants.
+            if (!climbUpKey) player.ladderTopJumpUsed = false;
+            var atTopPushingUp = false;
+            if (ladder && player.climbing && ladder.jumpOff && climbUpKey && !player.ladderTopJumpUsed) {
+                var ladderBox = objectBox(ladder);
+                var climbHb = getPlayerHitbox();
+                atTopPushingUp = (climbHb.y + climbHb.height - (ladder.climbSpeed || 2)) <= ladderBox.top;
+            }
+
 
             // Update coyote time: give player configurable frames to jump after leaving ground
             // Also count platform riding as grounded (for fast-moving platform support)
@@ -6338,7 +6353,7 @@ ${includeComments ? `            // ──────────────�
             // Sharing the key made grabbing a ladder with Up held fire a jump on
             // the very same frame, which read as the ladder refusing to hold you.
             var jumpKeyPressed = player.climbing
-                ? !!keys['Space']
+                ? (!!keys['Space'] || atTopPushingUp)
                 : (keys['ArrowUp'] || keys['KeyW'] || keys['Space']);
 
             if (JUMP_MODE === 'fly') {
@@ -6410,6 +6425,9 @@ ${includeComments ? `            // ──────────────�
 ` : ''}            if (player.jumpedThisFrame && player.climbing) {
                 player.climbing = false;
                 player.ladderNeedsRepress = true;
+                // One hop per press of Up, or holding it would bob the player off
+                // the top over and over.
+                if (atTopPushingUp) player.ladderTopJumpUsed = true;
             }
 
             if (player.climbing && ladder) {
