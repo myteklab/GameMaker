@@ -152,6 +152,11 @@ function getAllPfxData(pfxIds) {
 // Test passes the level being edited.
 let generatorStartLevel = 0;
 
+// Games built by this engine say GAME_BOOTED when their script runs. A preview
+// only watches for that signal if it sees this, so an older cached engine that
+// never sends it is not mistaken for a game that failed to start.
+if (typeof window !== 'undefined') window.GAME_REPORTS_BOOT = true;
+
 async function generateGameHTMLAsync(includeComments = false, pixelScale = 1, options = {}) {
     const wanted = parseInt(options.startLevel, 10);
     generatorStartLevel = (wanted >= 0 && wanted < levels.length) ? wanted : 0;
@@ -12256,6 +12261,12 @@ ${includeComments ? `    // ═════════════════�
     } else {
         requestAnimationFrame(gameLoop);
     }
+
+    // Tell whoever framed us that this script actually ran. The controls line and
+    // the canvas are static markup, so a game whose script never executes still
+    // LOOKS like a game, just one that never starts. A preview that hears nothing
+    // here can say so instead of showing a dead canvas.
+    try { if (window.parent !== window) window.parent.postMessage({ type: 'GAME_BOOTED' }, '*'); } catch (e) {}
 
     // Start level-specific BGM on first user interaction (browsers require this)
     // Also unlock vibration API on Android (requires user gesture)
