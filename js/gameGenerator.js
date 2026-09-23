@@ -12254,13 +12254,76 @@ ${includeComments ? `    // ═════════════════�
         }
     });
 
-    // Start the game loop (use requestAnimationFrame to get initial timestamp)
-    // If multiplayer is enabled, show join UI first; otherwise start immediately
-    if (MULTIPLAYER_ENABLED) {
-        initMultiplayer();
-    } else {
-        requestAnimationFrame(gameLoop);
+    // The game used to start the instant the script ran and draw whatever had
+    // arrived so far, so a level with a large background opened on an empty
+    // coloured rectangle and the artwork dropped in seconds later. Wait for the
+    // pictures the first frame needs, and say so while waiting.
+    function startupImages() {
+        var imgs = [];
+        for (var i = 0; i < loadedBgImages.length; i++) {
+            if (loadedBgImages[i]) imgs.push(loadedBgImages[i]);
+        }
+        if (TILESET_SRC && tileset) imgs.push(tileset);
+        if (playerSprite) imgs.push(playerSprite);
+        for (var key in loadedSprites) {
+            if (loadedSprites[key]) imgs.push(loadedSprites[key]);
+        }
+        return imgs;
     }
+
+    function drawLoadingScreen(done, total) {
+        ctx.fillStyle = currentBgColor || '#1a1a2e';
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        var barW = Math.min(360, CANVAS_WIDTH - 80);
+        var barX = (CANVAS_WIDTH - barW) / 2;
+        var barY = CANVAS_HEIGHT / 2;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 18px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Loading', CANVAS_WIDTH / 2, barY - 22);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+        ctx.fillRect(barX, barY, barW, 8);
+        ctx.fillStyle = '#4ea1ff';
+        ctx.fillRect(barX, barY, barW * (total ? done / total : 1), 8);
+        ctx.textAlign = 'left';
+    }
+
+    function startGame() {
+        if (MULTIPLAYER_ENABLED) {
+            initMultiplayer();
+        } else {
+            requestAnimationFrame(gameLoop);
+        }
+    }
+
+    // A picture that never arrives must never hold the game hostage, so this is a
+    // deadline, not a barrier: whatever is still missing at the end gets drawn as
+    // it always was, once it turns up. An image that failed counts as settled too.
+    var LOAD_DEADLINE_MS = 10000;
+    var waitingOn = startupImages();
+    var loadingStartedAt = Date.now();
+    // Assets already in cache settle within a frame or two, and a loading screen
+    // that flashes for 80ms is worse than none.
+    var SHOW_LOADING_AFTER_MS = 250;
+    var loadingShown = false;
+
+    function waitForStartupImages() {
+        var left = 0;
+        for (var i = 0; i < waitingOn.length; i++) {
+            if (!waitingOn[i].complete) left++;
+        }
+        var waited = Date.now() - loadingStartedAt;
+        if (left === 0 || waited > LOAD_DEADLINE_MS) {
+            startGame();
+            return;
+        }
+        if (loadingShown || waited > SHOW_LOADING_AFTER_MS) {
+            loadingShown = true;
+            drawLoadingScreen(waitingOn.length - left, waitingOn.length);
+        }
+        requestAnimationFrame(waitForStartupImages);
+    }
+    waitForStartupImages();
 
     // Tell whoever framed us that this script actually ran. The controls line and
     // the canvas are static markup, so a game whose script never executes still
