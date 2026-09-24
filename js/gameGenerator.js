@@ -1165,6 +1165,13 @@ ${includeComments ? `    // ═════════════════�
         var windowWidth = window.innerWidth;
         var windowHeight = window.innerHeight;
 
+        // A sandboxed preview frame runs out of process, and on a cold load this
+        // script can run before the frame has been told its size. Scaling to that
+        // 0x0 hides the canvas outright, and no resize event is promised once the
+        // real size lands, so leave the canvas alone and let the observer below
+        // call again when there is a size.
+        if (!windowWidth || !windowHeight) return;
+
         // Calculate scale to fit screen while maintaining aspect ratio
         var scaleX = windowWidth / CANVAS_WIDTH;
         var scaleY = windowHeight / CANVAS_HEIGHT;
@@ -1187,6 +1194,10 @@ ${includeComments ? `    // ═════════════════�
     // Scale on load and when window resizes (orientation change)
     scaleCanvas();
     window.addEventListener('resize', scaleCanvas);
+    // Unlike resize, an observer always reports once the page first has a layout.
+    if (window.ResizeObserver) {
+        new ResizeObserver(function() { scaleCanvas(); }).observe(document.documentElement);
+    }
     window.addEventListener('orientationchange', function() {
         setTimeout(scaleCanvas, 100); // Small delay for orientation change
     });
