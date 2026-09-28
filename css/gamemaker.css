@@ -358,6 +358,20 @@
             margin-left: auto;
         }
 
+        /* Play has to stay on screen: the /try tour starts on it, and below
+           about 1180px it was pushed past the right edge. Zoom (the wheel does
+           it too) and the cursor readout go first. */
+        @media (max-width: 1180px) {
+            #coordinates, #zoom-display,
+            .menubar-right [onclick="zoomIn()"], .menubar-right [onclick="zoomOut()"],
+            .menubar-right .menu-divider { display: none; }
+            .dropdown-toggle { padding: 6px 8px; }
+        }
+        @media (max-width: 860px) {
+            .app-title { display: none; }
+            #top-menu-bar > .menu-divider { display: none; }
+        }
+
         #app {
             display: flex;
             flex: 1;
