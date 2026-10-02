@@ -2,6 +2,8 @@
 
 A visual platformer game creation tool for building 2D side-scrolling and top-down games without coding. Design levels with tilesets, place enemies and collectibles, tune physics, and export playable games as standalone HTML files.
 
+**Try it in your browser, no account needed:** [mytekdev.com/tools/game-builder](https://mytekdev.com/tools/game-builder). The page has a live demo and explains what students learn from it.
+
 ![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)
 
 ## Features
