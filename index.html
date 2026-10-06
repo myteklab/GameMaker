@@ -3458,11 +3458,20 @@
                     </div>
                     <div class="form-group">
                         <label>How it's given</label>
-                        <select id="npc-template-gift-mode">
+                        <select id="npc-template-gift-mode" onchange="toggleNPCGiftOptions()">
                             <option value="inventory">Put it in the inventory</option>
                             <option value="drop">Drop it on the ground</option>
                         </select>
-                        <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Dropped items land around the NPC and are picked up like any other collectible, points included</span>
+                    </div>
+                    <div class="form-group" id="npc-gift-drop-options">
+                        <label>Which side of the NPC</label>
+                        <select id="npc-template-gift-drop-dir">
+                            <option value="below">Below</option>
+                            <option value="above">Above</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                        </select>
+                        <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Items hop out of the NPC onto that side and are picked up like any other collectible, points included. If the player or a wall is in the way, they land a step further out, or on another side.</span>
                     </div>
                     <div class="form-group">
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">

@@ -2277,6 +2277,7 @@ function setNPCGiftFields(template) {
     document.getElementById('npc-template-gift-count').value = template.giftCount || 1;
     document.getElementById('npc-template-gift-once').checked = template.giftOnce !== false;
     document.getElementById('npc-template-gift-mode').value = template.giftMode === 'drop' ? 'drop' : 'inventory';
+    document.getElementById('npc-template-gift-drop-dir').value = template.giftDropDir || 'below';
     document.getElementById('npc-template-after-gift').value = (template.afterGiftLines || []).join('\n');
     toggleNPCGiftOptions();
 }
@@ -2284,6 +2285,8 @@ function setNPCGiftFields(template) {
 function toggleNPCGiftOptions() {
     document.getElementById('npc-gift-options').style.display =
         document.getElementById('npc-template-gift-enabled').checked ? 'block' : 'none';
+    document.getElementById('npc-gift-drop-options').style.display =
+        document.getElementById('npc-template-gift-mode').value === 'drop' ? 'block' : 'none';
 }
 
 function showNPCTemplatesModal() {
@@ -2429,6 +2432,7 @@ function saveNPCTemplate() {
         giftCount: clampGiftCount(document.getElementById('npc-template-gift-count').value),
         giftOnce: document.getElementById('npc-template-gift-once').checked,
         giftMode: document.getElementById('npc-template-gift-mode').value,
+        giftDropDir: document.getElementById('npc-template-gift-drop-dir').value,
         afterGiftLines: splitLines(document.getElementById('npc-template-after-gift').value)
     };
 

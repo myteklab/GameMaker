@@ -5459,6 +5459,7 @@ ${includeComments ? `    // ═════════════════�
                 gameObj.giftCount = Math.max(1, Math.min(99, parseInt(template.giftCount) || 1));
                 gameObj.giftOnce = template.giftOnce !== false;
                 gameObj.giftMode = template.giftMode === 'drop' ? 'drop' : 'inventory';
+                gameObj.giftDropDir = template.giftDropDir || 'below';
                 gameObj.afterGiftLines = template.afterGiftLines || [];
                 // obj.x/obj.y are the placed tile, which never changes.
                 // gameObj.x/y are pixels and move while the NPC wanders.
@@ -6860,7 +6861,10 @@ ${includeComments ? `        // ────────────────
             var objTop = obj.y - objVisH / 2 + (objVisH - objColH) + objColOfsY;
             var objBottom = objTop + objColH;
 
-            if (hbRight > objLeft && hbLeft < objRight && hbBottom > objTop && hbTop < objBottom) {
+            // A dropped gift still in the air cannot be touched yet
+            var landing = obj.landTick < DROP_LAND_TICKS;
+
+            if (!landing && hbRight > objLeft && hbLeft < objRight && hbBottom > objTop && hbTop < objBottom) {
                 // Collision detected!
                 switch (obj.type) {
                     case 'collectible':
@@ -7037,6 +7041,7 @@ ${includeComments ? `        // ────────────────
             if (obj.type === 'npc' && IS_TOPDOWN) {
                 updateNPC(obj);
             }
+            if (obj.landTick < DROP_LAND_TICKS) advanceDrop(obj);
 
             // A hazard only moves if the student drew it a path. It travels the
             // same way a platform does, since neither has a facing to worry about.
@@ -7813,6 +7818,16 @@ ${includeComments ? `        // ────────────────
     // The box the pickup test uses for a collectible. Items can be bigger than
     // a tile (a 32px gem on 16px tiles), so a free tile is not enough to know
     // the player is not already touching what lands there.
+    var DROP_DIRS = { below: { x: 0, y: 1 }, above: { x: 0, y: -1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+    var DROP_LAND_TICKS = 24;
+
+    function advanceDrop(obj) {
+        obj.landTick++;
+        var t = Math.min(1, obj.landTick / DROP_LAND_TICKS);
+        obj.x = obj.fromX + (obj.landX - obj.fromX) * t;
+        obj.y = obj.fromY + (obj.landY - obj.fromY) * t - Math.sin(Math.PI * t) * RENDER_SIZE * 0.75;
+    }
+
     function collectibleBox(o) {
         var visH = o.height || RENDER_SIZE;
         var colW = o.collisionWidth || o.width || RENDER_SIZE;
@@ -7840,29 +7855,49 @@ ${includeComments ? `        // ────────────────
         var probe = makeItem(0, 0);
         var stride = Math.max(1, Math.ceil(Math.max(probe.width, probe.height) / RENDER_SIZE));
 
+        var seen = {};
         var spots = [];
+        var tryTile = function(tx, ty) {
+            var key = tx + ',' + ty;
+            if (seen[key]) return;
+            seen[key] = true;
+            if (ty < 0 || ty >= level.length || tx < 0 || tx >= level[ty].length) return;
+            var tile = getTileAt(tx * RENDER_SIZE + RENDER_SIZE / 2, ty * RENDER_SIZE + RENDER_SIZE / 2);
+            if (tile && tile.solid) return;
+            var box = collectibleBox(makeItem(tx, ty));
+            // Pickup needs a real overlap, so a spot that only meets the player
+            // at an edge or corner is fine and keeps the drop close to the NPC
+            if (boxesTouch(box, playerBox, 0)) return;
+            for (var i = 0; i < activeObjects.length; i++) {
+                if (activeObjects[i].active === false) continue;
+                if (boxesTouch(box, collectibleBox(activeObjects[i]), 0)) return;
+            }
+            spots.push({ x: tx, y: ty });
+        };
+
+        // The builder's direction first: a row across it, one step out, then
+        // further out. A spot the player is standing on is skipped, so a
+        // player waiting on that side never takes the gift without seeing it.
+        var dir = DROP_DIRS[npc.giftDropDir] || DROP_DIRS.below;
+        for (var dist = 1; dist <= 3 && spots.length < npc.giftCount; dist++) {
+            for (var side = 0; side <= 2; side++) {
+                for (var sign = 1; sign >= -1; sign -= 2) {
+                    if (side === 0 && sign < 0) continue;
+                    tryTile(npcTx + (dir.x * dist + dir.y * side * sign) * stride,
+                            npcTy + (dir.y * dist + dir.x * side * sign) * stride);
+                }
+            }
+        }
+        // That side walled off: nearest free spot anywhere around the NPC
         for (var r = 1; r <= 3 && spots.length < npc.giftCount; r++) {
             var ring = [];
             for (var dy = -r; dy <= r; dy++) {
                 for (var dx = -r; dx <= r; dx++) {
-                    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-                    var tx = npcTx + dx * stride, ty = npcTy + dy * stride;
-                    if (ty < 0 || ty >= level.length || tx < 0 || tx >= level[ty].length) continue;
-                    var tile = getTileAt(tx * RENDER_SIZE + RENDER_SIZE / 2, ty * RENDER_SIZE + RENDER_SIZE / 2);
-                    if (tile && tile.solid) continue;
-                    var box = collectibleBox(makeItem(tx, ty));
-                    if (boxesTouch(box, playerBox, 4)) continue;
-                    var blocked = false;
-                    for (var i = 0; i < activeObjects.length && !blocked; i++) {
-                        if (activeObjects[i].active === false) continue;
-                        blocked = boxesTouch(box, collectibleBox(activeObjects[i]), 0);
-                    }
-                    if (blocked) continue;
-                    ring.push({ x: tx, y: ty, d: dx * dx + dy * dy });
+                    if (Math.max(Math.abs(dx), Math.abs(dy)) === r) ring.push({ dx: dx, dy: dy, d: dx * dx + dy * dy });
                 }
             }
-            ring.sort(function(a, b) { return a.d - b.d; });
-            spots = spots.concat(ring);
+            ring.sort(function(p, q) { return p.d - q.d; });
+            for (var k = 0; k < ring.length; k++) tryTile(npcTx + ring[k].dx * stride, npcTy + ring[k].dy * stride);
         }
         if (spots.length === 0) return false;
 
@@ -7873,6 +7908,14 @@ ${includeComments ? `        // ────────────────
             item.respawns = false;
             // Only this player sees a drop, so it must stay out of item sync
             item.dropped = true;
+            // It hops out of the NPC and cannot be picked up until it lands
+            item.landX = item.x;
+            item.landY = item.y;
+            item.fromX = npc.x;
+            item.fromY = npc.y;
+            item.landTick = 0;
+            item.x = npc.x;
+            item.y = npc.y;
             activeObjects.push(item);
             collectiblesTotal++;
         }
