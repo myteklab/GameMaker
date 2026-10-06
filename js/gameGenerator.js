@@ -7810,20 +7810,35 @@ ${includeComments ? `        // ────────────────
         }
     }
 
-    // Lays the gift on free tiles around the NPC, nearest first, skipping any
-    // tile the player overlaps so the items are seen landing before they are
-    // picked up. Returns false when the NPC is boxed in, and the gift goes straight to
-    // the inventory instead.
+    // The box the pickup test uses for a collectible. Items can be bigger than
+    // a tile (a 32px gem on 16px tiles), so a free tile is not enough to know
+    // the player is not already touching what lands there.
+    function collectibleBox(o) {
+        var visH = o.height || RENDER_SIZE;
+        var colW = o.collisionWidth || o.width || RENDER_SIZE;
+        var colH = o.collisionHeight || visH;
+        var top = o.y - visH / 2 + (visH - colH) + (o.collisionOffsetY || 0);
+        return { l: o.x - colW / 2, r: o.x + colW / 2, t: top, b: top + colH };
+    }
+
+    function boxesTouch(a, b, pad) {
+        return a.l < b.r + pad && a.r > b.l - pad && a.t < b.b + pad && a.b > b.t - pad;
+    }
+
+    // Lays the gift around the NPC, nearest first, spaced by the item's size,
+    // never on a wall, another object, or the player, so the items are seen
+    // landing before they are picked up. Returns false when there is no room,
+    // and the gift goes straight to the inventory instead.
     function dropNpcGift(npc) {
         var npcTx = Math.floor(npc.x / RENDER_SIZE), npcTy = Math.floor(npc.y / RENDER_SIZE);
         var hb = getPlayerHitbox();
-        var pad = 4;
-        var taken = {};
-        for (var i = 0; i < activeObjects.length; i++) {
-            var o = activeObjects[i];
-            if (o.active === false) continue;
-            taken[Math.floor(o.x / RENDER_SIZE) + ',' + Math.floor(o.y / RENDER_SIZE)] = true;
-        }
+        var sprOfsY = player.spriteOffsetY || 0;
+        var playerBox = { l: hb.x, r: hb.x + hb.width, t: hb.y + sprOfsY, b: hb.y + hb.height + sprOfsY };
+        var makeItem = function(tx, ty) {
+            return buildGameObject({ type: 'collectible', templateId: npc.giftItemId, x: tx, y: ty });
+        };
+        var probe = makeItem(0, 0);
+        var stride = Math.max(1, Math.ceil(Math.max(probe.width, probe.height) / RENDER_SIZE));
 
         var spots = [];
         for (var r = 1; r <= 3 && spots.length < npc.giftCount; r++) {
@@ -7831,13 +7846,18 @@ ${includeComments ? `        // ────────────────
             for (var dy = -r; dy <= r; dy++) {
                 for (var dx = -r; dx <= r; dx++) {
                     if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-                    var tx = npcTx + dx, ty = npcTy + dy;
+                    var tx = npcTx + dx * stride, ty = npcTy + dy * stride;
                     if (ty < 0 || ty >= level.length || tx < 0 || tx >= level[ty].length) continue;
-                    if (tx * RENDER_SIZE < hb.x + hb.width + pad && (tx + 1) * RENDER_SIZE > hb.x - pad &&
-                        ty * RENDER_SIZE < hb.y + hb.height + pad && (ty + 1) * RENDER_SIZE > hb.y - pad) continue;
-                    if (taken[tx + ',' + ty]) continue;
                     var tile = getTileAt(tx * RENDER_SIZE + RENDER_SIZE / 2, ty * RENDER_SIZE + RENDER_SIZE / 2);
                     if (tile && tile.solid) continue;
+                    var box = collectibleBox(makeItem(tx, ty));
+                    if (boxesTouch(box, playerBox, 4)) continue;
+                    var blocked = false;
+                    for (var i = 0; i < activeObjects.length && !blocked; i++) {
+                        if (activeObjects[i].active === false) continue;
+                        blocked = boxesTouch(box, collectibleBox(activeObjects[i]), 0);
+                    }
+                    if (blocked) continue;
                     ring.push({ x: tx, y: ty, d: dx * dx + dy * dy });
                 }
             }
@@ -7846,10 +7866,10 @@ ${includeComments ? `        // ────────────────
         }
         if (spots.length === 0) return false;
 
-        // More items than free tiles: they share tiles rather than vanish
+        // More items than free spots: they share spots rather than vanish
         for (var n = 0; n < npc.giftCount; n++) {
             var spot = spots[n % spots.length];
-            var item = buildGameObject({ type: 'collectible', templateId: npc.giftItemId, x: spot.x, y: spot.y });
+            var item = makeItem(spot.x, spot.y);
             item.respawns = false;
             // Only this player sees a drop, so it must stay out of item sync
             item.dropped = true;
