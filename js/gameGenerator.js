@@ -2345,12 +2345,16 @@ ${includeComments ? `    // ═════════════════�
 
     // NPC/Door/Player interaction state (Top-Down RPG)
     var interactionPrompt = { visible: false, x: 0, y: 0, text: '', npc: null, door: null, remotePlayer: null };
-    var dialogueState = { active: false, npc: null, lineIndex: 0, text: '', displayedChars: 0, charTimer: 0, remotePlayer: null };
+    var dialogueState = { active: false, npc: null, lines: null, lineIndex: 0, text: '', displayedChars: 0, charTimer: 0, remotePlayer: null };
     var nearestInteractable = null; // The NPC, door, or remote player closest to player for interaction
 
     // Inventory system (Top-Down RPG)
     var inventory = {}; // { templateId: { count: N, template: {...} } }
     var inventoryOpen = false;
+    // Keyed by where the NPC or door was placed (level id + tile), not by its
+    // type, so two NPCs of the same type each give their own gift.
+    var giftsGiven = {};
+    var doorsUnlocked = {};
 
     // ═══════════════════════════════════════════════════════════════════════════
     // MULTIPLAYER STATE (Experimental - Top-Down RPG Only)
@@ -2400,6 +2404,8 @@ ${includeComments ? `    // ═════════════════�
         try {
             var progress = {
                 inventory: inventory,
+                giftsGiven: giftsGiven,
+                doorsUnlocked: doorsUnlocked,
                 currentLevelIndex: currentLevelIndex,
                 activeCheckpointLevel: activeCheckpoint ? currentLevelIndex : null,
                 activeCheckpoint: activeCheckpoint,
@@ -2421,6 +2427,8 @@ ${includeComments ? `    // ═════════════════�
                 // Only load if saved within last 7 days
                 if (progress.timestamp && (Date.now() - progress.timestamp) < 7 * 24 * 60 * 60 * 1000) {
                     inventory = progress.inventory || {};
+                    giftsGiven = progress.giftsGiven || {};
+                    doorsUnlocked = progress.doorsUnlocked || {};
                     score = progress.score || 0;
                     // Restore checkpoint if on same level
                     if (progress.activeCheckpointLevel === currentLevelIndex && progress.activeCheckpoint) {
@@ -2450,6 +2458,8 @@ ${includeComments ? `    // ═════════════════�
         try {
             localStorage.removeItem(STORAGE_KEY);
             inventory = {};
+            giftsGiven = {};
+            doorsUnlocked = {};
             activeCheckpoint = null;
             score = 0;
             showProgressMessage('🗑️ Progress Cleared!');
@@ -4857,6 +4867,11 @@ ${includeComments ? `    // ═════════════════�
     }
 
     // Find next level by ID
+    function placeKeyFor(placed) {
+        var lvl = allLevels[currentLevelIndex];
+        return (lvl && lvl.id ? lvl.id : 'level' + currentLevelIndex) + ':' + placed.x + ':' + placed.y;
+    }
+
     function findLevelIndexById(id) {
         for (var i = 0; i < allLevels.length; i++) {
             if (allLevels[i].id === id) return i;
@@ -5387,6 +5402,14 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.wanderDirection = 'down'; // Current facing direction
                     gameObj.wanderSpeed = template.wanderSpeed || 1;
                     gameObj.wanderRadius = (template.wanderRadius || 3) * RENDER_SIZE;
+                    gameObj.giftEnabled = template.giftEnabled === true;
+                    gameObj.giftItemId = template.giftItemId || '';
+                    gameObj.giftCount = Math.max(1, Math.min(99, parseInt(template.giftCount) || 1));
+                    gameObj.giftOnce = template.giftOnce !== false;
+                    gameObj.afterGiftLines = template.afterGiftLines || [];
+                    // obj.x/obj.y are the placed tile, which never changes.
+                    // gameObj.x/y are pixels and move while the NPC wanders.
+                    gameObj.placeKey = placeKeyFor(obj);
                 }
 
                 // Door-specific (Top-Down RPG)
@@ -5400,6 +5423,12 @@ ${includeComments ? `    // ═════════════════�
                     gameObj.interactionRadius = template.interactionRadius || 48;
                     gameObj.interactSound = template.interactSound || '';
                     gameObj.particleEffect = template.particleEffect || '';
+                    gameObj.name = template.name || 'Door';
+                    gameObj.requiresItemId = template.requiresItemId || '';
+                    gameObj.requiresCount = Math.max(1, Math.min(99, parseInt(template.requiresCount) || 1));
+                    gameObj.consumeItem = template.consumeItem === true;
+                    gameObj.lockedLines = (template.lockedLines && template.lockedLines.length) ? template.lockedLines : ['It is locked.'];
+                    gameObj.placeKey = placeKeyFor(obj);
                 }
 
                 // Mystery Block-specific (Platformer)
@@ -7633,14 +7662,23 @@ ${includeComments ? `        // ────────────────
         }
     }
 
-    // Start NPC dialogue
-    function startDialogue(npc) {
-        if (!npc.dialogueLines || npc.dialogueLines.length === 0) return;
+    // Start NPC dialogue. A locked door reuses this with its own lines,
+    // which is why the lines are passed in rather than read off npc.
+    function startDialogue(npc, lines) {
+        if (!lines) {
+            lines = npc.dialogueLines;
+            if (npc.giftEnabled && npc.giftOnce && giftsGiven[npc.placeKey] &&
+                npc.afterGiftLines && npc.afterGiftLines.length > 0) {
+                lines = npc.afterGiftLines;
+            }
+        }
+        if (!lines || lines.length === 0) return;
 
         dialogueState.active = true;
         dialogueState.npc = npc;
+        dialogueState.lines = lines;
         dialogueState.lineIndex = 0;
-        dialogueState.text = npc.dialogueLines[0];
+        dialogueState.text = lines[0];
         dialogueState.displayedChars = 0;
         dialogueState.charTimer = 0;
         interactionPrompt.visible = false;
@@ -7692,16 +7730,21 @@ ${includeComments ? `        // ────────────────
 
         // Move to next line
         dialogueState.lineIndex++;
-        if (dialogueState.lineIndex >= dialogueState.npc.dialogueLines.length) {
+        if (dialogueState.lineIndex >= dialogueState.lines.length) {
             // End dialogue
+            var finishedWith = dialogueState.npc;
             dialogueState.active = false;
             dialogueState.npc = null;
+            dialogueState.lines = null;
 
             // Show controls again
             setMobileControlsVisible(true);
             setKeyboardControlsVisible(true);
+
+            // Only a talk that reached its last line earns the gift
+            if (finishedWith.type === 'npc') giveNpcGift(finishedWith);
         } else {
-            dialogueState.text = dialogueState.npc.dialogueLines[dialogueState.lineIndex];
+            dialogueState.text = dialogueState.lines[dialogueState.lineIndex];
             dialogueState.displayedChars = 0;
             dialogueState.charTimer = 0;
         }
@@ -7720,8 +7763,60 @@ ${includeComments ? `        // ────────────────
         }
     }
 
+    function findCollectibleTemplate(id) {
+        for (var i = 0; i < collectibleTemplates.length; i++) {
+            if (collectibleTemplates[i].id === id) return collectibleTemplates[i];
+        }
+        return null;
+    }
+
+    function giveNpcGift(npc) {
+        if (!npc.giftEnabled || !npc.giftItemId) return;
+        if (npc.giftOnce && giftsGiven[npc.placeKey]) return;
+        // The collectible type may have been deleted since the NPC was set up
+        var itemTemplate = findCollectibleTemplate(npc.giftItemId);
+        if (!itemTemplate) return;
+
+        if (!inventory[npc.giftItemId]) {
+            inventory[npc.giftItemId] = { count: 0, template: itemTemplate };
+        }
+        inventory[npc.giftItemId].count += npc.giftCount;
+        if (npc.giftOnce) giftsGiven[npc.placeKey] = true;
+        saveRPGProgress();
+
+        showProgressMessage('Got ' + (itemTemplate.name || 'an item') + (npc.giftCount > 1 ? ' x' + npc.giftCount : ''));
+        playObjectSound({ template: itemTemplate }, 'collect');
+        vibrate(30);
+        if (itemTemplate.particleEffect) {
+            var hb = getPlayerHitbox();
+            spawnParticleEffectFromURL(itemTemplate.particleEffect, hb.x + hb.width / 2, hb.y + hb.height / 2, 200);
+        }
+    }
+
+    // True when the door may open now. Uses up the item on the first
+    // opening if the door is set to, then stays unlocked for good.
+    function unlockDoor(door) {
+        if (!door.requiresItemId || doorsUnlocked[door.placeKey]) return true;
+        // A deleted collectible type would lock the door forever
+        if (!findCollectibleTemplate(door.requiresItemId)) return true;
+
+        var held = inventory[door.requiresItemId] ? inventory[door.requiresItemId].count : 0;
+        if (held < door.requiresCount) {
+            startDialogue(door, door.lockedLines);
+            return false;
+        }
+        if (door.consumeItem) {
+            inventory[door.requiresItemId].count -= door.requiresCount;
+            if (inventory[door.requiresItemId].count <= 0) delete inventory[door.requiresItemId];
+            doorsUnlocked[door.placeKey] = true;
+            saveRPGProgress();
+        }
+        return true;
+    }
+
     // Use a door (teleport or level transition)
     function useDoor(door) {
+        if (!unlockDoor(door)) return;
         if (door.interactSound) {
             playSound(door.interactSound);
         }

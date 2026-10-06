@@ -1336,8 +1336,8 @@ const helpContent = {
                 <div style="font-size: 11px; color: var(--text-2);">
                     <div style="margin-bottom: 6px;"><strong style="color: #fff;">8-Direction Movement</strong> - Move freely in any direction with WASD</div>
                     <div style="margin-bottom: 6px;"><strong style="color: #fff;">No Gravity</strong> - Walk anywhere that isn't blocked</div>
-                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">NPCs & Dialogue</strong> - Create characters that talk to the player</div>
-                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">Doors & Teleporters</strong> - Connect areas and create dungeons</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">NPCs & Dialogue</strong> - Create characters that talk to the player, and can hand over an item when the talk ends</div>
+                    <div style="margin-bottom: 6px;"><strong style="color: #fff;">Doors & Teleporters</strong> - Connect areas and create dungeons. A door can stay locked until the player has an item, like a key from an NPC</div>
                     <div style="margin-bottom: 6px;"><strong style="color: #fff;">Online Multiplayer</strong> - Play with friends (experimental)</div>
                 </div>
             </div>

@@ -2250,6 +2250,41 @@ function populateAllObjectTileSelectors() {
 // NPC TEMPLATE MANAGEMENT (Top-Down RPG)
 // ============================================
 
+function splitLines(text) {
+    return text.split('\n').map(line => line.trim()).filter(line => line);
+}
+
+function clampGiftCount(value) {
+    return Math.max(1, Math.min(99, parseInt(value) || 1));
+}
+
+// A gift or lock that points at a deleted collectible type keeps its id
+// here, so saving the form does not quietly switch it to another item.
+function fillCollectibleSelect(selectId, selectedId, noneLabel) {
+    const select = document.getElementById(selectId);
+    select.innerHTML = '';
+    if (noneLabel) select.add(new Option(noneLabel, ''));
+    collectibleTemplates.forEach(t => select.add(new Option(t.name, t.id)));
+    if (selectedId && !collectibleTemplates.some(t => t.id === selectedId)) {
+        select.add(new Option('(deleted item)', selectedId));
+    }
+    select.value = selectedId || (noneLabel ? '' : (collectibleTemplates[0]?.id || ''));
+}
+
+function setNPCGiftFields(template) {
+    document.getElementById('npc-template-gift-enabled').checked = template.giftEnabled === true;
+    fillCollectibleSelect('npc-template-gift-item', template.giftItemId || '');
+    document.getElementById('npc-template-gift-count').value = template.giftCount || 1;
+    document.getElementById('npc-template-gift-once').checked = template.giftOnce !== false;
+    document.getElementById('npc-template-after-gift').value = (template.afterGiftLines || []).join('\n');
+    toggleNPCGiftOptions();
+}
+
+function toggleNPCGiftOptions() {
+    document.getElementById('npc-gift-options').style.display =
+        document.getElementById('npc-template-gift-enabled').checked ? 'block' : 'none';
+}
+
 function showNPCTemplatesModal() {
     const modal = document.getElementById('npc-templates-modal');
     modal.classList.add('visible');
@@ -2268,6 +2303,13 @@ function renderNPCTemplatesList() {
     npcTemplates.forEach((template, index) => {
         const behaviorLabel = template.behavior === 'wander' ? 'Wanders' : 'Stationary';
         const dialogueCount = (template.dialogueLines || []).length;
+        let giftText = '';
+        if (template.giftEnabled) {
+            const item = collectibleTemplates.find(t => t.id === template.giftItemId);
+            giftText = item
+                ? ` | Gives ${escapeHtml(item.name)}${template.giftCount > 1 ? ' x' + template.giftCount : ''}`
+                : ' | <span style="color: var(--danger, #e74c3c);">Gift item missing</span>';
+        }
 
         html += `
             <div class="template-item" data-id="${template.id}">
@@ -2276,7 +2318,7 @@ function renderNPCTemplatesList() {
                 </div>
                 <div class="template-info">
                     <div class="template-name">${template.name}</div>
-                    <div class="template-details">${behaviorLabel} | ${dialogueCount} dialogue line(s)</div>
+                    <div class="template-details">${behaviorLabel} | ${dialogueCount} dialogue line(s)${giftText}</div>
                 </div>
                 <div class="template-actions">
                     <button class="btn btn-small" onclick="editNPCTemplate('${template.id}')">Edit</button>
@@ -2309,6 +2351,7 @@ function showAddNPCTemplate() {
     document.getElementById('npc-template-solid-collision').checked = true;
     // Hide wander options by default
     document.getElementById('npc-wander-options').style.display = 'none';
+    setNPCGiftFields({});
 
     document.getElementById('npc-template-editor').classList.add('visible');
     if (typeof updateNpcSpritePreview === 'function') updateNpcSpritePreview();
@@ -2338,6 +2381,7 @@ function editNPCTemplate(id) {
     // Show/hide wander options based on behavior
     document.getElementById('npc-wander-options').style.display =
         template.behavior === 'wander' ? 'block' : 'none';
+    setNPCGiftFields(template);
 
     document.getElementById('npc-template-editor').classList.add('visible');
     if (typeof updateNpcSpritePreview === 'function') updateNpcSpritePreview();
@@ -2349,6 +2393,18 @@ function saveNPCTemplate() {
 
     const dialogueText = document.getElementById('npc-template-dialogue').value.trim();
     const dialogueLines = dialogueText ? dialogueText.split('\n').filter(line => line.trim()) : [];
+
+    const giftEnabled = document.getElementById('npc-template-gift-enabled').checked;
+    const giftItemId = document.getElementById('npc-template-gift-item').value;
+    if (giftEnabled && !giftItemId) {
+        showToast('Pick the item this NPC gives', 'error');
+        return;
+    }
+    // The gift is handed over when the last line closes, so there has to be a line
+    if (giftEnabled && dialogueLines.length === 0) {
+        showToast('Add at least one dialogue line so the NPC has a talk to finish', 'error');
+        return;
+    }
 
     const templateData = {
         name: name,
@@ -2366,7 +2422,12 @@ function saveNPCTemplate() {
         // Wander options
         wanderSpeed: parseFloat(document.getElementById('npc-template-wander-speed').value) || 1,
         wanderRadius: parseInt(document.getElementById('npc-template-wander-radius').value) || 3,
-        solidCollision: document.getElementById('npc-template-solid-collision').checked
+        solidCollision: document.getElementById('npc-template-solid-collision').checked,
+        giftEnabled: giftEnabled,
+        giftItemId: giftItemId,
+        giftCount: clampGiftCount(document.getElementById('npc-template-gift-count').value),
+        giftOnce: document.getElementById('npc-template-gift-once').checked,
+        afterGiftLines: splitLines(document.getElementById('npc-template-after-gift').value)
     };
 
     if (editingTemplateId) {
@@ -2474,6 +2535,12 @@ function renderDoorTemplatesList() {
         } else if (template.destinationType === 'position' && template.destinationX !== null) {
             destText = `→ (${template.destinationX}, ${template.destinationY})`;
         }
+        if (template.requiresItemId) {
+            const item = collectibleTemplates.find(t => t.id === template.requiresItemId);
+            destText += item
+                ? ` | Needs ${escapeHtml(item.name)}${template.requiresCount > 1 ? ' x' + template.requiresCount : ''}`
+                : ' | <span style="color: var(--danger, #e74c3c);">Lock item missing (opens freely)</span>';
+        }
 
         html += `
             <div class="template-item" data-id="${template.id}">
@@ -2508,6 +2575,7 @@ function showAddDoorTemplate() {
     document.getElementById('door-template-symbol').value = '🚪';
     document.getElementById('door-template-dest-type').value = 'level';
     document.getElementById('door-template-sound').value = '';
+    setDoorLockFields({});
 
     updateDoorDestinationOptions();
     populateDoorLevelDropdown();
@@ -2531,6 +2599,7 @@ function editDoorTemplate(id) {
     document.getElementById('door-template-dest-type').value = template.destinationType || 'level';
     document.getElementById('door-template-sound').value = template.interactSound || '';
     document.getElementById('door-template-particle').value = template.particleEffect || '';
+    setDoorLockFields(template);
 
     // Update sound effect button states
     if (typeof updateSoundButtonStates === 'function') {
@@ -2655,7 +2724,11 @@ function saveDoorTemplate() {
                 return v === '' ? null : (parseInt(v) || 0);
             })(),
         interactSound: document.getElementById('door-template-sound').value.trim(),
-        particleEffect: document.getElementById('door-template-particle').value.trim()
+        particleEffect: document.getElementById('door-template-particle').value.trim(),
+        requiresItemId: document.getElementById('door-template-requires-item').value,
+        requiresCount: clampGiftCount(document.getElementById('door-template-requires-count').value),
+        consumeItem: document.getElementById('door-template-consume').checked,
+        lockedLines: splitLines(document.getElementById('door-template-locked-lines').value)
     };
 
     if (editingTemplateId) {
@@ -2680,6 +2753,19 @@ function saveDoorTemplate() {
         closeDoorTemplatesModal();
         selectObjectForPlacement('door', templateData.id);
     }
+}
+
+function setDoorLockFields(template) {
+    fillCollectibleSelect('door-template-requires-item', template.requiresItemId || '', 'Nothing, it always opens');
+    document.getElementById('door-template-requires-count').value = template.requiresCount || 1;
+    document.getElementById('door-template-consume').checked = template.consumeItem === true;
+    document.getElementById('door-template-locked-lines').value = (template.lockedLines || []).join('\n');
+    toggleDoorLockOptions();
+}
+
+function toggleDoorLockOptions() {
+    document.getElementById('door-lock-options').style.display =
+        document.getElementById('door-template-requires-item').value ? 'block' : 'none';
 }
 
 function closeDoorTemplateEditor() {

@@ -3393,6 +3393,36 @@
             <textarea id="npc-template-dialogue" rows="4" placeholder="Hello!&#10;How are you today?&#10;Goodbye!" style="width: 100%; resize: vertical;"></textarea>
             <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Player presses E to advance through each line</span>
         </div>
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="npc-template-gift-enabled" onchange="toggleNPCGiftOptions()" style="width: 18px; height: 18px;">
+                <span>Give the player an item when the talk ends</span>
+            </label>
+        </div>
+        <div id="npc-gift-options" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+            <div class="form-row">
+                <div class="form-group" style="flex: 0.6;">
+                    <label>Item</label>
+                    <select id="npc-template-gift-item"></select>
+                </div>
+                <div class="form-group" style="flex: 0.4;">
+                    <label>How many</label>
+                    <input type="number" id="npc-template-gift-count" value="1" min="1" max="99">
+                </div>
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="npc-template-gift-once" checked style="width: 18px; height: 18px;">
+                    <span>Only once</span>
+                </label>
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Each NPC you place gives its own gift</span>
+            </div>
+            <div class="form-group">
+                <label>After the gift (optional, one line per message)</label>
+                <textarea id="npc-template-after-gift" rows="2" placeholder="Good luck with that key!" style="width: 100%; resize: vertical;"></textarea>
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">What the NPC says once it has given. Leave blank to repeat the dialogue above.</span>
+            </div>
+        </div>
         <div class="form-row">
             <div class="form-group" style="flex: 0.5;">
                 <label>Interaction Radius (px)</label>
@@ -3551,6 +3581,29 @@
                 <button type="button" class="browse-library-btn pfx-create-btn" onclick="openParticleFXStudio('door-template-particle', 'Door Teleport Effect', 'sparkle')" style="background: var(--accent);"><svg class="gm-icon"><use href="#icon-sparkles"/></svg> Create</button>
                 <button type="button" class="browse-library-btn pfx-edit-btn" onclick="editParticleFXStudio('door-template-particle')" style="background: var(--bg-4); display: none;"><svg class="gm-icon"><use href="#icon-pencil"/></svg> Edit</button>
                 <button type="button" class="browse-library-btn pfx-unlink-btn" onclick="unlinkParticleFXStudio('door-template-particle')" style="background: var(--bg-3); display: none;"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Needs an item to open</label>
+            <select id="door-template-requires-item" onchange="toggleDoorLockOptions()"></select>
+        </div>
+        <div id="door-lock-options" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+            <div class="form-row">
+                <div class="form-group" style="flex: 0.4;">
+                    <label>How many</label>
+                    <input type="number" id="door-template-requires-count" value="1" min="1" max="99">
+                </div>
+                <div class="form-group" style="flex: 0.6; display: flex; align-items: flex-end;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="door-template-consume" style="width: 18px; height: 18px;">
+                        <span>Use up the item</span>
+                    </label>
+                </div>
+            </div>
+            <span style="font-size:9px;color:var(--text-3);display:block;margin-top:-4px;margin-bottom:8px;">When the item is used up, the door takes it once and stays unlocked after that.</span>
+            <div class="form-group">
+                <label>When locked (one line per message)</label>
+                <textarea id="door-template-locked-lines" rows="2" placeholder="It is locked." style="width: 100%; resize: vertical;"></textarea>
             </div>
         </div>
         <div class="modal-buttons">
