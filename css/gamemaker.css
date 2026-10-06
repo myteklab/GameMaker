@@ -4385,3 +4385,21 @@
 .object-tools-bar .otb-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }
 
 .field-error { border-color: var(--danger) !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25); }
+
+/* NPC type: appearance, talking and the gift side by side. Folds to one
+   column on a narrow window, like the enemy editor. */
+.template-editor-content.npc-wide {
+    width: min(1020px, 96vw);
+    max-height: 86vh;
+}
+
+.editor-columns.three {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    align-items: start;
+    gap: 20px;
+}
+
+.editor-columns.three .form-row .form-group {
+    flex: 1 1 80px;
+    min-width: 0;
+}

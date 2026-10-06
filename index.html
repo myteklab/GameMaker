@@ -3339,133 +3339,147 @@
 
 <!-- NPC Template Editor -->
 <div class="template-editor" id="npc-template-editor">
-    <div class="template-editor-content">
+    <div class="template-editor-content wide npc-wide">
         <h3 id="npc-template-title">Add NPC Type</h3>
-        <div class="form-group">
-            <label>Name</label>
-            <input type="text" id="npc-template-name" placeholder="e.g., Shopkeeper">
-        </div>
-        <div class="form-row" style="align-items: flex-end;">
-            <div class="form-group">
-                <label>Sprite URL (optional)</label>
-                <div class="input-with-browse">
-                    <input type="text" id="npc-template-sprite" placeholder="https://..." onchange="updateNpcSpritePreview()">
-                    <button type="button" class="browse-library-btn" onclick="pickNpcSprite()">Browse</button>
+
+        <div class="editor-columns three">
+            <div class="editor-column">
+                <div class="editor-section-header">Appearance</div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="npc-template-name" placeholder="e.g., Shopkeeper">
+                </div>
+                <div class="form-group">
+                    <label>Sprite URL (optional)</label>
+                    <div class="input-with-browse">
+                        <input type="text" id="npc-template-sprite" placeholder="https://..." onchange="updateNpcSpritePreview()">
+                        <button type="button" class="browse-library-btn" onclick="pickNpcSprite()">Browse</button>
+                    </div>
+                </div>
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="form-group">
+                        <label>Cols</label>
+                        <input type="number" id="npc-template-cols" value="1" min="1" max="32" title="Frames per row (3 for a standard character walk cycle)" onchange="updateNpcSpritePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Rows</label>
+                        <input type="number" id="npc-template-rows" value="1" min="1" max="16" title="Rows (4 for directional: down/left/right/up)" onchange="updateNpcSpritePreview()">
+                    </div>
+                    <div class="form-group" style="flex: 0 0 80px;">
+                        <label style="font-size: 10px; color: var(--text-3);">Preview</label>
+                        <div id="npc-template-sprite-preview" style="width: 80px; height: 80px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                            <span style="color: var(--text-3); font-size: 10px;">No sprite</span>
+                        </div>
+                    </div>
+                </div>
+                <small style="color: var(--text-3); font-size: 10px; display: block; margin: -6px 0 10px;">Tip: For a 3 (cols) x 4 (rows) walk-cycle sheet, the NPC walks in 4 directions just like the player.</small>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Width (px)</label>
+                        <input type="number" id="npc-template-width" value="32" min="8" max="128" onchange="updateNpcSpritePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Height (px)</label>
+                        <input type="number" id="npc-template-height" value="32" min="8" max="128" onchange="updateNpcSpritePreview()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Symbol</label>
+                        <input type="text" id="npc-template-symbol" value="👤" maxlength="2">
+                    </div>
+                    <div class="form-group">
+                        <label>Fallback Color</label>
+                        <input type="color" id="npc-template-color" value="#3498db">
+                    </div>
                 </div>
             </div>
-            <div class="form-group" style="flex: 0.3; min-width: 60px;">
-                <label>Cols</label>
-                <input type="number" id="npc-template-cols" value="1" min="1" max="32" title="Frames per row (3 for a standard character walk cycle)" onchange="updateNpcSpritePreview()">
+
+            <div class="editor-column">
+                <div class="editor-section-header">Talking</div>
+                <div class="form-group">
+                    <label>Dialogue (one line per message)</label>
+                    <textarea id="npc-template-dialogue" rows="6" placeholder="Hello!&#10;How are you today?&#10;Goodbye!" style="width: 100%; resize: vertical;"></textarea>
+                    <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Player presses E to advance through each line</span>
+                </div>
+                <div class="form-group">
+                    <label>Interaction Radius (px)</label>
+                    <input type="number" id="npc-template-radius" value="48" min="16" max="128">
+                </div>
+
+                <div class="editor-section-header">Moving</div>
+                <div class="form-group">
+                    <label>Behavior</label>
+                    <select id="npc-template-behavior" onchange="toggleNPCWanderOptions()">
+                        <option value="stationary">Stationary</option>
+                        <option value="wander">Wander</option>
+                    </select>
+                </div>
+                <!-- Wander Options (shown when behavior is 'wander') -->
+                <div id="npc-wander-options" class="editor-collapsible" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Wander Speed</label>
+                            <input type="number" id="npc-template-wander-speed" value="1" min="0.5" max="5" step="0.5" title="Movement speed while wandering (0.5-5)">
+                        </div>
+                        <div class="form-group">
+                            <label>Wander Radius (tiles)</label>
+                            <input type="number" id="npc-template-wander-radius" value="3" min="1" max="10" title="Maximum distance from start position in tiles">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="npc-template-solid-collision" checked style="width: 18px; height: 18px;">
+                            <span>Collide with solid tiles (walls)</span>
+                        </label>
+                        <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">When disabled, NPC can pass through walls while wandering</span>
+                    </div>
+                </div>
             </div>
-            <div class="form-group" style="flex: 0.3; min-width: 60px;">
-                <label>Rows</label>
-                <input type="number" id="npc-template-rows" value="1" min="1" max="16" title="Rows (4 for directional: down/left/right/up)" onchange="updateNpcSpritePreview()">
-            </div>
-            <div class="form-group" style="flex: 0 0 80px;">
-                <label style="font-size: 10px; color: var(--text-3);">Preview</label>
-                <div id="npc-template-sprite-preview" style="width: 80px; height: 80px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-                    <span style="color: var(--text-3); font-size: 10px;">No sprite</span>
+
+            <div class="editor-column">
+                <div class="editor-section-header">Gift</div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="npc-template-gift-enabled" onchange="toggleNPCGiftOptions()" style="width: 18px; height: 18px;">
+                        <span>Give the player an item when the talk ends</span>
+                    </label>
+                </div>
+                <div id="npc-gift-options" class="editor-collapsible" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;">
+                            <label>Item</label>
+                            <select id="npc-template-gift-item"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>How many</label>
+                            <input type="number" id="npc-template-gift-count" value="1" min="1" max="99">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>How it's given</label>
+                        <select id="npc-template-gift-mode">
+                            <option value="inventory">Put it in the inventory</option>
+                            <option value="drop">Drop it on the ground</option>
+                        </select>
+                        <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Dropped items land around the NPC and are picked up like any other collectible, points included</span>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="npc-template-gift-once" checked style="width: 18px; height: 18px;">
+                            <span>Only once</span>
+                        </label>
+                        <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Each NPC you place gives its own gift</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>After the gift (optional, one line per message)</label>
+                        <textarea id="npc-template-after-gift" rows="3" placeholder="Good luck with that key!" style="width: 100%; resize: vertical;"></textarea>
+                        <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">What the NPC says once it has given. Leave blank to repeat the dialogue.</span>
+                    </div>
                 </div>
             </div>
         </div>
-        <small style="color: var(--text-3); font-size: 10px; display: block; margin-top: -6px;">Tip: For a 3 (cols) x 4 (rows) walk-cycle sheet, the NPC walks in 4 directions just like the player.</small>
-        <div class="form-row">
-            <div class="form-group" style="flex: 0.4;">
-                <label>Width (px)</label>
-                <input type="number" id="npc-template-width" value="32" min="8" max="128" onchange="updateNpcSpritePreview()">
-            </div>
-            <div class="form-group" style="flex: 0.4;">
-                <label>Height (px)</label>
-                <input type="number" id="npc-template-height" value="32" min="8" max="128" onchange="updateNpcSpritePreview()">
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group" style="flex: 0.3;">
-                <label>Symbol</label>
-                <input type="text" id="npc-template-symbol" value="👤" maxlength="2">
-            </div>
-            <div class="form-group" style="flex: 0.3;">
-                <label>Fallback Color</label>
-                <input type="color" id="npc-template-color" value="#3498db">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Dialogue (one line per message)</label>
-            <textarea id="npc-template-dialogue" rows="4" placeholder="Hello!&#10;How are you today?&#10;Goodbye!" style="width: 100%; resize: vertical;"></textarea>
-            <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Player presses E to advance through each line</span>
-        </div>
-        <div class="form-group">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                <input type="checkbox" id="npc-template-gift-enabled" onchange="toggleNPCGiftOptions()" style="width: 18px; height: 18px;">
-                <span>Give the player an item when the talk ends</span>
-            </label>
-        </div>
-        <div id="npc-gift-options" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; margin-bottom: 10px;">
-            <div class="form-row">
-                <div class="form-group" style="flex: 0.6;">
-                    <label>Item</label>
-                    <select id="npc-template-gift-item"></select>
-                </div>
-                <div class="form-group" style="flex: 0.4;">
-                    <label>How many</label>
-                    <input type="number" id="npc-template-gift-count" value="1" min="1" max="99">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>How it's given</label>
-                <select id="npc-template-gift-mode">
-                    <option value="inventory">Put it in the inventory</option>
-                    <option value="drop">Drop it on the ground</option>
-                </select>
-                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Dropped items land around the NPC and are picked up like any other collectible, points included</span>
-            </div>
-            <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="npc-template-gift-once" checked style="width: 18px; height: 18px;">
-                    <span>Only once</span>
-                </label>
-                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Each NPC you place gives its own gift</span>
-            </div>
-            <div class="form-group">
-                <label>After the gift (optional, one line per message)</label>
-                <textarea id="npc-template-after-gift" rows="2" placeholder="Good luck with that key!" style="width: 100%; resize: vertical;"></textarea>
-                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">What the NPC says once it has given. Leave blank to repeat the dialogue above.</span>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group" style="flex: 0.5;">
-                <label>Interaction Radius (px)</label>
-                <input type="number" id="npc-template-radius" value="48" min="16" max="128">
-            </div>
-            <div class="form-group" style="flex: 0.5;">
-                <label>Behavior</label>
-                <select id="npc-template-behavior" onchange="toggleNPCWanderOptions()">
-                    <option value="stationary">Stationary</option>
-                    <option value="wander">Wander</option>
-                </select>
-            </div>
-        </div>
-        <!-- Wander Options (shown when behavior is 'wander') -->
-        <div id="npc-wander-options" style="display: none; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; margin-top: 5px;">
-            <div style="font-size: 11px; color: var(--accent); margin-bottom: 8px; font-weight: bold;">Wander Options</div>
-            <div class="form-row">
-                <div class="form-group" style="flex: 0.5;">
-                    <label>Wander Speed</label>
-                    <input type="number" id="npc-template-wander-speed" value="1" min="0.5" max="5" step="0.5" title="Movement speed while wandering (0.5-5)">
-                </div>
-                <div class="form-group" style="flex: 0.5;">
-                    <label>Wander Radius (tiles)</label>
-                    <input type="number" id="npc-template-wander-radius" value="3" min="1" max="10" title="Maximum distance from start position in tiles">
-                </div>
-            </div>
-            <div class="form-group" style="margin-top: 5px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="npc-template-solid-collision" checked style="width: 18px; height: 18px;">
-                    <span>Collide with solid tiles (walls)</span>
-                </label>
-                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">When disabled, NPC can pass through walls while wandering</span>
-            </div>
-        </div>
+
         <div class="modal-buttons">
             <button class="btn" onclick="saveNPCTemplate()">Save</button>
             <button class="btn" onclick="closeNPCTemplateEditor()">Cancel</button>
