@@ -11112,7 +11112,10 @@ ${includeComments ? `        // ────────────────
                 // Cap icon size to RENDER_SIZE so objects don't appear oversized
                 var iconSize = Math.min(objW, objH, RENDER_SIZE);
 
-                if (!IS_TOPDOWN && obj.type === 'enemy') {
+                // Enemies and springs were platformer-only here, so in a top-down
+                // game one with no sprite was never drawn. Moving platforms stay
+                // gated: top-down cannot place them.
+                if (obj.type === 'enemy') {
                     // Enemy: draw a simple skull/face
                     var cx = screenX + objW/2;
                     var cy = screenY + objH/2;
@@ -11379,7 +11382,7 @@ ${includeComments ? `        // ────────────────
                     drawConveyorBelt(obj, screenX, screenY, objW, objH, color);
                 } else if (obj.type === 'crate') {
                     drawCrate(obj, screenX, screenY, objW, objH, color);
-                } else if (!IS_TOPDOWN && obj.type === 'spring') {
+                } else if (obj.type === 'spring') {
                     // Draw a spring pad with coil
                     var sx = screenX;
                     var sy = screenY;
