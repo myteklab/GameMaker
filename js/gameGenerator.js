@@ -157,6 +157,12 @@ let generatorStartLevel = 0;
 // never sends it is not mistaken for a game that failed to start.
 if (typeof window !== 'undefined') window.GAME_REPORTS_BOOT = true;
 
+// Where a top-down game keeps its saved progress. The play test runs in a
+// blob iframe on the editor's origin, so the editor can clear it too.
+function rpgProgressKey() {
+    return 'gamemaker_rpg_' + (projectName || 'game').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+}
+
 async function generateGameHTMLAsync(includeComments = false, pixelScale = 1, options = {}) {
     const wanted = parseInt(options.startLevel, 10);
     generatorStartLevel = (wanted >= 0 && wanted < levels.length) ? wanted : 0;
@@ -1266,7 +1272,7 @@ ${includeComments ? `    // ═════════════════�
     // RPG Progress Saving (localStorage)
     var SAVE_RPG_PROGRESS = IS_TOPDOWN && ${gameSettings.saveRPGProgress !== false};
     var MINI_MAP_ENABLED = IS_TOPDOWN && ${gameSettings.miniMapEnabled === true};
-    var STORAGE_KEY = 'gamemaker_rpg_' + '${(projectName || 'game').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}';
+    var STORAGE_KEY = '${rpgProgressKey()}';
 
     // Physics (gravity disabled in top-down mode)
     var GRAVITY = IS_TOPDOWN ? 0 : ${gameSettings.gravity};
@@ -3578,7 +3584,7 @@ ${includeComments ? `    // ═════════════════�
         // Remove item from activeObjects if it matches the position
         for (var i = activeObjects.length - 1; i >= 0; i--) {
             var obj = activeObjects[i];
-            if (obj.type === 'collectible') {
+            if (obj.type === 'collectible' && !obj.dropped) {
                 var objId = (obj.templateId || 'item') + '_' + Math.floor(obj.x) + '_' + Math.floor(obj.y);
                 if (objId === itemId) {
                     activeObjects.splice(i, 1);
@@ -5118,345 +5124,7 @@ ${includeComments ? `    // ═════════════════�
         // Filter out terrain zones - they are handled separately in activeTerrainZones
         activeObjects = gameObjectsData.filter(function(obj) {
             return obj.type !== 'terrainZone';
-        }).map(function(obj) {
-            var template = null;
-            var templates = null;
-
-            // Get the appropriate template
-            if (obj.type === 'enemy') templates = enemyTemplates;
-            else if (obj.type === 'collectible') templates = collectibleTemplates;
-            else if (obj.type === 'hazard') templates = hazardTemplates;
-            else if (obj.type === 'powerup') templates = powerupTemplates;
-            else if (obj.type === 'spring') templates = springTemplates;
-            else if (obj.type === 'movingPlatform') templates = movingPlatformTemplates;
-            else if (obj.type === 'ladder') templates = ladderTemplates;
-            else if (obj.type === 'crate') templates = crateTemplates;
-            else if (obj.type === 'conveyor') templates = conveyorTemplates;
-            else if (obj.type === 'npc') templates = npcTemplates;
-            else if (obj.type === 'door') templates = doorTemplates;
-            else if (obj.type === 'mysteryBlock') templates = mysteryBlockTemplates;
-            else if (obj.type === 'checkpoint') template = checkpointTemplate;
-            else if (obj.type === 'goal') template = goalTemplate;
-
-            if (templates) {
-                template = getTemplateById(templates, obj.templateId);
-            }
-
-            // Get size from template or default to RENDER_SIZE
-            // Template dimensions match RENDER_SIZE at default (32px = 1 tile at 2x)
-            var objWidth = (template && template.width) ? template.width : RENDER_SIZE;
-            var objHeight = (template && template.height) ? template.height : RENDER_SIZE;
-            // A placed object can be resized on its own (obj.size, game pixels).
-            // Its hit box scales by the same amount, or it would look bigger
-            // than it collides.
-            var sizeScaleX = 1, sizeScaleY = 1;
-            if (obj.size && obj.type !== 'terrainZone') {
-                var sizedW = Math.max(8, Math.min(1024, parseFloat(obj.size.w) || objWidth));
-                var sizedH = Math.max(8, Math.min(1024, parseFloat(obj.size.h) || objHeight));
-                sizeScaleX = sizedW / objWidth;
-                sizeScaleY = sizedH / objHeight;
-                objWidth = sizedW;
-                objHeight = sizedH;
-            }
-
-            // Position: center X in tile, but align bottom with tile bottom (so objects stand ON tiles)
-            var objX = obj.x * RENDER_SIZE + RENDER_SIZE / 2;
-            var objY = obj.y * RENDER_SIZE + RENDER_SIZE - objHeight / 2; // Bottom-aligned
-
-            var gameObj = {
-                x: objX,
-                y: objY,
-                startX: objX, // Remember start position for pacing/wandering
-                startY: objY, // Remember start Y for top-down wandering
-                width: objWidth,
-                height: objHeight,
-                type: obj.type,
-                templateId: obj.templateId,
-                active: true,
-                direction: 1,
-                moveTimer: 0,
-                animFrame: 0,
-                animTimer: 0
-            };
-
-            // Copy template properties
-            if (template) {
-                gameObj.template = template;
-                gameObj.color = template.color;
-                gameObj.symbol = template.symbol;
-                gameObj.tileKey = template.tileKey || '';
-                gameObj.sprite = template.sprite;
-                gameObj.frameCount = template.frameCount || 1;
-                gameObj.spritesheetCols = template.spritesheetCols || template.frameCount || 1;
-                gameObj.spritesheetRows = template.spritesheetRows || 1;
-                gameObj.animSpeed = template.animSpeed || 8;
-                gameObj.spriteFaces = template.spriteFaces === 'left' ? 'left' : 'right';
-
-                // Universal collision properties (all object types)
-                gameObj.spriteOffsetY = (template.spriteOffsetY || 0);
-                gameObj.collisionWidth = (template.collisionWidth || 0) * sizeScaleX;
-                gameObj.collisionHeight = (template.collisionHeight || 0) * sizeScaleY;
-                gameObj.collisionOffsetY = (template.collisionOffsetY || 0) * sizeScaleY;
-
-                // Enemy-specific properties
-                if (obj.type === 'enemy') {
-                    gameObj.enemyId = 'enemy_' + (enemyIdCounter++); // Unique ID for multiplayer sync
-                    gameObj.behavior = template.behavior || 'pace';
-                    gameObj.paceDistance = (template.paceDistance || 3) * RENDER_SIZE;
-                    gameObj.paceAxis = template.paceAxis || 'horizontal'; // For top-down mode
-                    gameObj.speed = (template.speed || 2) * TILE_SCALE;
-                    gameObj.damage = template.damage || 1;
-                    gameObj.maxHealth = Math.max(1, Math.min(20, parseInt(template.health) || 1));
-                    gameObj.health = gameObj.maxHealth;
-                    gameObj.hitFlashUntil = 0;
-                    gameObj.followRange = (template.followRange || 5) * RENDER_SIZE;
-                    gameObj.jumpPower = template.jumpPower || 8;
-                    gameObj.stompable = template.stompable || false;
-                    gameObj.stompScore = template.stompScore || 50;
-                    gameObj.respawnTime = (template.respawnTime || 0) * 1000; // Convert seconds to ms
-                    gameObj.deathTime = 0; // Timestamp when enemy was killed (for respawn)
-                    gameObj.velocityY = 0;
-                    gameObj.onGround = false;
-                    gameObj.projectileEnabled = template.projectileEnabled === true;
-                    gameObj.projectileAim = template.projectileAim || 'facing';
-                    gameObj.projectileAngle = parseFloat(template.projectileAngle) || 0;
-                    gameObj.projectileCount = Math.max(1, Math.min(12, parseInt(template.projectileCount) || 3));
-                    gameObj.projectileSpread = parseFloat(template.projectileSpread) || 30;
-                    gameObj.projectileInterval = parseFloat(template.projectileInterval) || 2;
-                    gameObj.projectileRange = parseFloat(template.projectileRange) || 0;
-                    gameObj.projectileSpeed = (parseFloat(template.projectileSpeed) || 4) * TILE_SCALE;
-                    gameObj.projectileDamage = parseInt(template.projectileDamage) || 1;
-                    gameObj.projectileLifetime = parseFloat(template.projectileLifetime) || 3;
-                    gameObj.projectileSize = (parseFloat(template.projectileSize) || 10) * TILE_SCALE;
-                    gameObj.projectileColor = template.projectileColor || '#ff6b6b';
-                    gameObj.projectileSprite = template.projectileSprite || '';
-                    gameObj.projectileSound = template.projectileSound || '';
-                    gameObj.nextProjectileAt = 0;
-                    // a path sketched on this placed enemy replaces its usual movement
-                    gameObj.path = prepareObjectPath(obj.path);
-                    if (gameObj.path) {
-                        gameObj.pathDist = 0;
-                        gameObj.pathDir = 1;
-                        placeObjectOnPath(gameObj);
-                    }
-                }
-
-                // Collectible-specific
-                if (obj.type === 'collectible') {
-                    gameObj.name = template.name || 'Item';
-                    gameObj.value = template.value || 10;
-                    gameObj.respawns = template.respawns === true;
-                }
-
-                // Hazard-specific
-                if (obj.type === 'hazard') {
-                    gameObj.damage = template.damage || 1;
-                    gameObj.continuous = template.continuous || false;
-                    // A sketched path turns a spike into a saw on a track.
-                    gameObj.speed = Math.max(0.25, parseFloat(template.speed) || 2);
-                    gameObj.startX = objX;
-                    gameObj.startY = objY;
-                    gameObj.path = prepareObjectPath(obj.path);
-                    if (gameObj.path) {
-                        gameObj.pathDist = 0;
-                        gameObj.direction = 1;
-                        placeObjectOnPath(gameObj);
-                    }
-                }
-
-                // Powerup-specific
-                if (obj.type === 'powerup') {
-                    gameObj.effect = template.effect || 'heal';
-                    gameObj.amount = template.amount || 1;
-                    gameObj.duration = template.duration || 0;
-                }
-
-                // Spring-specific
-                if (obj.type === 'spring') {
-                    gameObj.bouncePower = template.bouncePower || 1.5;
-                    gameObj.bounceSound = template.bounceSound || '';
-                }
-
-                // Checkpoint-specific
-                if (obj.type === 'checkpoint') {
-                    gameObj.activated = false;
-                    gameObj.activatedColor = template.activatedColor || '#2ecc71';
-                    gameObj.activateSound = template.activateSound || '';
-                }
-
-                // Crate-specific
-                if (obj.type === 'crate') {
-                    gameObj.pushSpeed = Math.max(0.25, parseFloat(template.pushSpeed) || 2);
-                    gameObj.textureFit = template.textureFit || 'repeat';
-                    gameObj.repeatTiles = Math.max(1, parseInt(template.repeatTiles) || 1);
-                    gameObj.tileKey = template.tileKey || '';
-                    gameObj.pushSound = template.pushSound || '';
-                    gameObj.landSound = template.landSound || '';
-                    gameObj.speedY = 0;
-                    gameObj.deltaX = 0;
-                    gameObj.deltaY = 0;
-                    gameObj.pushSoundUntil = 0;
-                }
-
-                // Ladder-specific
-                if (obj.type === 'ladder') {
-                    gameObj.climbSpeed = Math.max(0.5, parseFloat(template.climbSpeed) || 2);
-                    gameObj.textureFit = template.textureFit || 'stretch';
-                    gameObj.repeatTiles = Math.max(0, parseInt(template.repeatTiles) || 0);
-                    gameObj.jumpOff = template.jumpOff !== false;
-                    gameObj.tileKey = template.tileKey || '';
-                    gameObj.grabSound = template.grabSound || '';
-                    gameObj.climbSound = template.climbSound || '';
-                }
-
-                // Conveyor-specific
-                if (obj.type === 'conveyor') {
-                    gameObj.beltSpeed = Math.max(0, parseFloat(template.beltSpeed) || 2);
-                    gameObj.textureFit = template.textureFit || 'stretch';
-                    gameObj.repeatTiles = Math.max(0, parseInt(template.repeatTiles) || 0);
-                    gameObj.direction = template.direction || 'right';
-                    gameObj.collisionMode = template.collisionMode || 'solid';
-                    gameObj.affectsEnemies = !!template.affectsEnemies;
-                    gameObj.tileKey = template.tileKey || '';
-                    gameObj.moveSound = template.moveSound || '';
-                    // The platform collision path reads these; a belt never moves itself.
-                    gameObj.activation = 'always';
-                    gameObj.activated = true;
-                    gameObj.deltaX = 0;
-                    gameObj.deltaY = 0;
-                }
-
-                // Moving Platform-specific
-                if (obj.type === 'movingPlatform') {
-                    gameObj.axis = template.axis || 'x';
-                    gameObj.distance = template.distance || 100;
-                    gameObj.speed = template.speed || 2;
-                    gameObj.collisionMode = template.collisionMode || 'solid';
-                    gameObj.activation = template.activation || 'always';
-                    gameObj.activated = (template.activation === 'always');
-                    gameObj.tileKey = template.tileKey || '';
-                    gameObj.moveSound = template.moveSound || '';
-                    gameObj.showInactiveOutline = template.showInactiveOutline !== false;
-                    gameObj.inactiveOutlineColor = template.inactiveOutlineColor || '#ffff00';
-                    gameObj.cornerRadius = Math.max(0, Math.min(64, parseFloat(template.cornerRadius) || 0));
-                    gameObj.startX = objX;
-                    gameObj.startY = objY;
-
-                    // Randomize start position if enabled and always-moving
-                    if (template.randomizeStart && template.activation === 'always') {
-                        var randomOffset = Math.random() * gameObj.distance;
-                        if (gameObj.axis === 'circle' || gameObj.axis === 'figure8') {
-                            gameObj.angle = Math.random() * Math.PI * 2;
-                        } else if (gameObj.axis === 'y') {
-                            gameObj.y = objY + randomOffset;
-                            gameObj.startY = objY; // Keep original start for boundary calc
-                        } else {
-                            gameObj.x = objX + randomOffset;
-                            gameObj.startX = objX; // Keep original start for boundary calc
-                        }
-                        // Also randomize initial direction
-                        gameObj.direction = Math.random() < 0.5 ? 1 : -1;
-                    } else {
-                        gameObj.direction = 1; // 1 = forward, -1 = backward
-                    }
-
-                    // a path sketched on this placed platform replaces its type's movement
-                    gameObj.path = prepareObjectPath(obj.path);
-                    if (gameObj.path) {
-                        gameObj.pathDist = (template.randomizeStart && template.activation === 'always') ? Math.random() * gameObj.path.total : 0;
-                        placeObjectOnPath(gameObj);
-                    } else if (gameObj.axis === 'circle' || gameObj.axis === 'figure8') {
-                        gameObj.angle = gameObj.angle || 0;
-                        placePlatformOnLoop(gameObj);
-                    }
-                    gameObj.lastX = gameObj.x;
-                    gameObj.lastY = gameObj.y;
-                    gameObj.deltaX = 0;
-                    gameObj.deltaY = 0;
-                    gameObj.tileMode = template.tileMode || 'tile'; // 'tile' or 'stretch'
-                    // Collapsing platform properties
-                    gameObj.collapsing = template.collapsing || false;
-                    gameObj.collapseDelay = (template.collapseDelay || 1.0) * 1000; // Convert to ms
-                    gameObj.collapseShakeDuration = (template.collapseShakeDuration || 0.5) * 1000;
-                    gameObj.collapseRespawnTime = (template.collapseRespawnTime !== undefined ? template.collapseRespawnTime : 3.0) * 1000; // 0 = never respawn
-                    gameObj.collapseSound = template.collapseSound || '';
-                    // Collapse state tracking
-                    gameObj.collapseState = 'solid'; // 'solid', 'shaking', 'collapsed'
-                    gameObj.collapseTimer = 0;
-                    gameObj.playerStandingTime = 0;
-                    gameObj.shakeOffset = 0;
-                }
-
-                // NPC-specific (Top-Down RPG)
-                if (obj.type === 'npc') {
-                    gameObj.dialogueLines = template.dialogueLines || ['Hello!'];
-                    gameObj.interactionRadius = template.interactionRadius || 48;
-                    gameObj.behavior = template.behavior || 'stationary';
-                    gameObj.name = template.name || 'NPC';
-                    gameObj.solidCollision = template.solidCollision !== false; // Default true
-                    // Wander behavior state
-                    gameObj.speedX = 0;
-                    gameObj.speedY = 0;
-                    gameObj.wanderTimer = 0;
-                    gameObj.wanderPauseTimer = 0;
-                    gameObj.wanderDirection = 'down'; // Current facing direction
-                    gameObj.wanderSpeed = template.wanderSpeed || 1;
-                    gameObj.wanderRadius = (template.wanderRadius || 3) * RENDER_SIZE;
-                    gameObj.giftEnabled = template.giftEnabled === true;
-                    gameObj.giftItemId = template.giftItemId || '';
-                    gameObj.giftCount = Math.max(1, Math.min(99, parseInt(template.giftCount) || 1));
-                    gameObj.giftOnce = template.giftOnce !== false;
-                    gameObj.afterGiftLines = template.afterGiftLines || [];
-                    // obj.x/obj.y are the placed tile, which never changes.
-                    // gameObj.x/y are pixels and move while the NPC wanders.
-                    gameObj.placeKey = placeKeyFor(obj);
-                }
-
-                // Door-specific (Top-Down RPG)
-                if (obj.type === 'door') {
-                    gameObj.destinationType = template.destinationType || 'position';
-                    gameObj.destinationLevelId = template.destinationLevelId || null;
-                    // Use null-coalescing semantics: a valid spawn at tile 0
-                    // must not be treated as falsy and reset to null.
-                    gameObj.destinationX = (template.destinationX === null || template.destinationX === undefined) ? null : template.destinationX;
-                    gameObj.destinationY = (template.destinationY === null || template.destinationY === undefined) ? null : template.destinationY;
-                    gameObj.interactionRadius = template.interactionRadius || 48;
-                    gameObj.interactSound = template.interactSound || '';
-                    gameObj.particleEffect = template.particleEffect || '';
-                    gameObj.name = template.name || 'Door';
-                    gameObj.requiresItemId = template.requiresItemId || '';
-                    gameObj.requiresCount = Math.max(1, Math.min(99, parseInt(template.requiresCount) || 1));
-                    gameObj.consumeItem = template.consumeItem === true;
-                    gameObj.lockedLines = (template.lockedLines && template.lockedLines.length) ? template.lockedLines : ['It is locked.'];
-                    gameObj.placeKey = placeKeyFor(obj);
-                }
-
-                // Mystery Block-specific (Platformer)
-                if (obj.type === 'mysteryBlock') {
-                    gameObj.emitType = template.emitType || 'collectible';
-                    gameObj.emitTemplateId = template.emitTemplateId || 'coin';
-                    gameObj.emitCount = template.emitCount || 1;
-                    gameObj.depletedBehavior = template.depletedBehavior || 'solid';
-                    gameObj.emitMode = template.emitMode || 'popup';
-                    gameObj.emitDirection = template.emitDirection || 'up';
-                    gameObj.emitSpeed = template.emitSpeed || 3;
-                    gameObj.emitPopHeight = template.emitPopHeight || 32;
-                    gameObj.emitGravity = template.emitGravity !== false;
-                    gameObj.collectMode = template.collectMode || 'manual';
-                    gameObj.autoCollectDelay = template.autoCollectDelay || 500;
-                    gameObj.emptyColor = template.emptyColor || '#8B4513';
-                    gameObj.emptySprite = template.emptySprite || '';
-                    gameObj.emptyTileKey = template.emptyTileKey || '';
-                    gameObj.hitSound = template.hitSound || '';
-                    gameObj.emptyHitSound = template.emptyHitSound || '';
-                    gameObj.particleEffect = template.particleEffect || '';
-                    // Runtime state - remaining items tracked in mysteryBlockStates
-                    gameObj.depleted = false;
-                }
-            }
-
-            return gameObj;
-        });
+        }).map(buildGameObject);
 
         // Initialize mystery block states (remaining item counts)
         mysteryBlockStates = {};
@@ -5498,6 +5166,349 @@ ${includeComments ? `    // ═════════════════�
         }
         lastZoneDamageTime = 0;
         playerCurrentZone = null;
+    }
+
+    // One placed object from the level data, made ready to play. Also used for
+    // items an NPC drops, so a dropped gem is the same as a placed one.
+    function buildGameObject(obj) {
+        var template = null;
+        var templates = null;
+
+        // Get the appropriate template
+        if (obj.type === 'enemy') templates = enemyTemplates;
+        else if (obj.type === 'collectible') templates = collectibleTemplates;
+        else if (obj.type === 'hazard') templates = hazardTemplates;
+        else if (obj.type === 'powerup') templates = powerupTemplates;
+        else if (obj.type === 'spring') templates = springTemplates;
+        else if (obj.type === 'movingPlatform') templates = movingPlatformTemplates;
+        else if (obj.type === 'ladder') templates = ladderTemplates;
+        else if (obj.type === 'crate') templates = crateTemplates;
+        else if (obj.type === 'conveyor') templates = conveyorTemplates;
+        else if (obj.type === 'npc') templates = npcTemplates;
+        else if (obj.type === 'door') templates = doorTemplates;
+        else if (obj.type === 'mysteryBlock') templates = mysteryBlockTemplates;
+        else if (obj.type === 'checkpoint') template = checkpointTemplate;
+        else if (obj.type === 'goal') template = goalTemplate;
+
+        if (templates) {
+            template = getTemplateById(templates, obj.templateId);
+        }
+
+        // Get size from template or default to RENDER_SIZE
+        // Template dimensions match RENDER_SIZE at default (32px = 1 tile at 2x)
+        var objWidth = (template && template.width) ? template.width : RENDER_SIZE;
+        var objHeight = (template && template.height) ? template.height : RENDER_SIZE;
+        // A placed object can be resized on its own (obj.size, game pixels).
+        // Its hit box scales by the same amount, or it would look bigger
+        // than it collides.
+        var sizeScaleX = 1, sizeScaleY = 1;
+        if (obj.size && obj.type !== 'terrainZone') {
+            var sizedW = Math.max(8, Math.min(1024, parseFloat(obj.size.w) || objWidth));
+            var sizedH = Math.max(8, Math.min(1024, parseFloat(obj.size.h) || objHeight));
+            sizeScaleX = sizedW / objWidth;
+            sizeScaleY = sizedH / objHeight;
+            objWidth = sizedW;
+            objHeight = sizedH;
+        }
+
+        // Position: center X in tile, but align bottom with tile bottom (so objects stand ON tiles)
+        var objX = obj.x * RENDER_SIZE + RENDER_SIZE / 2;
+        var objY = obj.y * RENDER_SIZE + RENDER_SIZE - objHeight / 2; // Bottom-aligned
+
+        var gameObj = {
+            x: objX,
+            y: objY,
+            startX: objX, // Remember start position for pacing/wandering
+            startY: objY, // Remember start Y for top-down wandering
+            width: objWidth,
+            height: objHeight,
+            type: obj.type,
+            templateId: obj.templateId,
+            active: true,
+            direction: 1,
+            moveTimer: 0,
+            animFrame: 0,
+            animTimer: 0
+        };
+
+        // Copy template properties
+        if (template) {
+            gameObj.template = template;
+            gameObj.color = template.color;
+            gameObj.symbol = template.symbol;
+            gameObj.tileKey = template.tileKey || '';
+            gameObj.sprite = template.sprite;
+            gameObj.frameCount = template.frameCount || 1;
+            gameObj.spritesheetCols = template.spritesheetCols || template.frameCount || 1;
+            gameObj.spritesheetRows = template.spritesheetRows || 1;
+            gameObj.animSpeed = template.animSpeed || 8;
+            gameObj.spriteFaces = template.spriteFaces === 'left' ? 'left' : 'right';
+
+            // Universal collision properties (all object types)
+            gameObj.spriteOffsetY = (template.spriteOffsetY || 0);
+            gameObj.collisionWidth = (template.collisionWidth || 0) * sizeScaleX;
+            gameObj.collisionHeight = (template.collisionHeight || 0) * sizeScaleY;
+            gameObj.collisionOffsetY = (template.collisionOffsetY || 0) * sizeScaleY;
+
+            // Enemy-specific properties
+            if (obj.type === 'enemy') {
+                gameObj.enemyId = 'enemy_' + (enemyIdCounter++); // Unique ID for multiplayer sync
+                gameObj.behavior = template.behavior || 'pace';
+                gameObj.paceDistance = (template.paceDistance || 3) * RENDER_SIZE;
+                gameObj.paceAxis = template.paceAxis || 'horizontal'; // For top-down mode
+                gameObj.speed = (template.speed || 2) * TILE_SCALE;
+                gameObj.damage = template.damage || 1;
+                gameObj.maxHealth = Math.max(1, Math.min(20, parseInt(template.health) || 1));
+                gameObj.health = gameObj.maxHealth;
+                gameObj.hitFlashUntil = 0;
+                gameObj.followRange = (template.followRange || 5) * RENDER_SIZE;
+                gameObj.jumpPower = template.jumpPower || 8;
+                gameObj.stompable = template.stompable || false;
+                gameObj.stompScore = template.stompScore || 50;
+                gameObj.respawnTime = (template.respawnTime || 0) * 1000; // Convert seconds to ms
+                gameObj.deathTime = 0; // Timestamp when enemy was killed (for respawn)
+                gameObj.velocityY = 0;
+                gameObj.onGround = false;
+                gameObj.projectileEnabled = template.projectileEnabled === true;
+                gameObj.projectileAim = template.projectileAim || 'facing';
+                gameObj.projectileAngle = parseFloat(template.projectileAngle) || 0;
+                gameObj.projectileCount = Math.max(1, Math.min(12, parseInt(template.projectileCount) || 3));
+                gameObj.projectileSpread = parseFloat(template.projectileSpread) || 30;
+                gameObj.projectileInterval = parseFloat(template.projectileInterval) || 2;
+                gameObj.projectileRange = parseFloat(template.projectileRange) || 0;
+                gameObj.projectileSpeed = (parseFloat(template.projectileSpeed) || 4) * TILE_SCALE;
+                gameObj.projectileDamage = parseInt(template.projectileDamage) || 1;
+                gameObj.projectileLifetime = parseFloat(template.projectileLifetime) || 3;
+                gameObj.projectileSize = (parseFloat(template.projectileSize) || 10) * TILE_SCALE;
+                gameObj.projectileColor = template.projectileColor || '#ff6b6b';
+                gameObj.projectileSprite = template.projectileSprite || '';
+                gameObj.projectileSound = template.projectileSound || '';
+                gameObj.nextProjectileAt = 0;
+                // a path sketched on this placed enemy replaces its usual movement
+                gameObj.path = prepareObjectPath(obj.path);
+                if (gameObj.path) {
+                    gameObj.pathDist = 0;
+                    gameObj.pathDir = 1;
+                    placeObjectOnPath(gameObj);
+                }
+            }
+
+            // Collectible-specific
+            if (obj.type === 'collectible') {
+                gameObj.name = template.name || 'Item';
+                gameObj.value = template.value || 10;
+                gameObj.respawns = template.respawns === true;
+            }
+
+            // Hazard-specific
+            if (obj.type === 'hazard') {
+                gameObj.damage = template.damage || 1;
+                gameObj.continuous = template.continuous || false;
+                // A sketched path turns a spike into a saw on a track.
+                gameObj.speed = Math.max(0.25, parseFloat(template.speed) || 2);
+                gameObj.startX = objX;
+                gameObj.startY = objY;
+                gameObj.path = prepareObjectPath(obj.path);
+                if (gameObj.path) {
+                    gameObj.pathDist = 0;
+                    gameObj.direction = 1;
+                    placeObjectOnPath(gameObj);
+                }
+            }
+
+            // Powerup-specific
+            if (obj.type === 'powerup') {
+                gameObj.effect = template.effect || 'heal';
+                gameObj.amount = template.amount || 1;
+                gameObj.duration = template.duration || 0;
+            }
+
+            // Spring-specific
+            if (obj.type === 'spring') {
+                gameObj.bouncePower = template.bouncePower || 1.5;
+                gameObj.bounceSound = template.bounceSound || '';
+            }
+
+            // Checkpoint-specific
+            if (obj.type === 'checkpoint') {
+                gameObj.activated = false;
+                gameObj.activatedColor = template.activatedColor || '#2ecc71';
+                gameObj.activateSound = template.activateSound || '';
+            }
+
+            // Crate-specific
+            if (obj.type === 'crate') {
+                gameObj.pushSpeed = Math.max(0.25, parseFloat(template.pushSpeed) || 2);
+                gameObj.textureFit = template.textureFit || 'repeat';
+                gameObj.repeatTiles = Math.max(1, parseInt(template.repeatTiles) || 1);
+                gameObj.tileKey = template.tileKey || '';
+                gameObj.pushSound = template.pushSound || '';
+                gameObj.landSound = template.landSound || '';
+                gameObj.speedY = 0;
+                gameObj.deltaX = 0;
+                gameObj.deltaY = 0;
+                gameObj.pushSoundUntil = 0;
+            }
+
+            // Ladder-specific
+            if (obj.type === 'ladder') {
+                gameObj.climbSpeed = Math.max(0.5, parseFloat(template.climbSpeed) || 2);
+                gameObj.textureFit = template.textureFit || 'stretch';
+                gameObj.repeatTiles = Math.max(0, parseInt(template.repeatTiles) || 0);
+                gameObj.jumpOff = template.jumpOff !== false;
+                gameObj.tileKey = template.tileKey || '';
+                gameObj.grabSound = template.grabSound || '';
+                gameObj.climbSound = template.climbSound || '';
+            }
+
+            // Conveyor-specific
+            if (obj.type === 'conveyor') {
+                gameObj.beltSpeed = Math.max(0, parseFloat(template.beltSpeed) || 2);
+                gameObj.textureFit = template.textureFit || 'stretch';
+                gameObj.repeatTiles = Math.max(0, parseInt(template.repeatTiles) || 0);
+                gameObj.direction = template.direction || 'right';
+                gameObj.collisionMode = template.collisionMode || 'solid';
+                gameObj.affectsEnemies = !!template.affectsEnemies;
+                gameObj.tileKey = template.tileKey || '';
+                gameObj.moveSound = template.moveSound || '';
+                // The platform collision path reads these; a belt never moves itself.
+                gameObj.activation = 'always';
+                gameObj.activated = true;
+                gameObj.deltaX = 0;
+                gameObj.deltaY = 0;
+            }
+
+            // Moving Platform-specific
+            if (obj.type === 'movingPlatform') {
+                gameObj.axis = template.axis || 'x';
+                gameObj.distance = template.distance || 100;
+                gameObj.speed = template.speed || 2;
+                gameObj.collisionMode = template.collisionMode || 'solid';
+                gameObj.activation = template.activation || 'always';
+                gameObj.activated = (template.activation === 'always');
+                gameObj.tileKey = template.tileKey || '';
+                gameObj.moveSound = template.moveSound || '';
+                gameObj.showInactiveOutline = template.showInactiveOutline !== false;
+                gameObj.inactiveOutlineColor = template.inactiveOutlineColor || '#ffff00';
+                gameObj.cornerRadius = Math.max(0, Math.min(64, parseFloat(template.cornerRadius) || 0));
+                gameObj.startX = objX;
+                gameObj.startY = objY;
+
+                // Randomize start position if enabled and always-moving
+                if (template.randomizeStart && template.activation === 'always') {
+                    var randomOffset = Math.random() * gameObj.distance;
+                    if (gameObj.axis === 'circle' || gameObj.axis === 'figure8') {
+                        gameObj.angle = Math.random() * Math.PI * 2;
+                    } else if (gameObj.axis === 'y') {
+                        gameObj.y = objY + randomOffset;
+                        gameObj.startY = objY; // Keep original start for boundary calc
+                    } else {
+                        gameObj.x = objX + randomOffset;
+                        gameObj.startX = objX; // Keep original start for boundary calc
+                    }
+                    // Also randomize initial direction
+                    gameObj.direction = Math.random() < 0.5 ? 1 : -1;
+                } else {
+                    gameObj.direction = 1; // 1 = forward, -1 = backward
+                }
+
+                // a path sketched on this placed platform replaces its type's movement
+                gameObj.path = prepareObjectPath(obj.path);
+                if (gameObj.path) {
+                    gameObj.pathDist = (template.randomizeStart && template.activation === 'always') ? Math.random() * gameObj.path.total : 0;
+                    placeObjectOnPath(gameObj);
+                } else if (gameObj.axis === 'circle' || gameObj.axis === 'figure8') {
+                    gameObj.angle = gameObj.angle || 0;
+                    placePlatformOnLoop(gameObj);
+                }
+                gameObj.lastX = gameObj.x;
+                gameObj.lastY = gameObj.y;
+                gameObj.deltaX = 0;
+                gameObj.deltaY = 0;
+                gameObj.tileMode = template.tileMode || 'tile'; // 'tile' or 'stretch'
+                // Collapsing platform properties
+                gameObj.collapsing = template.collapsing || false;
+                gameObj.collapseDelay = (template.collapseDelay || 1.0) * 1000; // Convert to ms
+                gameObj.collapseShakeDuration = (template.collapseShakeDuration || 0.5) * 1000;
+                gameObj.collapseRespawnTime = (template.collapseRespawnTime !== undefined ? template.collapseRespawnTime : 3.0) * 1000; // 0 = never respawn
+                gameObj.collapseSound = template.collapseSound || '';
+                // Collapse state tracking
+                gameObj.collapseState = 'solid'; // 'solid', 'shaking', 'collapsed'
+                gameObj.collapseTimer = 0;
+                gameObj.playerStandingTime = 0;
+                gameObj.shakeOffset = 0;
+            }
+
+            // NPC-specific (Top-Down RPG)
+            if (obj.type === 'npc') {
+                gameObj.dialogueLines = template.dialogueLines || ['Hello!'];
+                gameObj.interactionRadius = template.interactionRadius || 48;
+                gameObj.behavior = template.behavior || 'stationary';
+                gameObj.name = template.name || 'NPC';
+                gameObj.solidCollision = template.solidCollision !== false; // Default true
+                // Wander behavior state
+                gameObj.speedX = 0;
+                gameObj.speedY = 0;
+                gameObj.wanderTimer = 0;
+                gameObj.wanderPauseTimer = 0;
+                gameObj.wanderDirection = 'down'; // Current facing direction
+                gameObj.wanderSpeed = template.wanderSpeed || 1;
+                gameObj.wanderRadius = (template.wanderRadius || 3) * RENDER_SIZE;
+                gameObj.giftEnabled = template.giftEnabled === true;
+                gameObj.giftItemId = template.giftItemId || '';
+                gameObj.giftCount = Math.max(1, Math.min(99, parseInt(template.giftCount) || 1));
+                gameObj.giftOnce = template.giftOnce !== false;
+                gameObj.giftMode = template.giftMode === 'drop' ? 'drop' : 'inventory';
+                gameObj.afterGiftLines = template.afterGiftLines || [];
+                // obj.x/obj.y are the placed tile, which never changes.
+                // gameObj.x/y are pixels and move while the NPC wanders.
+                gameObj.placeKey = placeKeyFor(obj);
+            }
+
+            // Door-specific (Top-Down RPG)
+            if (obj.type === 'door') {
+                gameObj.destinationType = template.destinationType || 'position';
+                gameObj.destinationLevelId = template.destinationLevelId || null;
+                // Use null-coalescing semantics: a valid spawn at tile 0
+                // must not be treated as falsy and reset to null.
+                gameObj.destinationX = (template.destinationX === null || template.destinationX === undefined) ? null : template.destinationX;
+                gameObj.destinationY = (template.destinationY === null || template.destinationY === undefined) ? null : template.destinationY;
+                gameObj.interactionRadius = template.interactionRadius || 48;
+                gameObj.interactSound = template.interactSound || '';
+                gameObj.particleEffect = template.particleEffect || '';
+                gameObj.name = template.name || 'Door';
+                gameObj.requiresItemId = template.requiresItemId || '';
+                gameObj.requiresCount = Math.max(1, Math.min(99, parseInt(template.requiresCount) || 1));
+                gameObj.consumeItem = template.consumeItem === true;
+                gameObj.lockedLines = (template.lockedLines && template.lockedLines.length) ? template.lockedLines : ['It is locked.'];
+                gameObj.placeKey = placeKeyFor(obj);
+            }
+
+            // Mystery Block-specific (Platformer)
+            if (obj.type === 'mysteryBlock') {
+                gameObj.emitType = template.emitType || 'collectible';
+                gameObj.emitTemplateId = template.emitTemplateId || 'coin';
+                gameObj.emitCount = template.emitCount || 1;
+                gameObj.depletedBehavior = template.depletedBehavior || 'solid';
+                gameObj.emitMode = template.emitMode || 'popup';
+                gameObj.emitDirection = template.emitDirection || 'up';
+                gameObj.emitSpeed = template.emitSpeed || 3;
+                gameObj.emitPopHeight = template.emitPopHeight || 32;
+                gameObj.emitGravity = template.emitGravity !== false;
+                gameObj.collectMode = template.collectMode || 'manual';
+                gameObj.autoCollectDelay = template.autoCollectDelay || 500;
+                gameObj.emptyColor = template.emptyColor || '#8B4513';
+                gameObj.emptySprite = template.emptySprite || '';
+                gameObj.emptyTileKey = template.emptyTileKey || '';
+                gameObj.hitSound = template.hitSound || '';
+                gameObj.emptyHitSound = template.emptyHitSound || '';
+                gameObj.particleEffect = template.particleEffect || '';
+                // Runtime state - remaining items tracked in mysteryBlockStates
+                gameObj.depleted = false;
+            }
+        }
+
+        return gameObj;
     }
 
     // Check if a point is inside a terrain zone (returns zone or null)
@@ -6877,7 +6888,7 @@ ${includeComments ? `        // ────────────────
                         obj.active = false;
                         collectiblesCollected++;
                         // Multiplayer: Notify server of item collection
-                        if (MULTIPLAYER_ENABLED && multiplayerReady) {
+                        if (MULTIPLAYER_ENABLED && multiplayerReady && !obj.dropped) {
                             sendItemCollected(obj);
                         }
                         playObjectSound(obj, 'collect');
@@ -7777,6 +7788,12 @@ ${includeComments ? `        // ────────────────
         var itemTemplate = findCollectibleTemplate(npc.giftItemId);
         if (!itemTemplate) return;
 
+        if (npc.giftMode === 'drop' && dropNpcGift(npc)) {
+            if (npc.giftOnce) giftsGiven[npc.placeKey] = true;
+            saveRPGProgress();
+            return;
+        }
+
         if (!inventory[npc.giftItemId]) {
             inventory[npc.giftItemId] = { count: 0, template: itemTemplate };
         }
@@ -7791,6 +7808,55 @@ ${includeComments ? `        // ────────────────
             var hb = getPlayerHitbox();
             spawnParticleEffectFromURL(itemTemplate.particleEffect, hb.x + hb.width / 2, hb.y + hb.height / 2, 200);
         }
+    }
+
+    // Lays the gift on free tiles around the NPC, nearest first, skipping any
+    // tile the player overlaps so the items are seen landing before they are
+    // picked up. Returns false when the NPC is boxed in, and the gift goes straight to
+    // the inventory instead.
+    function dropNpcGift(npc) {
+        var npcTx = Math.floor(npc.x / RENDER_SIZE), npcTy = Math.floor(npc.y / RENDER_SIZE);
+        var hb = getPlayerHitbox();
+        var pad = 4;
+        var taken = {};
+        for (var i = 0; i < activeObjects.length; i++) {
+            var o = activeObjects[i];
+            if (o.active === false) continue;
+            taken[Math.floor(o.x / RENDER_SIZE) + ',' + Math.floor(o.y / RENDER_SIZE)] = true;
+        }
+
+        var spots = [];
+        for (var r = 1; r <= 3 && spots.length < npc.giftCount; r++) {
+            var ring = [];
+            for (var dy = -r; dy <= r; dy++) {
+                for (var dx = -r; dx <= r; dx++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+                    var tx = npcTx + dx, ty = npcTy + dy;
+                    if (ty < 0 || ty >= level.length || tx < 0 || tx >= level[ty].length) continue;
+                    if (tx * RENDER_SIZE < hb.x + hb.width + pad && (tx + 1) * RENDER_SIZE > hb.x - pad &&
+                        ty * RENDER_SIZE < hb.y + hb.height + pad && (ty + 1) * RENDER_SIZE > hb.y - pad) continue;
+                    if (taken[tx + ',' + ty]) continue;
+                    var tile = getTileAt(tx * RENDER_SIZE + RENDER_SIZE / 2, ty * RENDER_SIZE + RENDER_SIZE / 2);
+                    if (tile && tile.solid) continue;
+                    ring.push({ x: tx, y: ty, d: dx * dx + dy * dy });
+                }
+            }
+            ring.sort(function(a, b) { return a.d - b.d; });
+            spots = spots.concat(ring);
+        }
+        if (spots.length === 0) return false;
+
+        // More items than free tiles: they share tiles rather than vanish
+        for (var n = 0; n < npc.giftCount; n++) {
+            var spot = spots[n % spots.length];
+            var item = buildGameObject({ type: 'collectible', templateId: npc.giftItemId, x: spot.x, y: spot.y });
+            item.respawns = false;
+            // Only this player sees a drop, so it must stay out of item sync
+            item.dropped = true;
+            activeObjects.push(item);
+            collectiblesTotal++;
+        }
+        return true;
     }
 
     // True when the door may open now. Uses up the item on the first

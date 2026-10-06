@@ -2276,6 +2276,7 @@ function setNPCGiftFields(template) {
     fillCollectibleSelect('npc-template-gift-item', template.giftItemId || '');
     document.getElementById('npc-template-gift-count').value = template.giftCount || 1;
     document.getElementById('npc-template-gift-once').checked = template.giftOnce !== false;
+    document.getElementById('npc-template-gift-mode').value = template.giftMode === 'drop' ? 'drop' : 'inventory';
     document.getElementById('npc-template-after-gift').value = (template.afterGiftLines || []).join('\n');
     toggleNPCGiftOptions();
 }
@@ -2307,7 +2308,7 @@ function renderNPCTemplatesList() {
         if (template.giftEnabled) {
             const item = collectibleTemplates.find(t => t.id === template.giftItemId);
             giftText = item
-                ? ` | Gives ${escapeHtml(item.name)}${template.giftCount > 1 ? ' x' + template.giftCount : ''}`
+                ? ` | ${template.giftMode === 'drop' ? 'Drops' : 'Gives'} ${escapeHtml(item.name)}${template.giftCount > 1 ? ' x' + template.giftCount : ''}`
                 : ' | <span style="color: var(--danger, #e74c3c);">Gift item missing</span>';
         }
 
@@ -2427,6 +2428,7 @@ function saveNPCTemplate() {
         giftItemId: giftItemId,
         giftCount: clampGiftCount(document.getElementById('npc-template-gift-count').value),
         giftOnce: document.getElementById('npc-template-gift-once').checked,
+        giftMode: document.getElementById('npc-template-gift-mode').value,
         afterGiftLines: splitLines(document.getElementById('npc-template-after-gift').value)
     };
 

@@ -1720,6 +1720,7 @@
             </div>
             <div class="game-actions">
                 <button class="btn" onclick="restartGame()"><svg class="gm-icon"><use href="#icon-reload"/></svg></button>
+                <button class="btn" id="playtest-reset-progress" onclick="resetSavedProgressAndRestart()" title="Forget saved items, gifts, unlocked doors and checkpoints, then restart" style="display: none;">Reset saved progress</button>
                 <button class="btn btn-export-game" onclick="exportFullGame()"><svg class="gm-icon"><use href="#icon-package"/></svg> Export</button>
                 <button class="btn" onclick="copyOrOpenShareLink()" title="Get a real /p/ share link that works for anyone"><svg class="gm-icon"><use href="#icon-external"/></svg> Share Link</button>
                 <button class="btn" onclick="closePlayTestModal()"><svg class="gm-icon"><use href="#icon-x-mark"/></svg></button>
@@ -3409,6 +3410,14 @@
                     <label>How many</label>
                     <input type="number" id="npc-template-gift-count" value="1" min="1" max="99">
                 </div>
+            </div>
+            <div class="form-group">
+                <label>How it's given</label>
+                <select id="npc-template-gift-mode">
+                    <option value="inventory">Put it in the inventory</option>
+                    <option value="drop">Drop it on the ground</option>
+                </select>
+                <span style="font-size:9px;color:var(--text-3);display:block;margin-top:2px;">Dropped items land around the NPC and are picked up like any other collectible, points included</span>
             </div>
             <div class="form-group">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">

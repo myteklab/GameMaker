@@ -113,6 +113,9 @@ function showPlayTestModal() {
         }
     }
 
+    document.getElementById('playtest-reset-progress').style.display =
+        gameSettings.gameType === 'topdown' && gameSettings.saveRPGProgress !== false ? '' : 'none';
+
     // Generate and load the game
     loadGamePreview();
 }
@@ -133,6 +136,18 @@ function closePlayTestModal() {
 
 function restartGame() {
     loadGamePreview();
+}
+
+// Restart alone keeps what the game saved, so a once-only NPC gift or a used
+// key cannot be tested twice without this.
+function resetSavedProgressAndRestart() {
+    try {
+        localStorage.removeItem(rpgProgressKey());
+    } catch (e) {
+        // Storage blocked: nothing was saved to clear
+    }
+    loadGamePreview();
+    showToast('Saved progress cleared', 'success');
 }
 
 async function loadGamePreview() {
