@@ -11101,8 +11101,10 @@ ${includeComments ? `        // ────────────────
                     ctx.lineTo(cx + r * 0.1, cy + r * 0.35);
                     ctx.lineTo(cx + r * 0.3, cy + r * 0.2);
                     ctx.stroke();
-                } else if (!IS_TOPDOWN && obj.type === 'collectible') {
-                    // Collectible: draw a shiny coin
+                } else if (obj.type === 'collectible') {
+                    // Collectible: draw a shiny coin. This was platformer-only, so a
+                    // top-down item with no sprite was not drawn at all but could
+                    // still be picked up.
                     var cx = screenX + objW/2;
                     var cy = screenY + objH/2;
                     var r = iconSize * 0.33;
