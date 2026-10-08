@@ -38,6 +38,11 @@ function loadTilesetFile(file) {
     reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
+            // A tileset from a file is art that was made somewhere else. The
+            // app only says so; whoever hosts it decides what to do with that.
+            try {
+                document.dispatchEvent(new CustomEvent('gamemaker:image-imported'));
+            } catch (err) { /* never block a load */ }
             tilesetImage = img;
             tilesetDataURLCache = e.target.result; // Store data URL for export
             tilesetSourceURL = ''; // Clear URL source since this is a file upload
