@@ -4446,7 +4446,9 @@ ${includeComments ? `    // ═════════════════�
             return;
         }
 
-        // Otherwise treat as URL (assume SFX)
+        // Otherwise treat as URL (assume SFX). A bare name like 'jump' with no
+        // sound picked for it is silence, not a fetch of /jump.
+        if (playerSounds.hasOwnProperty(nameOrUrl) || !/[\/.:]/.test(nameOrUrl)) return;
         var snd = loadSound(nameOrUrl, false);
         if (snd) {
             snd.volume = getSfxVolume();
