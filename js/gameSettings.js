@@ -326,6 +326,9 @@ function updateGameSetting(key, value) {
     else if (key === 'runTimerMode') {
         gameSettings[key] = value;
     }
+    else if (key === 'topdownHudShows') {
+        gameSettings[key] = ['items', 'score', 'both'].includes(value) ? value : 'items';
+    }
     // String values for multiplayer
     else if (key === 'multiplayerPlayerName') {
         gameSettings[key] = String(value).substring(0, 20); // Max 20 chars
@@ -520,6 +523,11 @@ function updateGameSettingsUI() {
     const saveRPGProgressCheckbox = document.getElementById('setting-save-rpg-progress');
     if (saveRPGProgressCheckbox) {
         saveRPGProgressCheckbox.checked = gameSettings.saveRPGProgress !== false; // Default true
+    }
+
+    const topdownHudSelect = document.getElementById('setting-topdown-hud-shows');
+    if (topdownHudSelect) {
+        topdownHudSelect.value = gameSettings.topdownHudShows || 'items';
     }
 
     // Mini-Map (Top-Down only)

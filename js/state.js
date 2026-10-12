@@ -272,6 +272,7 @@ let gameSettings = {
     coyoteTimeFrames: 6,               // Frames where jump still works after walking off edge (0-15)
     // RPG Progress Saving (Top-Down mode only)
     saveRPGProgress: true,             // Save inventory and checkpoint progress to localStorage
+    topdownHudShows: 'items',          // Top-down HUD and end screens: 'items', 'score', or 'both'
     miniMapEnabled: false,             // Show a top-down mini-map in the corner during play (top-down mode only)
     // Multiplayer Settings (Experimental - Top-Down RPG Mode Only)
     multiplayerEnabled: false,         // Master toggle for multiplayer

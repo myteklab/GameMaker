@@ -1436,6 +1436,7 @@ ${includeComments ? `    // ═════════════════�
     // Run Timer (Speedrun Feature)
     var RUN_TIMER_ENABLED = ${gameSettings.runTimerEnabled === true};
     var RUN_TIMER_MODE = '${gameSettings.runTimerMode || 'level'}';
+    var TOPDOWN_HUD_SHOWS = '${['score', 'both'].includes(gameSettings.topdownHudShows) ? gameSettings.topdownHudShows : 'items'}';
 
     // Particle Effects System
     // NOTE: enemyDeath, collectItem, hazardHit, powerupCollect, springBounce are now per-template
@@ -11698,6 +11699,16 @@ ${includeComments ? `        // ────────────────
         }
     }
 
+    // Top-down games pick what the HUD and end screens count. The score is kept
+    // either way, since every collectible adds its value to it.
+    function topdownTally(scoreLabel, itemsLabel) {
+        var items = 0;
+        for (var k in inventory) items += inventory[k].count;
+        if (TOPDOWN_HUD_SHOWS === 'score') return scoreLabel + score;
+        if (TOPDOWN_HUD_SHOWS === 'both') return scoreLabel + score + '   Items: ' + items;
+        return itemsLabel + items;
+    }
+
     function drawUI() {
         // Score display (or inventory hint in RPG mode)
         ctx.save();
@@ -11708,13 +11719,7 @@ ${includeComments ? `        // ────────────────
         ctx.shadowBlur = 4;
 
         if (IS_TOPDOWN) {
-            // RPG mode: Show item count summary and inventory hint
-            var itemCount = 0;
-            var itemTypes = Object.keys(inventory).length;
-            for (var key in inventory) {
-                itemCount += inventory[key].count;
-            }
-            ctx.fillText('Items: ' + itemCount + ' (Press I)', 10, 30);
+            ctx.fillText(topdownTally('Score: ', 'Items: ') + ' (Press I)', 10, 30);
         } else {
             // Platformer mode: Show score
             ctx.fillText('Score: ' + score, 10, 30);
@@ -11809,9 +11814,7 @@ ${includeComments ? `        // ────────────────
             ctx.font = '24px sans-serif';
             ctx.fillStyle = '#fff';
             if (IS_TOPDOWN) {
-                var totalItems = 0;
-                for (var k in inventory) totalItems += inventory[k].count;
-                ctx.fillText('Items Collected: ' + totalItems, CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
+                ctx.fillText(topdownTally('Final Score: ', 'Items Collected: '), CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
             } else {
                 ctx.fillText('Final Score: ' + score, CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
             }
@@ -11865,9 +11868,7 @@ ${includeComments ? `        // ────────────────
                 ctx.font = '24px sans-serif';
                 ctx.fillStyle = '#fff';
                 if (IS_TOPDOWN) {
-                    var totalItems = 0;
-                    for (var k in inventory) totalItems += inventory[k].count;
-                    ctx.fillText('Items: ' + totalItems, CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
+                    ctx.fillText(topdownTally('Score: ', 'Items: '), CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
                 } else {
                     ctx.fillText('Score: ' + score, CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
                 }
@@ -11889,9 +11890,7 @@ ${includeComments ? `        // ────────────────
                 ctx.font = '24px sans-serif';
                 ctx.fillStyle = '#fff';
                 if (IS_TOPDOWN) {
-                    var totalItems = 0;
-                    for (var k in inventory) totalItems += inventory[k].count;
-                    ctx.fillText('Items Collected: ' + totalItems, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 20);
+                    ctx.fillText(topdownTally('Final Score: ', 'Items Collected: '), CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 20);
                 } else {
                     ctx.fillText('Final Score: ' + score, CANVAS_WIDTH/2, CANVAS_HEIGHT/2 - 20);
                 }
