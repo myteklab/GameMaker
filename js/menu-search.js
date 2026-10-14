@@ -122,14 +122,18 @@
         problems = [];
 
         function add(it) {
+            it.label = clean(it.label);
+            it.path = it.path || '';
+            // A one-letter label is a swatch's "x" or a step's "+", never something to look for.
+            if (it.label.length < 2) return;
             var key = it.label.toLowerCase() + '|' + it.path.toLowerCase();
-            if (!it.label || seen[key]) return;
+            if (seen[key]) return;
             // A dialog the menus already open is listed once, as the menu item.
             if (it.kind === 'dialog' && items.some(function (o) { return o.kind === 'menu' && o.label.toLowerCase() === it.label.toLowerCase(); })) return;
             seen[key] = 1;
             it.hay = words(it.label).concat(words(it.path));
-            it.say = [];
-            it.means = 0;
+            it.say = words(it.said || '');
+            it.means = it.said ? 15 : 0;
             items.push(it);
         }
 
@@ -152,7 +156,8 @@
         // it is an icon. Running one is the same as clicking it.
         (cfg.buttons || []).forEach(function (src) {
             document.querySelectorAll(src.items).forEach(function (btn) {
-                if (hiddenWithin(btn, null)) return;
+                // Not drawn at all (a Stop button outside a run, a tab page not open) is not offered.
+                if (hiddenWithin(btn, null) || !btn.getClientRects().length) return;
                 var lab = src.label ? btn.querySelector(src.label) : null;
                 var text = lab ? ownText(lab) : (clean(btn.textContent) || clean(btn.title).replace(/\s*\([^)]*\)$/, ''));
                 add({
@@ -176,6 +181,10 @@
             });
 
             if (!d.fields) return;
+            // A panel an app builds only when it opens is built once, out of sight, to be read.
+            if (d.prime && !isOpen(el)) d.prime();
+            var fieldSel = d.fieldSelector || cfg.fieldSelector;
+            var groups = d.groupSelector ? Array.prototype.slice.call(el.querySelectorAll(d.groupSelector)) : [];
 
             if (d.tabs) {
                 el.querySelectorAll(d.tabs.nav).forEach(function (nav) {
@@ -190,7 +199,7 @@
                 });
             }
 
-            el.querySelectorAll(cfg.fieldSelector).forEach(function (f) {
+            el.querySelectorAll(fieldSel).forEach(function (f, at) {
                 var state = fieldState(f, el);
                 if (state === 'off') return;
                 var key = null;
@@ -199,12 +208,26 @@
                     if (!sec) return;
                     key = sec.id.slice(d.tabs.sectionPrefix.length);
                 }
-                var row = f.closest(cfg.rowSelector) || f.parentElement;
+                var rowSel = d.rowSelector || cfg.rowSelector;
+                var row = f.closest(rowSel) || f.parentElement;
+                // The heading this field sits under, for the path: "Course > Music".
+                var group = null;
+                if (groups.indexOf(f) < 0) {
+                    groups.forEach(function (g) { if (g.compareDocumentPosition(f) & 4) group = g; });
+                }
                 // Nothing to flash while the row is hidden, so the result lands on
                 // the nearest part of the tab that shows, which holds the switch.
+                // An opener that rebuilds its panel replaces this row, so it is found
+                // again by its place in the rebuilt one.
                 function landing() {
-                    var h = hiddenBy(row, el);
-                    return h ? (h.parentElement || row) : row;
+                    var now = row;
+                    if (!el.contains(row)) {
+                        var again = el.querySelectorAll(fieldSel)[at];
+                        now = again ? (again.closest(rowSel) || again.parentElement) : null;
+                    }
+                    if (!now) return el;
+                    var h = hiddenBy(now, el);
+                    return h ? (h.parentElement || now) : now;
                 }
                 var control = (f.htmlFor && document.getElementById(f.htmlFor)) ||
                     (f.tagName === 'LABEL' ? row.querySelector('input, select, textarea') : null);
@@ -212,9 +235,10 @@
                     kind: 'field',
                     dialogId: d.id,
                     label: ownText(f),
-                    path: title + (key != null && tabNames[key] ? ' > ' + tabNames[key] : ''),
+                    path: title + (key != null && tabNames[key] ? ' > ' + tabNames[key] : '') + (group ? ' > ' + ownText(group) : ''),
                     note: state === 'waits' ? (cfg.waitsNote || 'shows when its option is turned on') : '',
-                    controlId: control && control.id ? control.id : '',
+                    // A panel with no ids on its fields names them for the words list instead.
+                    controlId: (d.keyOf && d.keyOf(f)) || (control && control.id ? control.id : ''),
                     run: function () { openDialogAt(d, key, landing, control); }
                 });
             });
@@ -222,7 +246,7 @@
 
         if (cfg.extras) {
             cfg.extras().forEach(function (x) {
-                add({ kind: x.kind || 'extra', label: x.label, path: x.path || '', body: x.body || '', run: x.run });
+                add({ kind: x.kind || 'extra', label: x.label, path: x.path || '', body: x.body || '', said: x.say || '', note: x.note || '', controlId: x.key || '', run: x.run });
             });
         }
 
@@ -251,6 +275,7 @@
     }
 
     var KIND_RANK = { field: 0, tab: 1, dialog: 2, menu: 3, extra: 4, help: 5 };
+    function rank(kind) { return kind in KIND_RANK ? KIND_RANK[kind] : KIND_RANK.extra; }
 
     function search(q) {
         var qw = words(q).filter(function (w) { return !STOP[w]; });
@@ -278,7 +303,7 @@
             out.push({ it: it, score: score });
         });
         out.sort(function (a, b) {
-            return b.score - a.score || KIND_RANK[a.it.kind] - KIND_RANK[b.it.kind] || a.it.label.length - b.it.label.length;
+            return b.score - a.score || rank(a.it.kind) - rank(b.it.kind) || a.it.label.length - b.it.label.length;
         });
         return out.slice(0, cfg.limit || 8).map(function (r) { return r.it; });
     }
@@ -397,7 +422,9 @@
                 '<div class="ms-list" role="listbox" hidden></div>' +
                 '<div class="ms-foot">Up and Down to pick, Enter to open, Esc to close</div>' +
             '</div>';
-        if (cfg.mountAt === 'end') mount.appendChild(ui.root);
+        var ref = cfg.before ? mount.querySelector(cfg.before) : null;
+        if (ref) mount.insertBefore(ui.root, ref);
+        else if (cfg.mountAt === 'end') mount.appendChild(ui.root);
         else mount.insertBefore(ui.root, mount.firstChild);
 
         ui.trigger = ui.root.querySelector('.ms-trigger');
@@ -482,6 +509,10 @@
             buildUI();
         },
         open: open,
+        close: close,
+        // For an app's own result that opens something itself and then wants
+        // the same flash on what it opened.
+        flash: function (el, control) { flash(el, control); },
         // For check scripts and tests: what the box would find right now, and
         // anything in the config that no longer matches the page.
         items: function () { return buildIndex(); },
