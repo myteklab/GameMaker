@@ -47,13 +47,30 @@
     }
 
     // Hidden on purpose, as opposed to inside a dialog that is closed or a tab
-    // that is not showing. Apps hide fields for the other game mode (or a
-    // blocked feature) with an inline display:none, and those must not be found.
+    // that is not showing: an inline display:none or the hidden attribute.
     function hiddenWithin(el, stop) {
+        return !!hiddenBy(el, stop);
+    }
+
+    function hiddenBy(el, stop) {
         for (var n = el; n && n !== stop; n = n.parentElement) {
-            if (n.hidden || (n.style && n.style.display === 'none')) return true;
+            if (n.hidden || (n.style && n.style.display === 'none')) return n;
         }
-        return false;
+        return null;
+    }
+
+    // Two kinds of hidden field. One matching cfg.offSelector (the other game
+    // mode, a feature the class has blocked) does not exist for this project
+    // and is not found. Any other is waiting on a switch in its dialog, like
+    // Scroll Speed under Autoscroll: it is found, and the result says so.
+    function fieldState(el, stop) {
+        var off = false, waits = false;
+        for (var n = el; n && n !== stop; n = n.parentElement) {
+            if (!(n.hidden || (n.style && n.style.display === 'none'))) continue;
+            if (cfg.offSelector && n.matches(cfg.offSelector)) off = true;
+            else waits = true;
+        }
+        return off ? 'off' : (waits ? 'waits' : 'shown');
     }
 
     function isOpen(el) {
@@ -77,7 +94,9 @@
     }
 
     function flash(target, control) {
+        if (typeof target === 'function') target = target();
         if (!target) return;
+        if (control && hiddenWithin(control, null)) control = null;
         target.scrollIntoView({ block: 'center' });
         if (control && control.focus) control.focus({ preventScroll: true });
         target.classList.remove('ms-flash');
@@ -94,7 +113,7 @@
         if (tabKey != null && d.showTab) d.showTab(tabKey);
         // Openers fill their fields and toggle mode rows as they run, so the row
         // is measured after that has happened.
-        requestAnimationFrame(function () { flash(target, control); });
+        setTimeout(function () { flash(target, control); }, 30);
     }
 
     function buildIndex() {
@@ -110,6 +129,7 @@
             seen[key] = 1;
             it.hay = words(it.label).concat(words(it.path));
             it.say = [];
+            it.means = 0;
             items.push(it);
         }
 
@@ -161,7 +181,7 @@
                 el.querySelectorAll(d.tabs.nav).forEach(function (nav) {
                     var key = nav.dataset[d.tabs.navKey || 'section'];
                     tabNames[key] = ownText(nav);
-                    if (hiddenWithin(nav, el)) return;
+                    if (fieldState(nav, el) === 'off') return;
                     var sec = document.getElementById(d.tabs.sectionPrefix + key);
                     add({
                         kind: 'tab', dialogId: d.id, label: ownText(nav), path: title, sectionId: sec ? sec.id : '',
@@ -171,14 +191,21 @@
             }
 
             el.querySelectorAll(cfg.fieldSelector).forEach(function (f) {
-                if (hiddenWithin(f, el)) return;
+                var state = fieldState(f, el);
+                if (state === 'off') return;
                 var key = null;
                 if (d.tabs) {
                     var sec = f.closest(d.tabs.section);
-                    if (!sec || hiddenWithin(sec, el)) return;
+                    if (!sec) return;
                     key = sec.id.slice(d.tabs.sectionPrefix.length);
                 }
                 var row = f.closest(cfg.rowSelector) || f.parentElement;
+                // Nothing to flash while the row is hidden, so the result lands on
+                // the nearest part of the tab that shows, which holds the switch.
+                function landing() {
+                    var h = hiddenBy(row, el);
+                    return h ? (h.parentElement || row) : row;
+                }
                 var control = (f.htmlFor && document.getElementById(f.htmlFor)) ||
                     (f.tagName === 'LABEL' ? row.querySelector('input, select, textarea') : null);
                 add({
@@ -186,8 +213,9 @@
                     dialogId: d.id,
                     label: ownText(f),
                     path: title + (key != null && tabNames[key] ? ' > ' + tabNames[key] : ''),
+                    note: state === 'waits' ? (cfg.waitsNote || 'shows when its option is turned on') : '',
                     controlId: control && control.id ? control.id : '',
-                    run: function () { openDialogAt(d, key, row, control); }
+                    run: function () { openDialogAt(d, key, landing, control); }
                 });
             });
         });
@@ -201,10 +229,11 @@
         // Students type "song" and "jump higher", the labels say BGM and Jump Power.
         (cfg.words || []).forEach(function (w) {
             var say = words(w.say);
-            w.find.forEach(function (id) {
+            // The first id is what the words mean most often, and it ranks first.
+            w.find.forEach(function (id, n) {
                 var hit = items.filter(function (it) { return it.controlId === id || it.sectionId === id; });
                 if (!hit.length && !document.getElementById(id)) problems.push('words "' + w.say + '" point at #' + id + ', which is not on the page');
-                hit.forEach(function (it) { it.say = it.say.concat(say); });
+                hit.forEach(function (it) { it.say = it.say.concat(say); it.means = Math.max(it.means, n === 0 ? 15 : 5); });
             });
         });
 
@@ -231,15 +260,19 @@
         buildIndex().forEach(function (it) {
             var label = words(it.label);
             var score = 0;
+            var said = false;
             var all = qw.every(function (t) {
                 function has(list) { return list.some(function (w) { return w.indexOf(t) === 0; }); }
+                var inSay = has(it.say);
+                if (inSay) said = true;
                 if (has(label)) { score += 6; return true; }
-                if (has(it.say)) { score += 5; return true; }
+                if (inSay) { score += 5; return true; }
                 if (has(it.hay)) { score += 2; return true; }
                 if (has(helpText(it))) { score += 1; return true; }
                 return false;
             });
             if (!all) return;
+            if (said) score += it.means;
             if (label.join(' ') === phrase) score += 20;
             else if (label.join(' ').indexOf(phrase) === 0) score += 8;
             out.push({ it: it, score: score });
@@ -273,7 +306,7 @@
             l.textContent = it.label;
             var p = document.createElement('span');
             p.className = 'ms-path';
-            p.textContent = it.kind === 'help' ? 'Help' + (it.path ? ' > ' + it.path : '') : it.path;
+            p.textContent = (it.kind === 'help' ? 'Help' + (it.path ? ' > ' + it.path : '') : it.path) + (it.note ? ' (' + it.note + ')' : '');
             row.appendChild(l);
             row.appendChild(p);
             row.addEventListener('mousedown', function (e) { e.preventDefault(); });
@@ -320,7 +353,15 @@
         it.run();
     }
 
+    function place() {
+        var b = ui.trigger.getBoundingClientRect();
+        var w = Math.min(340, window.innerWidth - 32);
+        ui.panel.style.top = (b.bottom + 6) + 'px';
+        ui.panel.style.left = Math.max(16, Math.min(b.right - w, window.innerWidth - w - 16)) + 'px';
+    }
+
     function open() {
+        place();
         ui.panel.hidden = false;
         ui.trigger.setAttribute('aria-expanded', 'true');
         ui.input.focus();
@@ -361,8 +402,11 @@
 
         ui.trigger = ui.root.querySelector('.ms-trigger');
         ui.panel = ui.root.querySelector('.ms-panel');
-        ui.input = ui.root.querySelector('.ms-input');
-        ui.list = ui.root.querySelector('.ms-list');
+        // On the body, not in the menubar: a menubar is its own stacking context,
+        // and the panel has to sit above whatever dialog is open.
+        document.body.appendChild(ui.panel);
+        ui.input = ui.panel.querySelector('.ms-input');
+        ui.list = ui.panel.querySelector('.ms-list');
 
         ui.trigger.addEventListener('click', function () { ui.panel.hidden ? open() : close(); });
         ui.input.addEventListener('input', render);
@@ -380,7 +424,7 @@
         });
         ui.input.addEventListener('keyup', function (e) { e.stopPropagation(); });
         document.addEventListener('mousedown', function (e) {
-            if (!ui.panel.hidden && !ui.root.contains(e.target)) close();
+            if (!ui.panel.hidden && !ui.root.contains(e.target) && !ui.panel.contains(e.target)) close();
         });
         // Capture phase, so the app's single-key shortcuts never see these.
         document.addEventListener('keydown', function (e) {
@@ -404,7 +448,7 @@
             '.ms-trigger{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;cursor:pointer;' +
                 'background:var(--ms-bg,#1a1e26);color:var(--ms-text-2,#a4acb9);border:1px solid var(--ms-line,#2a303b);font:inherit;font-size:12px}' +
             '.ms-trigger:hover,.ms-trigger[aria-expanded="true"]{color:var(--ms-text,#e6e9ef);border-color:var(--ms-line-strong,#3a4250)}' +
-            '.ms-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:10000;width:340px;max-width:calc(100vw - 32px);' +
+            '.ms-panel{position:fixed;z-index:100000;width:340px;max-width:calc(100vw - 32px);box-sizing:border-box;' +
                 'background:var(--ms-bg,#1a1e26);border:1px solid var(--ms-line-strong,#3a4250);border-radius:8px;' +
                 'box-shadow:0 10px 30px rgba(0,0,0,.45);padding:8px}' +
             '.ms-panel[hidden],.ms-list[hidden]{display:none}' +

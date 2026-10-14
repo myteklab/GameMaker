@@ -9,6 +9,10 @@ MenuSearch.init({
     placeholder: 'Search menus and settings',
     emptyHint: 'Try one word, like "music" or "jump".',
 
+    // Hidden by one of these means not in this project at all: the other game
+    // type, the other kind of level, or multiplayer blocked for the class.
+    offSelector: '.platformer-only, .topdown-only, .gameplay-level-only, .menu-level-only, #game-settings-section-multiplayer',
+
     menus: { items: '#top-menu-bar .dropdown-item', menu: '.dropdown-menu', toggle: '.dropdown-toggle' },
 
     buttons: [
