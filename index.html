@@ -784,6 +784,9 @@
             <button class="dropdown-item" onclick="showPlayerPropertiesModal(); closeAllDropdowns();">
                 <span class="icon"><svg class="gm-icon"><use href="#icon-gamepad"/></svg></span> Player Properties
             </button>
+            <button class="dropdown-item" onclick="showLevelSettingsModal(currentLevelIndex); closeAllDropdowns();">
+                <span class="icon"><svg class="gm-icon"><use href="#icon-flag"/></svg></span> Level Settings
+            </button>
             <div class="dropdown-separator"></div>
             <button class="dropdown-item" onclick="showLevelManagerModal(); closeAllDropdowns();">
                 <span class="icon"><svg class="gm-icon"><use href="#icon-layers"/></svg></span> Manage Levels
@@ -6029,6 +6032,8 @@ const URL_BACKGROUNDS = [];
 <script src="js/tilesPanelResize.js"></script>
 <script src="js/assetPicker.js"></script>
 <script src="js/collab-api.js"></script>
+<script src="js/menu-search.js"></script>
+<script src="js/menu-search-config.js"></script>
 
 </body>
 </html>
