@@ -4142,6 +4142,10 @@ ${includeComments ? `    // ═════════════════�
         // and moving platforms were missing, so their sprites never loaded and
         // the game drew the fallback color instead.
         var allTemplates = [].concat(enemyTemplates, collectibleTemplates, hazardTemplates, powerupTemplates, npcTemplates, doorTemplates, springTemplates, movingPlatformTemplates, ladderTemplates, conveyorTemplates, crateTemplates);
+        // The goal and checkpoint are single templates, not lists, and were left out: a goal
+        // drawn as a star in the editor played as the flag fallback.
+        if (goalTemplate) allTemplates.push(goalTemplate);
+        if (checkpointTemplate) allTemplates.push(checkpointTemplate);
         for (var i = 0; i < allTemplates.length; i++) {
             var tmpl = allTemplates[i];
             if (tmpl.sprite && !loadedSprites[tmpl.sprite]) {
