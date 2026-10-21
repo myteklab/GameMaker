@@ -957,9 +957,10 @@ ${(gameSettings.multiplayerEnabled && gameSettings.gameType === 'topdown') ? '  
             }
         }
         /* Keyboard controls overlay - desktop only */
+        /* bottom right: the top right is where the level name and the goal are drawn */
         #keyboard-controls {
             position: fixed;
-            top: 10px;
+            bottom: 10px;
             right: 10px;
             background: rgba(0, 0, 0, 0.75);
             border: 1px solid rgba(255, 255, 255, 0.2);
