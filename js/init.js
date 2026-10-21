@@ -109,9 +109,15 @@ function initLevel() {
     if (typeof updateTileLayerUI === 'function') updateTileLayerUI();
 }
 
-// Scroll camera so the bottom of the level is visible
+// Scroll camera so the bottom of the level is visible: a platformer's ground is there.
+// A top-down level has no ground, so it opens at the top like a map.
 function scrollToLevelBottom() {
     if (!canvas) return;
+    if (typeof gameSettings !== 'undefined' && gameSettings.gameType === 'topdown') {
+        cameraY = 0;
+        if (typeof updateScrollbars === 'function') updateScrollbars();
+        return;
+    }
     var levelPixelHeight = levelHeight * tileSize;
     var viewportHeight = canvas.height / zoom;
     cameraY = Math.max(0, levelPixelHeight - viewportHeight);

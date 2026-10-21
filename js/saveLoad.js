@@ -516,6 +516,8 @@ function loadProjectData(data) {
     renderTilePalette();
     renderCustomTilesPalette();
     renderBackgroundLayers();
+    // init scrolled to the bottom before this project's game type was known; a top-down map opens at its top
+    if (gameSettings.gameType === 'topdown' && typeof scrollToLevelBottom === 'function') scrollToLevelBottom();
     updateLevelSizeDisplay();
     updateLiveDataPreview();
     draw();

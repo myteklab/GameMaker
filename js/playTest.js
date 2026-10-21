@@ -102,6 +102,14 @@ function showPlayTestModal() {
         selectedMoveObject = null;
     }
 
+    // A top-down game has no jump; the platformer keys are the page's default
+    const moveControls = document.getElementById('move-controls');
+    if (moveControls) {
+        moveControls.innerHTML = gameSettings.gameType === 'topdown'
+            ? '<span class="key-badge">←↑↓→</span><span class="key-badge">WASD</span> Move <span class="control-sep">|</span> <span class="key-badge">E</span> Interact'
+            : '<span class="key-badge">←→</span><span class="key-badge">AD</span> Move <span class="control-sep">|</span> <span class="key-badge">↑</span><span class="key-badge">W</span><span class="key-badge">Space</span> Jump';
+    }
+
     // Update shoot controls display based on projectile settings
     const shootPlaceholder = document.getElementById('shoot-controls-placeholder');
     if (shootPlaceholder) {
@@ -192,7 +200,9 @@ async function loadGamePreview() {
     // Auto-focus iframe after it loads so keyboard controls work immediately
     iframe.onload = function() {
         iframe.focus();
-        let statusText = 'Use arrow keys or WASD to move, Space to jump';
+        let statusText = gameSettings.gameType === 'topdown'
+            ? 'Use arrow keys or WASD to move'
+            : 'Use arrow keys or WASD to move, Space to jump';
         if (gameSettings.projectileEnabled) {
             statusText += ', ' + formatFireKey(gameSettings.projectileFireKey) + ' to shoot';
         }

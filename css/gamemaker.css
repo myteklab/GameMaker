@@ -2715,6 +2715,12 @@
             /* Maintain 16:10 aspect ratio (800:500) for consistent game display */
             aspect-ratio: 16 / 10;
             max-height: 540px;
+            /* Narrow enough that its height fits under the header and status line inside the
+               90vh modal. When it did not, the modal scrolled and the wheel carried the game's
+               bottom rows and its HUD out of view. */
+            width: min(100%, calc((90vh - 170px) * 1.6));
+            margin-left: auto;
+            margin-right: auto;
         }
 
         #game-preview-frame {

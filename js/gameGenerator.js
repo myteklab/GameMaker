@@ -2310,6 +2310,34 @@ ${includeComments ? `    // ═════════════════�
     }
 
     // Helper to get player collision box (hitbox centered in sprite, bottom-aligned, with user offsets)
+    // Top-down only. When the leading edge of the hitbox clips a wall corner but its middle is
+    // clear, slide the player sideways toward the opening. Walking into a one-tile gap then
+    // works like in most top-down games instead of needing pixel-exact lining up.
+    // edge: the x (or y) of the side moving into the wall; start, size: the hitbox span across it;
+    // across: which axis to slide on. Returns false so the normal stop still runs this frame.
+    function cornerNudge(edge, start, size, across) {
+        if (!IS_TOPDOWN) return false;
+        var at = across === 'x'
+            ? function (t) { return isSolidAt(start + t, edge); }
+            : function (t) { return isSolidAt(edge, start + t); };
+        if (at(size / 2)) return false;
+        var lowHit = at(4), highHit = at(size - 4);
+        if (lowHit === highHit) return false;
+        var step = Math.min(2, size / 8) * (lowHit ? 1 : -1);
+        // never slide into a wall beside the player
+        var hb = getPlayerHitbox();
+        if (across === 'x') {
+            var sx = step > 0 ? hb.x + hb.width + step : hb.x + step;
+            if (isSolidAt(sx, hb.y + 4) || isSolidAt(sx, hb.y + hb.height / 2) || isSolidAt(sx, hb.y + hb.height - 4)) return false;
+            player.x += step;
+        } else {
+            var sy = step > 0 ? hb.y + hb.height + step : hb.y + step;
+            if (isSolidAt(hb.x + 4, sy) || isSolidAt(hb.x + hb.width / 2, sy) || isSolidAt(hb.x + hb.width - 4, sy)) return false;
+            player.y += step;
+        }
+        return false;
+    }
+
     function getPlayerHitbox() {
         // Base position: centered horizontally, bottom-aligned vertically
         var baseOffsetX = (player.width - player.collisionWidth) / 2;
@@ -6576,7 +6604,8 @@ ${includeComments ? `        // ────────────────
         var hitboxOffsetX = (player.width - player.collisionWidth) / 2 + player.collisionOffsetX;
 
         if (player.speedX > 0) {
-            if (isSolidAt(hb.x + hb.width, hb.y + 4) ||
+            if (cornerNudge(hb.x + hb.width, hb.y, hb.height, 'y') ||
+                isSolidAt(hb.x + hb.width, hb.y + 4) ||
                 isSolidAt(hb.x + hb.width, hb.y + hb.height / 2) ||
                 isSolidAt(hb.x + hb.width, hb.y + hb.height - 4)) {
                 // Align hitbox right edge with solid wall left edge (accounts for partial hitboxes)
@@ -6585,7 +6614,8 @@ ${includeComments ? `        // ────────────────
                 player.speedX = 0;
             }
         } else if (player.speedX < 0) {
-            if (isSolidAt(hb.x, hb.y + 4) ||
+            if (cornerNudge(hb.x, hb.y, hb.height, 'y') ||
+                isSolidAt(hb.x, hb.y + 4) ||
                 isSolidAt(hb.x, hb.y + hb.height / 2) ||
                 isSolidAt(hb.x, hb.y + hb.height - 4)) {
                 // Align hitbox left edge with solid wall right edge (accounts for partial hitboxes)
@@ -6612,7 +6642,8 @@ ${includeComments ? `        // ────────────────
         var hitboxOffsetY = (player.height - player.collisionHeight) + player.collisionOffsetY;
 
         if (player.speedY > 0) {
-            if (isSolidAt(hb.x + 4, hb.y + hb.height) ||
+            if (cornerNudge(hb.y + hb.height, hb.x, hb.width, 'x') ||
+                isSolidAt(hb.x + 4, hb.y + hb.height) ||
                 isSolidAt(hb.x + hb.width / 2, hb.y + hb.height) ||
                 isSolidAt(hb.x + hb.width - 4, hb.y + hb.height)) {
                 // Align hitbox bottom with solid surface top (accounts for partial hitboxes)
@@ -6634,7 +6665,8 @@ ${includeComments ? `        // ────────────────
                 }
             }
         } else if (player.speedY < 0) {
-            if (isSolidAt(hb.x + 4, hb.y) ||
+            if (cornerNudge(hb.y, hb.x, hb.width, 'x') ||
+                isSolidAt(hb.x + 4, hb.y) ||
                 isSolidAt(hb.x + hb.width / 2, hb.y) ||
                 isSolidAt(hb.x + hb.width - 4, hb.y)) {
                 // Align hitbox top with solid ceiling bottom (accounts for partial hitboxes)
