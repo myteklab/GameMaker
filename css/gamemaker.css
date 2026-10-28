@@ -4409,3 +4409,14 @@
     flex: 1 1 80px;
     min-width: 0;
 }
+
+/* Fingers on these are replayed as mouse drags (js/touch-bridge.js), so the
+   browser must not take them for scrolling, zooming or a long-press menu. */
+#level-canvas, #pixel-editor-canvas,
+#scrollbar-horizontal, #scrollbar-vertical, #scrollbar-h-thumb, #scrollbar-v-thumb,
+#left-panel-handle, #right-panel-handle, #tiles-resize-handle, #code-panel-handle {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
