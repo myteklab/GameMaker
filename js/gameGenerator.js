@@ -244,7 +244,7 @@ function formatFireKey(keyCode) {
 // Only well-formed clips reach the game: known names, integer geometry, a
 // frame count of at least one. Anything else is dropped so the runtime's
 // fallbacks apply instead of a NaN source rect.
-const PLAYER_CLIP_NAMES = ['idle', 'walk', 'jump', 'fall', 'hurt',
+const PLAYER_CLIP_NAMES = ['idle', 'walk', 'jump', 'fall', 'hurt', 'climb',
     'idleDown', 'walkDown', 'idleLeft', 'walkLeft', 'idleRight', 'walkRight', 'idleUp', 'walkUp'];
 function cleanPlayerClips(clips) {
     const out = {};
@@ -1304,7 +1304,7 @@ ${includeComments ? `    // ═════════════════�
     // 3. Set PLAYER_SPRITE_URL to the image URL
     // 4. Set PLAYER_FRAME_COUNT to the number of frames
     // 5. PLAYER_ANIM_FPS is how many walk frames play per second (1 to 30)
-    // 6. PLAYER_CLIPS names runs of frames: idle, walk, jump, fall, hurt
+    // 6. PLAYER_CLIPS names runs of frames: idle, walk, jump, fall, hurt, climb
     //    (or one walk and idle per direction in a top-down game)
     // ═══════════════════════════════════════════════════════════════════════════
 ` : ''}    var PLAYER_SPRITE_URL = '${gameSettings.playerSpriteURL || ''}';
@@ -1344,12 +1344,13 @@ ${includeComments ? `    // ═════════════════�
     }
     // Only states the sheet actually has get picked; the rest read as walk or
     // idle, which is what every game did before clips existed.
-    function playerClipName(moving, airborne, rising, hurt, facing) {
+    function playerClipName(moving, airborne, rising, hurt, facing, climbing) {
         if (IS_TOPDOWN) {
             var d = facing || 'down';
             return (moving ? 'walk' : 'idle') + d.charAt(0).toUpperCase() + d.slice(1);
         }
         if (hurt && PLAYER_CLIPS.hurt) return 'hurt';
+        if (climbing && PLAYER_CLIPS.climb) return 'climb';
         if (airborne) {
             if (rising && PLAYER_CLIPS.jump) return 'jump';
             if (!rising && PLAYER_CLIPS.fall) return 'fall';
@@ -1358,14 +1359,18 @@ ${includeComments ? `    // ═════════════════�
         return moving ? 'walk' : 'idle';
     }
     // Advances a body's clip and leaves animFrame/animRow on it for the draw.
-    function stepPlayerClip(body, name, clip) {
+    // hold keeps the current frame: someone hanging still on a ladder stays
+    // mid-reach instead of snapping back to the first frame.
+    function stepPlayerClip(body, name, clip, hold) {
         if (body.clipName !== name) {
             body.clipName = name;
             body.clipFrame = 0;
             body.clipTimer = 0;
         }
         var ticks = Math.max(1, Math.round(60 / (clip.fps || PLAYER_ANIM_FPS)));
-        if (clip.frames > 1) {
+        if (hold) {
+            body.clipFrame = Math.min(body.clipFrame || 0, Math.max(0, clip.frames - 1));
+        } else if (clip.frames > 1) {
             body.clipTimer = (body.clipTimer || 0) + 1;
             if (body.clipTimer >= ticks) {
                 body.clipTimer = 0;
@@ -6413,12 +6418,12 @@ ${includeComments ? `        // ────────────────
         // clip would be wrong for the whole climb.
         var airborne = !IS_TOPDOWN && !player.climbing && (!player.onGround || JUMP_MODE === 'fly');
         var hurtNow = !!(player.hurtStart && (Date.now() - player.hurtStart) < hurtClipMs());
-        var clipName = playerClipName(isMoving, airborne, player.speedY < 0, hurtNow, player.facingDirection);
+        var clipName = playerClipName(isMoving, airborne, player.speedY < 0, hurtNow, player.facingDirection, !IS_TOPDOWN && player.climbing);
         var usingRoster = !!(myCustomSpriteLoaded && myCustomSpriteImage);
         stepPlayerClip(player, clipName, resolvePlayerClip(clipName,
             usingRoster ? PLAYER_SPRITE_COLS : PLAYER_SPRITESHEET_COLS,
             usingRoster ? PLAYER_SPRITE_ROWS : PLAYER_SPRITESHEET_ROWS,
-            usingRoster));
+            usingRoster), clipName === 'climb' && !isMoving);
 
         // Platformer-only: Jump mechanics and gravity
         if (!IS_TOPDOWN) {
@@ -10978,8 +10983,10 @@ ${includeComments ? `        // ────────────────
                 ctx.save();
                 if (obj.type === 'movingPlatform') clipPlatformCorners(obj, screenX, screenY, objW, objH);
                 // Handle sprite rotation/flip based on object type and direction
-                if (obj.type === 'npc' && IS_TOPDOWN && obj.wanderDirection && spriteRows <= 1) {
-                    // NPC in top-down mode with single-row sprite: rotate based on wander direction
+                if (obj.type === 'npc' && IS_TOPDOWN && obj.behavior === 'wander' && obj.wanderDirection && spriteRows <= 1) {
+                    // A wandering NPC with a single-row sprite turns to face where it walks.
+                    // A stationary one never moves, and its wanderDirection starts as 'down',
+                    // so turning it laid every standing villager on its side.
                     var centerX = screenX + objW / 2;
                     var centerY = screenY + objH / 2;
                     ctx.translate(centerX, centerY);
