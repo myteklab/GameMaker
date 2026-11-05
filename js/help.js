@@ -300,6 +300,7 @@ const helpContent = {
                 <li><strong>Walk</strong> - plays while moving, at the Speed you set</li>
                 <li><strong>Jump</strong> and <strong>Fall</strong> - rising and dropping; a one-frame clip holds the pose</li>
                 <li><strong>Hurt</strong> - plays once when the player takes damage</li>
+                <li><strong>Climb</strong> - plays while moving on a ladder and holds its frame when you stop; a back view looks best</li>
             </ul>
             <p>Top-down games get a walk and an idle for each direction instead. Any state without a clip falls back to walk, and walk falls back to the whole first row, so a plain strip works with no setup.</p>
             <h4>Layout Buttons</h4>
@@ -307,7 +308,7 @@ const helpContent = {
                 <li><strong>Horizontal strip</strong> - the row is the walk, frame 0 is idle</li>
                 <li><strong>Vertical strip</strong> - a column of frames, rebuilt into a row first</li>
                 <li><strong>Direction sheet</strong> - rows are down, left, right, up</li>
-                <li><strong>One row per state</strong> - rows are idle, walk, jump, fall, hurt</li>
+                <li><strong>One row per state</strong> - rows are idle, walk, jump, fall, hurt, climb</li>
             </ul>
             <h4>Automatic Features</h4>
             <ul>

@@ -1730,7 +1730,7 @@ function stopPlayerSpriteAnimation() {
 // runtime plays; anything else is rebuilt into a single row first.
 const CLIP_STATES_PLATFORMER = [
     { key: 'idle', label: 'Idle' }, { key: 'walk', label: 'Walk' }, { key: 'jump', label: 'Jump' },
-    { key: 'fall', label: 'Fall' }, { key: 'hurt', label: 'Hurt' }
+    { key: 'fall', label: 'Fall' }, { key: 'hurt', label: 'Hurt' }, { key: 'climb', label: 'Climb' }
 ];
 const CLIP_STATES_TOPDOWN = [
     { key: 'idleDown', label: 'Idle down' }, { key: 'walkDown', label: 'Walk down' },
@@ -2060,9 +2060,9 @@ function applyClipPreset(kind) {
         }
     } else if (kind === 'rows') {
         if (topdown) { applyClipPreset('directions'); return; }
-        const order = ['idle', 'walk', 'jump', 'fall', 'hurt'];
+        const order = ['idle', 'walk', 'jump', 'fall', 'hurt', 'climb'];
         for (let r = 0; r < Math.min(g.rows, order.length); r++) {
-            clips[order[r]] = run(r, 0, g.cols, order[r] === 'idle' || order[r] === 'walk' || order[r] === 'fall');
+            clips[order[r]] = run(r, 0, g.cols, order[r] === 'idle' || order[r] === 'walk' || order[r] === 'fall' || order[r] === 'climb');
         }
         if (g.rows < 2 && typeof showToast === 'function') showToast('One row per state needs at least two rows', 'warning');
     } else {
