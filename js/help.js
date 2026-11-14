@@ -776,6 +776,7 @@ const helpContent = {
 
             <h4>Size And Hitbox</h4>
             <p><strong>Width</strong> and <strong>Height</strong> set how big the enemy is drawn. The <strong>Hitbox</strong> fields set the part that actually touches the player, and left empty they match the sprite. Press <strong>H</strong> while play testing to see hitboxes on screen. To resize one placed enemy without changing the type, click it in the level and drag the square on its corner.</p>
+            <p>To make a second kind of enemy that is almost the same, open <strong>Enemies</strong> and press the copy button under one. You get a new type with every setting already filled in; edit it to change the speed, the sprite or anything else, and the original stays as it was. The same button is on every object type.</p>
 
             <h4>Game Design Tip</h4>
             <p><strong>Enemy placement is puzzle design.</strong></p>

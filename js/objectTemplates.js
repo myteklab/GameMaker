@@ -1595,6 +1595,7 @@ function renderTerrainZoneTemplatesList() {
                 </div>
                 <div class="template-actions" onclick="event.stopPropagation();">
                     <button class="btn btn-small" onclick="editTerrainZoneTemplate('${template.id}')">Edit</button>
+                    <button class="btn btn-small" onclick="duplicateTemplate('terrainZone', '${template.id}'); renderTerrainZoneTemplatesList();">Duplicate</button>
                     ${index > 0 ? `<button class="btn btn-small btn-danger" onclick="deleteTerrainZoneTemplate('${template.id}')">Delete</button>` : ''}
                 </div>
             </div>
@@ -3803,6 +3804,31 @@ function deleteConveyorTemplate(id) {
     showToast('Conveyor type deleted', 'success');
 }
 
+// A new type with every setting of the old one, so a student can make a faster
+// or tougher slime without filling the whole form in again. It goes at the end
+// of the list, where a new type always goes, and has its own id, so changing one
+// never changes the other and nothing already placed moves over to it.
+function copyTemplateName(type, name) {
+    const names = new Set(getTemplates(type).map(t => t.name));
+    const base = String(name || 'Type').replace(/ copy( \d+)?$/, '');
+    let candidate = base + ' copy';
+    for (let n = 2; names.has(candidate); n++) candidate = base + ' copy ' + n;
+    return candidate;
+}
+
+function duplicateTemplate(type, id) {
+    const list = getTemplates(type);
+    const index = list.findIndex(t => t.id === id);
+    if (index < 0) return null;
+    const copy = JSON.parse(JSON.stringify(list[index]));
+    copy.name = copyTemplateName(type, list[index].name);
+    copy.id = generateTemplateId(type, copy.name);
+    list.push(copy);
+    markDirty();
+    showToast('Made "' + copy.name + '". Edit it to make it different.', 'success');
+    return copy;
+}
+
 function showObjectPlacementModal(type) {
     const modal = document.getElementById('object-placement-modal');
     const title = document.getElementById('object-placement-title');
@@ -3922,6 +3948,7 @@ function showObjectPlacementModal(type) {
                 </div>
                 <div class="placement-actions">
                     <button class="placement-action-btn edit" onclick="event.stopPropagation(); closeObjectPlacementModal(); ${editFuncs[type]}('${template.id}')" title="Edit"><svg class="gm-icon"><use href="#icon-pencil"/></svg></button>
+                    <button class="placement-action-btn copy" onclick="event.stopPropagation(); duplicateTemplate('${type}', '${template.id}'); showObjectPlacementModal('${type}');" title="Duplicate this type"><svg class="gm-icon"><use href="#icon-copy"/></svg></button>
                     ${!isDefault ? `<button class="placement-action-btn delete" onclick="event.stopPropagation(); ${deleteFuncs[type]}('${template.id}'); showObjectPlacementModal('${type}');" title="Delete"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>` : ''}
                 </div>
             </div>

@@ -2402,6 +2402,14 @@
             background: rgba(79, 140, 255, 0.6);
         }
 
+        .placement-action-btn.copy {
+            background: rgba(46, 204, 113, 0.25);
+        }
+
+        .placement-action-btn.copy:hover {
+            background: rgba(46, 204, 113, 0.5);
+        }
+
         .placement-action-btn.delete {
             background: rgba(231, 76, 60, 0.3);
         }
