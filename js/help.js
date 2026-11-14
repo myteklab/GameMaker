@@ -101,6 +101,7 @@ const helpContent = {
                 <code style="color: var(--accent);">Ctrl+S</code><span style="color: var(--text-2);">Save project</span>
                 <code style="color: var(--accent);">Ctrl+Z</code><span style="color: var(--text-2);">Undo</span>
                 <code style="color: var(--accent);">Ctrl+Y</code><span style="color: var(--text-2);">Redo</span>
+                <code style="color: var(--accent);">Ctrl+D</code><span style="color: var(--text-2);">Duplicate the object you clicked</span>
                 <code style="color: var(--accent);">Space</code><span style="color: var(--text-2);">Play/Stop game</span>
             </div>
 
@@ -454,6 +455,7 @@ const helpContent = {
             <ul>
                 <li><strong>Ctrl+Z</strong> - Undo</li>
                 <li><strong>Ctrl+Y</strong> - Redo</li>
+                <li><strong>Ctrl+D</strong> - Duplicate the selected tiles, or the object you clicked</li>
                 <li><strong>Ctrl+S</strong> - Save project</li>
                 <li><strong>A-Z keys</strong> - Select assigned tile</li>
             </ul>
@@ -741,7 +743,7 @@ const helpContent = {
             <h4>What Stops an Enemy</h4>
             <p>Enemies are blocked by solid tiles, by crates, by mystery blocks and by solid moving platforms and conveyors. They walk through ladders, pickups, hazards and one-way platforms, the same as you would expect. A pacing enemy that meets something solid turns around; a chasing one stops against it. That means you can shove a crate into a corridor to shut an enemy out of it.</p>
 
-            <p>One enemy can follow a route you draw instead of its pattern. Click the enemy where it stands in the level, choose <strong>Draw path</strong>, and drag the route you want. End near where you started to make a loop, or leave it open and the enemy walks there and back. The route belongs to that one enemy, so two enemies of the same type can patrol different routes.</p>
+            <p>One enemy can follow a route you draw instead of its pattern. Click the enemy where it stands in the level, choose <strong>Draw path</strong>, and drag the route you want. End near where you started to make a loop, or leave it open and the enemy walks there and back. The route belongs to that one enemy, so two enemies of the same type can patrol different routes. To fill a level quickly, click an enemy and press <strong>Duplicate</strong> (or Ctrl+D): the copy appears beside it with the same route and size.</p>
 
             <h4>Touching The Player</h4>
             <ul>

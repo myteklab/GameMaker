@@ -85,6 +85,7 @@ function renderObjectTools() {
         }
         html += '<span class="otb-divider"></span>';
     }
+    html += `<button type="button" class="otb-btn" title="Make a copy beside it (Ctrl+D)" onclick="duplicateObject()">Duplicate</button>`;
     const size = objectGameSize(obj);
     html += `<span class="otb-size" title="Drag the square on the corner to resize">${Math.round(size.w)} &times; ${Math.round(size.h)}</span>`;
     if (obj.size) html += `<button type="button" class="otb-btn" onclick="resetObjectSize()">Reset size</button>`;
@@ -124,6 +125,65 @@ function objectToolsChanged(obj) {
         window.GameCollab.objectChanged(obj);
     }
     renderObjectTools();
+}
+
+// ---- duplicate ----
+
+// Objects are keyed by their cell, and placing on a taken cell replaces what is
+// there, so the copy has to find a clear spot. It goes one object-width to the
+// right (left once the level runs out) and skips any spot where it would sit on
+// another object, so pressing Duplicate again keeps lining copies up.
+function findDuplicateCell(obj) {
+    const box = objectEditorBox(obj);
+    const step = Math.max(1, Math.ceil(box.w / tileSize));
+    const others = gameObjects
+        .filter(o => o !== obj && o.type !== 'terrainZone')
+        .map(o => objectEditorBox(o));
+    const clear = (x) => {
+        if (x < 0 || x >= levelWidth) return false;
+        if (gameObjects.some(o => o.x === x && o.y === obj.y)) return false;
+        const left = box.x + (x - obj.x) * tileSize;
+        return !others.some(b => left < b.x + b.w && left + box.w > b.x &&
+                                 box.y < b.y + b.h && box.y + box.h > b.y);
+    };
+    for (let x = obj.x + step; x < levelWidth; x += step) if (clear(x)) return x;
+    for (let x = obj.x - step; x >= 0; x -= step) if (clear(x)) return x;
+    return null;
+}
+
+function duplicateObject() {
+    const obj = objectToolsTarget;
+    if (!obj || gameObjects.indexOf(obj) < 0) return;
+    const x = findDuplicateCell(obj);
+    if (x === null) {
+        showToast('No room on this row for a copy', 'error');
+        return;
+    }
+    addGameObject(x, obj.y, obj.type, obj.templateId);
+    const copy = gameObjects.find(o => o.x === x && o.y === obj.y);
+    if (!copy) {
+        showToast('That spot is taken, move it and try again', 'error');
+        return;
+    }
+    // Whatever the student set on this one object (its path, its size) comes
+    // with it. The path is relative to where it starts, so it moves along.
+    Object.keys(obj).forEach(k => {
+        if (k === 'x' || k === 'y' || k === 'type' || k === 'templateId') return;
+        copy[k] = JSON.parse(JSON.stringify(obj[k]));
+    });
+    if (window.GameCollab && typeof window.GameCollab.objectChanged === 'function') {
+        window.GameCollab.objectChanged(copy);
+    }
+    markDirty();
+    showObjectTools(copy);
+    // Follow the copy if it landed off screen.
+    const sx = (x * tileSize - cameraX) * zoom;
+    if (sx < 0 || sx > canvas.width - tileSize * zoom) {
+        cameraX = x * tileSize - canvas.width / zoom / 2;
+        if (typeof clampCamera === 'function') clampCamera();
+        draw();
+        positionObjectTools();
+    }
 }
 
 // ---- paths ----

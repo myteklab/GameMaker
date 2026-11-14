@@ -1278,6 +1278,11 @@ function onKeyDown(e) {
                 draw();
                 return;
             }
+            if (typeof objectToolsTarget !== 'undefined' && objectToolsTarget) {
+                e.preventDefault();
+                duplicateObject();
+                return;
+            }
         }
     }
 
