@@ -57,7 +57,8 @@ function drawAtTile(tx, ty) {
 // ============================================
 
 // Capture the current selection rect into tileClipboard. Pulls from BOTH
-// terrain and decoration layers so paste preserves stacking.
+// terrain and decoration layers so paste preserves stacking, and the objects
+// standing in it, so a copied room keeps its enemies, coins and springs.
 function copySelectionToClipboard() {
     if (!selection) return false;
     const x1 = selection.x1, y1 = selection.y1, x2 = selection.x2, y2 = selection.y2;
@@ -72,8 +73,61 @@ function copySelectionToClipboard() {
         terrain.push(trow);
         decor.push(drow);
     }
-    tileClipboard = { tiles: terrain, decorTiles: decor, w: w, h: h };
+    const objects = objectsInRect(x1, y1, x2, y2).map(o => {
+        const c = JSON.parse(JSON.stringify(o));
+        c.dx = o.x - x1;
+        c.dy = o.y - y1;
+        delete c.x;
+        delete c.y;
+        return c;
+    });
+    tileClipboard = { tiles: terrain, decorTiles: decor, w: w, h: h, objects: objects };
     return true;
+}
+
+// An object belongs to the cell it was placed on, so that is what decides
+// whether it is in a selection, even when it is drawn bigger than one tile. A
+// zone counts by its top-left corner.
+function objectsInRect(x1, y1, x2, y2) {
+    return gameObjects.filter(o => o.x >= x1 && o.x <= x2 && o.y >= y1 && o.y <= y2);
+}
+
+// Straight into gameObjects rather than through addGameObject: that one saves
+// an undo step per call and refuses overlapping platforms, and a paste is one
+// step that should land exactly as it was copied. Collab hears about each one
+// through the same ops addGameObject and the object bar send.
+function collabObjectOp(op) {
+    const api = window.GameCollab;
+    if (api && typeof api._cellCb === 'function') {
+        try { api._cellCb(op); } catch (e) {}
+    }
+}
+
+function removeObjectsInRect(x1, y1, x2, y2) {
+    const gone = objectsInRect(x1, y1, x2, y2);
+    if (!gone.length) return 0;
+    gone.forEach(o => gameObjects.splice(gameObjects.indexOf(o), 1));
+    gone.forEach(o => { if (o.type !== 'terrainZone') collabObjectOp({ obj: true, x: o.x, y: o.y, remove: true }); });
+    if (typeof objectToolsTarget !== 'undefined' && gone.indexOf(objectToolsTarget) >= 0) hideObjectTools();
+    return gone.length;
+}
+
+function placeClipboardObject(src, x, y) {
+    const copy = JSON.parse(JSON.stringify(src));
+    delete copy.dx;
+    delete copy.dy;
+    copy.x = x;
+    copy.y = y;
+    if (copy.type !== 'terrainZone') {
+        for (let i = gameObjects.length - 1; i >= 0; i--) {
+            const o = gameObjects[i];
+            if (o.type !== 'terrainZone' && o.x === x && o.y === y) gameObjects.splice(i, 1);
+        }
+    }
+    gameObjects.push(copy);
+    if (copy.type !== 'terrainZone' && window.GameCollab && typeof window.GameCollab.objectChanged === 'function') {
+        window.GameCollab.objectChanged(copy);
+    }
 }
 
 // Stamp clipboard contents at (originX, originY), top-left aligned. If
@@ -83,6 +137,9 @@ function pasteClipboardAt(originX, originY, transparent) {
     if (!tileClipboard) return false;
     const w = tileClipboard.w, h = tileClipboard.h;
     saveUndoState('Paste');
+    // A solid paste replaces what was there, objects included; a see-through
+    // one only replaces an object that sits on the very cell a copy lands on.
+    if (!transparent) removeObjectsInRect(originX, originY, originX + w - 1, originY + h - 1);
     for (let dy = 0; dy < h; dy++) {
         const ty = originY + dy;
         if (ty < 0 || ty >= level.length) continue;
@@ -95,8 +152,22 @@ function pasteClipboardAt(originX, originY, transparent) {
             if (!transparent || dCh !== '.') setTileAt(tx, ty, dCh, 'decor');
         }
     }
+    let placed = 0;
+    (tileClipboard.objects || []).forEach(o => {
+        const tx = originX + o.dx, ty = originY + o.dy;
+        if (tx < 0 || ty < 0 || tx >= levelWidth || ty >= levelHeight) return;
+        placeClipboardObject(o, tx, ty);
+        placed++;
+    });
+    if (placed) updateObjectCount();
     markDirty();
     return true;
+}
+
+// "3x2" or "3x2 and 4 objects", for the toasts below
+function clipboardLabel() {
+    const n = (tileClipboard.objects || []).length;
+    return tileClipboard.w + '×' + tileClipboard.h + (n ? ' and ' + n + (n === 1 ? ' object' : ' objects') : '');
 }
 
 // Erase a rectangle on both layers
@@ -114,14 +185,15 @@ function cutSelection() {
     if (!copySelectionToClipboard()) return;
     saveUndoState('Cut');
     eraseRect(selection.x1, selection.y1, selection.x2, selection.y2);
+    if (removeObjectsInRect(selection.x1, selection.y1, selection.x2, selection.y2)) updateObjectCount();
     markDirty();
-    showToast('Cut ' + tileClipboard.w + '×' + tileClipboard.h);
+    showToast('Cut ' + clipboardLabel());
 }
 
 function copySelection() {
     if (!selection) return;
     if (copySelectionToClipboard()) {
-        showToast('Copied ' + tileClipboard.w + '×' + tileClipboard.h);
+        showToast('Copied ' + clipboardLabel());
     }
 }
 
@@ -152,7 +224,7 @@ function duplicateSelection() {
     if (!copySelectionToClipboard()) return;
     // Paste immediately to the right of the original selection
     pasteClipboardAt(selection.x2 + 1, selection.y1, /* transparent */ false);
-    showToast('Duplicated ' + tileClipboard.w + '×' + tileClipboard.h);
+    showToast('Duplicated ' + clipboardLabel());
 }
 
 // ============================================

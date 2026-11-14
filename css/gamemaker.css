@@ -2303,16 +2303,17 @@
 
         /* Object Placement Modal */
         .placement-modal .modal {
-            max-width: 500px;
+            max-width: 580px;
         }
 
         .placement-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
             padding: 15px;
-            max-height: 300px;
+            max-height: 360px;
             overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .placement-item {
@@ -2377,6 +2378,8 @@
 
         .placement-actions {
             display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 4px;
             margin-top: 8px;
         }
@@ -2409,6 +2412,26 @@
         .placement-action-btn.copy:hover {
             background: rgba(46, 204, 113, 0.5);
         }
+
+        .placement-action-btn.save {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .placement-action-btn.save:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .placement-count {
+            font-size: 10px;
+            color: var(--text-3);
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .type-delete-modal .modal { max-width: 420px; }
+        .type-delete-modal .tdm-count { color: var(--text-2); margin: 6px 0 12px; }
+        .type-delete-modal .tdm-move { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 13px; }
+        .type-delete-modal select { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-3); color: var(--text); }
 
         .placement-action-btn.delete {
             background: rgba(231, 76, 60, 0.3);
@@ -4393,6 +4416,7 @@
 .object-tools-bar .otb-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-1); }
 .object-tools-bar .otb-seg button { padding: 3px 8px; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 11px; cursor: pointer; }
 .object-tools-bar .otb-seg button.active { background: var(--accent); color: #fff; }
+.object-tools-bar .otb-select { max-width: 140px; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--bg-3); color: var(--text); font-size: 11px; cursor: pointer; }
 .object-tools-bar .otb-divider { width: 1px; align-self: stretch; background: var(--line); }
 .object-tools-bar .otb-size { padding: 0 4px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .object-tools-bar .otb-close { width: 22px; height: 22px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-2); font-size: 15px; line-height: 1; cursor: pointer; }

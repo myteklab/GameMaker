@@ -456,6 +456,7 @@ const helpContent = {
                 <li><strong>Ctrl+Z</strong> - Undo</li>
                 <li><strong>Ctrl+Y</strong> - Redo</li>
                 <li><strong>Ctrl+D</strong> - Duplicate the selected tiles, or the object you clicked</li>
+                <li><strong>Ctrl+C / Ctrl+X / Ctrl+V</strong> - Copy, cut and paste a Shift+drag selection, with the objects standing in it</li>
                 <li><strong>Ctrl+S</strong> - Save project</li>
                 <li><strong>A-Z keys</strong> - Select assigned tile</li>
             </ul>
@@ -937,6 +938,14 @@ const helpContent = {
                 <li>Powerups should look beneficial (hearts, stars)</li>
             </ul>
             <p>Players learn what things do by how they look. Be consistent!</p>
+
+            <h4>Copying, Changing and Sharing Types</h4>
+            <ul>
+                <li><strong>Copy a type</strong> - The green copy button under a type makes a new one with every setting filled in. Edit the copy and the original stays as it was.</li>
+                <li><strong>Change one placed object</strong> - Click it in the level and pick another type from the list on its bar. It keeps its spot, its path and its size.</li>
+                <li><strong>Delete a type you used</strong> - You choose whether the placed ones change to another type or get deleted too.</li>
+                <li><strong>Use a type in another game</strong> - The download button saves it to a file. In the other game, open the same picker and choose <strong>From a file</strong>. Sounds, effects and custom tiles it uses come along.</li>
+            </ul>
 
             <div class="help-tip"><p>Changes to templates affect all objects of that type. Great for quickly reskinning your whole game!</p></div>
         `

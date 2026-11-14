@@ -85,6 +85,12 @@ function renderObjectTools() {
         }
         html += '<span class="otb-divider"></span>';
     }
+    const types = typeof getTemplates === 'function' ? getTemplates(obj.type) : [];
+    if (types.length > 1) {
+        const options = types.map(t =>
+            `<option value="${escapeHtml(t.id)}"${t.id === obj.templateId ? ' selected' : ''}>${escapeHtml(t.name)}</option>`).join('');
+        html += `<select class="otb-select" title="Change what kind this one is" onchange="setObjectTemplate(this.value)">${options}</select>`;
+    }
     html += `<button type="button" class="otb-btn" title="Make a copy beside it (Ctrl+D)" onclick="duplicateObject()">Duplicate</button>`;
     const size = objectGameSize(obj);
     html += `<span class="otb-size" title="Drag the square on the corner to resize">${Math.round(size.w)} &times; ${Math.round(size.h)}</span>`;
@@ -125,6 +131,21 @@ function objectToolsChanged(obj) {
         window.GameCollab.objectChanged(obj);
     }
     renderObjectTools();
+}
+
+// ---- type ----
+
+// Switches one placed object to another type of its kind, keeping its spot,
+// its path and its size. The usual case: a student duplicated Slime into Fast
+// Slime and wants a few of the slimes already in the level to be fast ones.
+function setObjectTemplate(templateId) {
+    const obj = objectToolsTarget;
+    if (!obj || gameObjects.indexOf(obj) < 0 || obj.templateId === templateId) return;
+    if (!getTemplates(obj.type).some(t => t.id === templateId)) return;
+    saveUndoState('Change type');
+    obj.templateId = templateId;
+    objectToolsChanged(obj);
+    positionObjectTools();
 }
 
 // ---- duplicate ----

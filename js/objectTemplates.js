@@ -1579,6 +1579,7 @@ function renderTerrainZoneTemplatesList() {
     if (!container) return;
 
     let html = '';
+    const counts = templateUseCounts('terrainZone');
     terrainZoneTemplates.forEach((template, index) => {
         const speedLabel = template.speedMultiplier < 1 ? 'Slow' : (template.speedMultiplier > 1 ? 'Fast' : 'Normal');
         const damageLabel = template.damagePerSecond > 0 ? `${template.damagePerSecond} DPS` : 'No damage';
@@ -1590,13 +1591,14 @@ function renderTerrainZoneTemplatesList() {
                 </div>
                 <div class="template-info">
                     <div class="template-name">${template.name}</div>
-                    <div class="template-details">${speedLabel} (${template.speedMultiplier}x) | ${damageLabel}</div>
+                    <div class="template-details">${speedLabel} (${template.speedMultiplier}x) | ${damageLabel} | ${placedLabel(counts[template.id] || 0)}</div>
                     <div class="template-hint" style="font-size: 10px; color: var(--text-3); margin-top: 2px;">Click to select for placement</div>
                 </div>
                 <div class="template-actions" onclick="event.stopPropagation();">
                     <button class="btn btn-small" onclick="editTerrainZoneTemplate('${template.id}')">Edit</button>
                     <button class="btn btn-small" onclick="duplicateTemplate('terrainZone', '${template.id}'); renderTerrainZoneTemplatesList();">Duplicate</button>
-                    ${index > 0 ? `<button class="btn btn-small btn-danger" onclick="deleteTerrainZoneTemplate('${template.id}')">Delete</button>` : ''}
+                    <button class="btn btn-small" title="Save this zone type to a file, to use it in another game" onclick="exportTemplate('terrainZone', '${template.id}')">Save</button>
+                    ${index > 0 ? `<button class="btn btn-small btn-danger" onclick="askDeleteTemplate('terrainZone', '${template.id}')">Delete</button>` : ''}
                 </div>
             </div>
         `;
@@ -3829,6 +3831,289 @@ function duplicateTemplate(type, id) {
     return copy;
 }
 
+// How many of each type are placed, across every level, in one pass.
+function templateUseCounts(type) {
+    if (typeof syncToCurrentLevel === 'function') syncToCurrentLevel();
+    const counts = {};
+    levels.forEach(lvl => {
+        (lvl.gameObjects || []).forEach(o => {
+            if (o.type === type) counts[o.templateId] = (counts[o.templateId] || 0) + 1;
+        });
+    });
+    return counts;
+}
+
+function placedLabel(n) {
+    return n ? n + ' placed' : 'none placed';
+}
+
+// Whichever list the student deleted from gets drawn again.
+function refreshTemplateLists(type) {
+    const picker = document.getElementById('object-placement-modal');
+    if (picker && picker.classList.contains('visible') && picker.dataset.type === type) showObjectPlacementModal(type);
+    const zones = document.getElementById('terrain-zone-templates-modal');
+    if (type === 'terrainZone' && zones && zones.classList.contains('visible')) renderTerrainZoneTemplatesList();
+}
+
+// ---- deleting a type that is in use ----
+// Deleting used to take every placed one with it. When some are placed, the
+// student now picks: move them to another type of the same kind (the way to
+// fold a copy back into the original) or remove them too.
+
+function askDeleteTemplate(type, id) {
+    const list = getTemplates(type);
+    const index = list.findIndex(t => t.id === id);
+    if (index <= 0) {
+        showToast('The first type cannot be deleted', 'error');
+        return;
+    }
+    const template = list[index];
+    const count = templateUseCounts(type)[id] || 0;
+    if (!count) {
+        if (confirm('Delete "' + template.name + '"?')) {
+            deleteTemplateNow(type, id, null);
+            showToast('"' + template.name + '" deleted', 'success');
+        }
+        return;
+    }
+    const others = list.filter(t => t.id !== id);
+    const dialog = document.getElementById('type-delete-modal') || buildTypeDeleteModal();
+    dialog.querySelector('.tdm-title').textContent = 'Delete "' + template.name + '"?';
+    dialog.querySelector('.tdm-count').textContent = count === 1
+        ? '1 of these is placed in your game.'
+        : count + ' of these are placed in your game.';
+    const select = dialog.querySelector('select');
+    select.innerHTML = '';
+    others.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        select.appendChild(opt);
+    });
+    dialog.dataset.type = type;
+    dialog.dataset.id = id;
+    dialog.classList.add('visible');
+    select.focus();
+}
+
+function buildTypeDeleteModal() {
+    const el = document.createElement('div');
+    el.id = 'type-delete-modal';
+    el.className = 'modal-overlay type-delete-modal';
+    el.innerHTML = `
+        <div class="modal">
+            <h2 class="tdm-title"></h2>
+            <p class="tdm-count"></p>
+            <label class="tdm-move">Change them to <select></select></label>
+            <div class="modal-buttons">
+                <button class="btn" style="background: var(--accent); color: #fff;" data-act="move">Change them and delete</button>
+                <button class="btn btn-danger" data-act="remove">Delete them too</button>
+                <button class="btn" data-act="cancel">Cancel</button>
+            </div>
+        </div>`;
+    el.addEventListener('click', e => {
+        const act = e.target === el ? 'cancel' : e.target.getAttribute('data-act');
+        if (!act) return;
+        el.classList.remove('visible');
+        if (act === 'cancel') return;
+        const type = el.dataset.type, id = el.dataset.id;
+        const template = getTemplates(type).find(t => t.id === id);
+        if (!template) return;
+        const to = act === 'move' ? el.querySelector('select').value : null;
+        const n = deleteTemplateNow(type, id, to);
+        if (to) {
+            const target = getTemplates(type).find(t => t.id === to);
+            showToast('"' + template.name + '" deleted. ' + n + ' changed to "' + (target ? target.name : to) + '"', 'success');
+        } else {
+            showToast('"' + template.name + '" and ' + n + ' placed deleted', 'success');
+        }
+    });
+    document.body.appendChild(el);
+    return el;
+}
+
+// moveTo: another type's id to switch placed ones to, or null to remove them.
+// Returns how many placed objects were changed or removed.
+function deleteTemplateNow(type, id, moveTo) {
+    const list = getTemplates(type);
+    const index = list.findIndex(t => t.id === id);
+    if (index <= 0) return 0;
+    let n = 0;
+    if (moveTo && list.some(t => t.id === moveTo)) {
+        if (typeof syncToCurrentLevel === 'function') syncToCurrentLevel();
+        levels.forEach(lvl => {
+            (lvl.gameObjects || []).forEach(o => {
+                if (o.type !== type || o.templateId !== id) return;
+                o.templateId = moveTo;
+                n++;
+                if (lvl.gameObjects === gameObjects && o.type !== 'terrainZone' &&
+                    window.GameCollab && typeof window.GameCollab.objectChanged === 'function') {
+                    window.GameCollab.objectChanged(o);
+                }
+            });
+        });
+    } else {
+        n = removeTemplateInstancesFromAllLevels(type, id);
+    }
+    list.splice(index, 1);
+    if (selectedObjectType === type && selectedTemplateId === id && typeof clearObjectSelection === 'function') {
+        clearObjectSelection();
+    }
+    if (typeof objectToolsTarget !== 'undefined' && objectToolsTarget) renderObjectTools();
+    markDirty();
+    updateObjectCount();
+    draw();
+    refreshTemplateLists(type);
+    return n;
+}
+
+// ---- a type in a file ----
+// Saves one type so it can go into another game. The type alone would lose
+// whatever it points at inside this game, so the file carries those too: a
+// sound or particle effect made in the studios (sfx:id, pfx:id) and a custom
+// tile it is drawn with. A tile cut from this game's tileset image cannot go:
+// the other game has a different image, so that look is dropped on the way in
+// and the type falls back to its sprite or color.
+
+const TEMPLATE_FILE_FORMAT = 'gamebuilder-type';
+const TEMPLATE_KIND_NAMES = {
+    enemy: 'enemy', collectible: 'collectible', hazard: 'hazard', powerup: 'powerup',
+    spring: 'spring', movingPlatform: 'platform', crate: 'crate', ladder: 'ladder',
+    conveyor: 'conveyor', npc: 'NPC', door: 'door', mysteryBlock: 'mystery block',
+    terrainZone: 'zone'
+};
+
+function eachTemplateString(value, fn) {
+    if (typeof value === 'string') return fn(value);
+    if (Array.isArray(value)) return value.map(v => eachTemplateString(v, fn));
+    if (value && typeof value === 'object') {
+        const out = {};
+        Object.keys(value).forEach(k => { out[k] = eachTemplateString(value[k], fn); });
+        return out;
+    }
+    return value;
+}
+
+function exportTemplate(type, id) {
+    const template = getTemplates(type).find(t => t.id === id);
+    if (!template) return;
+    const bundle = { format: TEMPLATE_FILE_FORMAT, version: 1, kind: type, type: JSON.parse(JSON.stringify(template)), sfx: {}, pfx: {}, tiles: {} };
+    delete bundle.type.id;
+    const sfx = (gameSettings && gameSettings.sfxData) || {};
+    const pfx = (gameSettings && gameSettings.pfxData) || {};
+    eachTemplateString(template, v => {
+        if (v.indexOf('sfx:') === 0 && sfx[v.slice(4)]) bundle.sfx[v.slice(4)] = sfx[v.slice(4)];
+        if (v.indexOf('pfx:') === 0 && pfx[v.slice(4)]) bundle.pfx[v.slice(4)] = pfx[v.slice(4)];
+        return v;
+    });
+    if (template.tileKey && typeof customTiles === 'object' && customTiles[template.tileKey]) {
+        bundle.tiles[template.tileKey] = customTiles[template.tileKey];
+    }
+    const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (String(template.name).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'type') + '.gbtype.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Saved "' + template.name + '". Open any game and pick From a file to bring it in.', 'success');
+}
+
+function pickTemplateFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        if (file.size > 8 * 1024 * 1024) {
+            showToast('That file is too big to be a saved type', 'error');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            let data = null;
+            try { data = JSON.parse(reader.result); } catch (e) {}
+            importTemplateBundle(data);
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+// A saved type can come from a classmate, and names and values end up in the
+// editor's HTML and in the exported game's script, so every string loses the
+// characters that could close a tag or an attribute. Sprites are base64 or
+// plain URLs and never need them.
+function cleanImportedValue(value) {
+    return eachTemplateString(value, v => v.replace(/[<>"`]/g, '').replace(/'/g, '’'));
+}
+
+function importTemplateBundle(raw) {
+    if (!raw || raw.format !== TEMPLATE_FILE_FORMAT || !raw.type || typeof raw.type !== 'object' ||
+        !Object.prototype.hasOwnProperty.call(TEMPLATE_KIND_NAMES, raw.kind)) {
+        showToast('That file is not a saved GameBuilder type', 'error');
+        return null;
+    }
+    const kind = raw.kind;
+    const data = cleanImportedValue(raw);
+    const template = data.type;
+    const notes = [];
+
+    // Sounds and effects keep their id unless this game already has a different
+    // one under it; then the type's references are pointed at a new id.
+    const rename = {};
+    [['sfx', 'sfxData'], ['pfx', 'pfxData']].forEach(([prefix, key]) => {
+        const incoming = data[prefix] || {};
+        if (!gameSettings[key]) gameSettings[key] = {};
+        Object.keys(incoming).forEach(oldId => {
+            let newId = oldId;
+            const have = gameSettings[key][newId];
+            if (have && JSON.stringify(have) !== JSON.stringify(incoming[oldId])) {
+                let n = 2;
+                while (gameSettings[key][oldId + '_' + n]) n++;
+                newId = oldId + '_' + n;
+            }
+            gameSettings[key][newId] = incoming[oldId];
+            if (newId !== oldId) rename[prefix + ':' + oldId] = prefix + ':' + newId;
+        });
+    });
+    let fixed = eachTemplateString(template, v => rename[v] || v);
+
+    if (fixed.tileKey) {
+        const tile = data.tiles && data.tiles[fixed.tileKey];
+        if (tile && typeof tile.dataURL === 'string' && tile.dataURL.indexOf('data:image/') === 0) {
+            let key = generateCustomTileKey();
+            while (customTiles[key]) key = generateCustomTileKey();
+            customTiles[key] = tile;
+            fixed.tileKey = key;
+            if (typeof renderCustomTilesPalette === 'function') renderCustomTilesPalette();
+        } else {
+            delete fixed.tileKey;
+            notes.push('its tile look stayed in the other game');
+        }
+    }
+
+    const list = getTemplates(kind);
+    fixed.name = String(fixed.name || 'Imported').slice(0, 60);
+    if (list.some(t => t.name === fixed.name)) fixed.name = copyTemplateName(kind, fixed.name);
+    fixed.id = generateTemplateId(kind, fixed.name);
+    list.push(fixed);
+    markDirty();
+    draw();
+
+    if (kind === 'terrainZone') {
+        closeObjectPlacementModal();
+        showTerrainZoneTemplatesModal();
+    } else {
+        showObjectPlacementModal(kind);
+    }
+    showToast('Added the ' + TEMPLATE_KIND_NAMES[kind] + ' "' + fixed.name + '"' + (notes.length ? '; ' + notes.join(', ') : ''), 'success');
+    return fixed;
+}
+
 function showObjectPlacementModal(type) {
     const modal = document.getElementById('object-placement-modal');
     const title = document.getElementById('object-placement-title');
@@ -3912,6 +4197,7 @@ function showObjectPlacementModal(type) {
     title.textContent = titles[type] || 'Select Object';
 
     const templates = getTemplates(type);
+    const counts = templateUseCounts(type);
     let html = '';
 
     // Default symbols for each type (used as fallback)
@@ -3945,11 +4231,13 @@ function showObjectPlacementModal(type) {
                         ${previewContent}
                     </div>
                     <div class="placement-name">${template.name}</div>
+                    <div class="placement-count">${placedLabel(counts[template.id] || 0)}</div>
                 </div>
                 <div class="placement-actions">
                     <button class="placement-action-btn edit" onclick="event.stopPropagation(); closeObjectPlacementModal(); ${editFuncs[type]}('${template.id}')" title="Edit"><svg class="gm-icon"><use href="#icon-pencil"/></svg></button>
                     <button class="placement-action-btn copy" onclick="event.stopPropagation(); duplicateTemplate('${type}', '${template.id}'); showObjectPlacementModal('${type}');" title="Duplicate this type"><svg class="gm-icon"><use href="#icon-copy"/></svg></button>
-                    ${!isDefault ? `<button class="placement-action-btn delete" onclick="event.stopPropagation(); ${deleteFuncs[type]}('${template.id}'); showObjectPlacementModal('${type}');" title="Delete"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>` : ''}
+                    <button class="placement-action-btn save" onclick="event.stopPropagation(); exportTemplate('${type}', '${template.id}');" title="Save this type to a file, to use it in another game"><svg class="gm-icon"><use href="#icon-download"/></svg></button>
+                    ${!isDefault ? `<button class="placement-action-btn delete" onclick="event.stopPropagation(); askDeleteTemplate('${type}', '${template.id}');" title="Delete"><svg class="gm-icon"><use href="#icon-trash"/></svg></button>` : ''}
                 </div>
             </div>
         `;
@@ -3960,6 +4248,10 @@ function showObjectPlacementModal(type) {
         <div class="placement-item add-item" onclick="closeObjectPlacementModal(); ${addFuncs[type]}();">
             <div class="placement-preview" style="background: var(--accent);">+</div>
             <div class="placement-name">${addLabels[type]}</div>
+        </div>
+        <div class="placement-item add-item" onclick="pickTemplateFile()" title="Bring in a type saved from another game">
+            <div class="placement-preview" style="background: var(--bg-4);"><svg class="gm-icon" style="transform: rotate(180deg);"><use href="#icon-download"/></svg></div>
+            <div class="placement-name">From a file</div>
         </div>
     `;
 
